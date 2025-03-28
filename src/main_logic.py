@@ -1,17 +1,39 @@
 # main_logic.py
 import threading
 import tkinter as tk
+import wmi
 from tkinter import messagebox
 from db.database import get_db_connection
 from utils.helpers import log_event, parse_percent, extract_details_from_sku, get_live_battery_percent
 from utils.specs import get_laptop_specs
+from logic.view_serials_logic import open_serial_viewer
 from ui.tests import TestsWindow
+
+# Store the initial battery level
+initial_battery_level = get_live_battery_percent()
 
 # Utility function
 
 def search_order_logic(order_id, canvas, search_button, test_results, test_labels, root):
+
+    def battery_charging_status():
+        try:
+            c = wmi.WMI()
+            battery = c.Win32_Battery()[0]
+            return battery.BatteryStatus == 2  # 2 = Charging
+        except:
+            return None
+
+    def parse_percent(text):
+        import re
+        try:
+            return int(re.search(r"\d+", text).group())
+        except:
+            return None
+
     def run_search():
         try:
+            from db.database import get_db_connection
             conn = get_db_connection()
             if not conn:
                 return
@@ -30,14 +52,29 @@ def search_order_logic(order_id, canvas, search_button, test_results, test_label
             laptop_specs = get_laptop_specs()
             serial_number = laptop_specs.get("Serial Number", "Unknown")
 
-            canvas.delete("all")
-            canvas_width = canvas.winfo_width() or 800
-            center_x = canvas_width // 2
-
             def update_ui():
+                canvas.delete("all")
+                canvas_width = canvas.winfo_width() or 800
+                center_x = canvas_width // 2
+
                 canvas.create_text(center_x, 20, text=f"🔍 SKU: {sku}", font=("Arial", 14, "bold"), anchor="center")
                 canvas.create_text(center_x, 40, text=f"Serial: {serial_number}", font=("Arial", 10, "bold"), anchor="center")
 
+                # Assign Button
+                assign_button = tk.Button(
+                    canvas, text="Assign Serial", bg="lightgreen", font=("Arial", 9, "bold"),
+                    command=lambda: assign_serial_logic(order_id, serial_number, laptop_specs, test_results, root)
+                )
+                canvas.create_window(center_x + 90, 40, window=assign_button, anchor="w")
+
+                # View Serials Button
+                view_serials_button = tk.Button(
+                    canvas, text="View Serials", bg="lightblue", font=("Arial", 9, "bold"),
+                    command=lambda: open_serial_viewer(order_id)
+                )
+                canvas.create_window(center_x + 200, 40, window=view_serials_button, anchor="w")
+
+                # Spec comparison
                 canvas.create_text(canvas.winfo_width() * 0.3, 70, text="SKU Spec", font=("Arial", 12, "bold"), anchor="center")
                 canvas.create_text(canvas.winfo_width() * 0.7, 70, text="Laptop Spec", font=("Arial", 12, "bold"), anchor="center")
 
@@ -72,25 +109,62 @@ def search_order_logic(order_id, canvas, search_button, test_results, test_label
                 mismatch_color = "red" if mismatches else "green"
                 canvas.create_text(center_x, start_y + len(fields) * line_spacing + 35, text=mismatch_text, fill=mismatch_color, font=("Arial", 10, "bold"), anchor="center")
 
-                # Battery bar
+                if mismatches:
+                    log_event("Spec mismatches detected:\n" + mismatch_text)
+
+                # Animated battery bar with pulse and reset logic
+                pulse_index = [0]
+                pulse_ticks = 4
+
                 def draw_battery_bar():
-                    canvas.delete("battery_bar")
                     bar_x, bar_y = 10, canvas.winfo_height() - 30
                     bar_width, bar_height = 200, 20
-                    percent = get_live_battery_percent() or 0
-                    fill_width = int(bar_width * percent / 100)
 
-                    if percent >= 70:
+                    live_percent = get_live_battery_percent()
+                    charging = battery_charging_status()
+
+                    percent = live_percent if live_percent is not None else 0
+
+                    if pulse_index[0] >= pulse_ticks:
+                        pulse_index[0] = 0
+
+                    offset = pulse_index[0] if charging else -pulse_index[0]
+                    animated_percent = max(0, min(100, percent + offset))
+                    fill_width = int(bar_width * animated_percent / 100)
+
+                    if live_percent is None:
+                        bar_color = "gray"
+                    elif percent >= 70:
                         bar_color = "green"
                     elif percent >= 45:
                         bar_color = "orange"
                     else:
                         bar_color = "red"
 
-                    canvas.create_rectangle(bar_x, bar_y, bar_x + bar_width, bar_y + bar_height, fill="lightgray", outline="black", tags="battery_bar")
-                    canvas.create_rectangle(bar_x, bar_y, bar_x + fill_width, bar_y + bar_height, fill=bar_color, outline="", tags="battery_bar")
-                    label = f"Battery: {percent}%"
-                    canvas.create_text(bar_x + bar_width // 2, bar_y + bar_height // 2, text=label, fill="black", font=("Arial", 10, "bold"), tags="battery_bar")
+                    canvas.delete("battery_bar")
+                    canvas.create_rectangle(bar_x, bar_y, bar_x + bar_width, bar_y + bar_height,
+                                            fill="lightgray", outline="black", tags="battery_bar")
+                    canvas.create_rectangle(bar_x, bar_y, bar_x + fill_width, bar_y + bar_height,
+                                            fill=bar_color, outline="", tags="battery_bar")
+
+                    change_str = ""
+                    if initial_battery_level is not None and live_percent is not None:
+                        delta = live_percent - initial_battery_level
+                        if delta != 0:
+                            sign = "+" if delta > 0 else ""
+                            change_str = f" ({sign}{delta}%)"
+
+                    label = f"Battery: {percent}%" + (" ⚡" if charging else "")
+                    canvas.create_text(bar_x + bar_width // 2, bar_y + bar_height // 2,
+                                    text=label, fill="black", font=("Arial", 10, "bold"), tags="battery_bar")
+
+                    if change_str:
+                        color = "green" if delta > 0 else "red"
+                        canvas.create_text(bar_x + bar_width + 40, bar_y + bar_height // 2,
+                                        text=change_str, fill=color, font=("Arial", 10, "bold"), tags="battery_bar")
+
+                    pulse_index[0] += 1
+                    canvas.after(150, draw_battery_bar)
 
                 draw_battery_bar()
 
@@ -98,13 +172,10 @@ def search_order_logic(order_id, canvas, search_button, test_results, test_label
 
         except Exception as e:
             log_event(f"Unhandled exception in search logic for order {order_id}: {e}")
-            def show_error():
-                messagebox.showerror("Unexpected Error", str(e))
-                search_button.config(state="normal")
-            root.after(0, show_error)
+            root.after(0, lambda: messagebox.showerror("Unexpected Error", str(e)))
+            search_button.config(state="normal")
 
     threading.Thread(target=run_search, daemon=True).start()
-
 
 def assign_serial_logic(order_number, serial_number, specs, test_results, root):
     try:

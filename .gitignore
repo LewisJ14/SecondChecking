@@ -1,3 +1,4 @@
 
 src/config.ini
 *.pyc
+src/logs.txt
