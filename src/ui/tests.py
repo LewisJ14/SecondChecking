@@ -25,7 +25,7 @@ class TestsWindow:
 
         self.add_test_row("Speaker Test", lambda: run_speaker_test(self.root, self.test_results, self.test_labels), "speaker")
         self.add_test_row("Display Test", lambda: run_display_test(self.root, self.test_results, self.test_labels), "display")
-        self.add_test_row("Keyboard Test", lambda: run_keyboard_test(self.root, self.test_results, self.test_labels), "keyboard")
+        self.add_test_row("Keyboard Test", lambda: run_keyboard_test(), "keyboard")
         self.add_test_row("Webcam Test", lambda: run_webcam_test(self.root, self.test_results, self.test_labels), "webcam")
         self.add_test_row("USB Test", lambda: run_usb_test(self.root, self.test_results, self.test_labels), "usb")
 

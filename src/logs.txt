@@ -1,3 +1,0 @@
-[2025-03-28 11:01:34] Spec mismatches detected:
-⚠ Model: Expected P50, Found ThinkPad T495
-⚠ RAM: Expected 32GB, Found 38GB

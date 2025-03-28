@@ -20,7 +20,7 @@ keyboard_test_window = None
 press_hook_id = None
 release_hook_id = None
 
-def run_keyboard_test(root, test_results, test_labels):
+def run_keyboard_test():
     global keyboard_test_window, press_hook_id, release_hook_id
 
     try:
@@ -182,12 +182,11 @@ def run_keyboard_test(root, test_results, test_labels):
 
         def on_response(result):
             test_results["keyboard"] = result
-            if "keyboard_label" in test_labels:
-                test_labels["keyboard_label"].config(text="✅" if result == "pass" else "❌")
+            update_test_results_ui()
             prompt.destroy()
 
         tk.Button(btn_frame, text="Yes", width=10, bg="lightgreen", command=lambda: on_response("pass")).pack(side="left", padx=5)
-        tk.Button(btn_frame, text="Retry", width=10, bg="lightblue", command=lambda: [prompt.destroy(), run_keyboard_test(root, test_results, test_labels)]).pack(side="left", padx=5)
+        tk.Button(btn_frame, text="Retry", width=10, bg="lightblue", command=lambda: [prompt.destroy(), run_keyboard_test()]).pack(side="left", padx=5)
         tk.Button(btn_frame, text="No", width=10, bg="tomato", command=lambda: on_response("fail")).pack(side="left", padx=5)
 
         prompt.protocol("WM_DELETE_WINDOW", prompt.destroy)
