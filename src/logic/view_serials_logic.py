@@ -13,6 +13,11 @@ def open_serial_viewer(order_number):
         treeview = ttk.Treeview(view_window, columns=("Serial Number", "Assigned At"), show="headings")
         treeview.heading("Serial Number", text="Serial Number")
         treeview.heading("Assigned At", text="Assigned At")
+
+        # Center align both columns and make them take up 50% each
+        treeview.column("Serial Number", anchor="center", width=150, stretch=True)
+        treeview.column("Assigned At", anchor="center", width=150, stretch=True)
+
         treeview.pack(pady=10, expand=True, fill=tk.BOTH)
 
         conn = get_db_connection()
