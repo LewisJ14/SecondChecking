@@ -2,3 +2,12 @@
 src/config.ini
 *.pyc
 src/logs.txt
+src/assets/config.ini
+src/db/config.ini
+src/logic/config.ini
+src/hardwaretests/config.ini
+src/ui/config.ini
+src/utils/config.ini
+src/output/config.ini
+/src/output
+src/utils/logs.txt

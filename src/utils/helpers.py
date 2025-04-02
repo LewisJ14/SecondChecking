@@ -1,9 +1,9 @@
-# utils/helpers.py
 import configparser
 import os
 import datetime
 import re
 import wmi
+import sys
 
 def log_event(message):
     with open("logs.txt", "a", encoding="utf-8") as log_file:
@@ -11,6 +11,8 @@ def log_event(message):
         log_file.write(f"[{timestamp}] {message}\n")
 
 def load_config(config_file="config.ini"):
+    import sys
+
     config = configparser.ConfigParser()
 
     required_config = {
@@ -21,12 +23,15 @@ def load_config(config_file="config.ini"):
         ]
     }
 
-    abs_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", config_file))
-    if not os.path.exists(abs_path):
-        log_event("Missing config.ini file.")
+    # Always get the folder containing the EXE or script
+    base_path = os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else __file__)
+    config_path = os.path.join(base_path, config_file)
+
+    if not os.path.exists(config_path):
+        log_event(f"Missing config.ini at: {config_path}")
         raise FileNotFoundError("Missing config.ini")
 
-    config.read(abs_path)
+    config.read(config_path)
 
     for section, keys in required_config.items():
         if not config.has_section(section):
@@ -42,7 +47,7 @@ def parse_percent(text):
         return int(re.search(r"\d+", text).group())
     except:
         return None
-    
+
 def extract_details_from_sku(sku):
     config = load_config()
     details = {
@@ -111,11 +116,12 @@ def extract_details_from_sku(sku):
 
     return details
 
-def get_live_battery_percent():
+def get_live_battery_percent(index=0):
     try:
-        w = wmi.WMI()
-        for battery in w.Win32_Battery():
-            return int(battery.EstimatedChargeRemaining)
-    except Exception as e:
-        log_event(f"Error reading live battery percent: {e}")
+        c = wmi.WMI()
+        batteries = c.Win32_Battery()
+        if index < len(batteries):
+            return int(batteries[index].EstimatedChargeRemaining)
+    except:
+        pass
     return None

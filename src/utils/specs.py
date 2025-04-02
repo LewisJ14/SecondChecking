@@ -29,7 +29,8 @@ def get_laptop_specs():
         "Model": "Unknown",
         "Resolution": "Unknown",
         "Windows": "Unknown",
-        "Battery": "Unknown"
+        "Battery": "Unknown",
+        "Battery 2": None
     }
 
     try:
@@ -78,7 +79,10 @@ def get_laptop_specs():
         else:
             specs["SSD"] = f"{round(total_disk_size)}GB"
 
-        specs["Battery"] = get_battery_health()
+        healths = get_battery_health()
+        specs["Battery"] = f"{healths[0]}%" if isinstance(healths[0], int) else "Unknown"
+        if len(healths) > 1:
+            specs["Battery 2"] = f"{healths[1]}%" if isinstance(healths[1], int) else "Unknown"
 
     except Exception as e:
         log_event(f"Exception in get_laptop_specs: {e}")
@@ -108,7 +112,7 @@ def get_battery_health():
 
         if result.returncode != 0:
             log_event(f"powercfg failed: {result.stderr.decode(errors='ignore')}")
-            return "Unknown"
+            return ["Unknown"]
 
         if os.path.exists(report_path):
             path_to_use = report_path
@@ -117,7 +121,7 @@ def get_battery_health():
             path_to_use = fallback_path
         else:
             log_event("Battery report not found in either temp or user directory.")
-            return "Unknown"
+            return ["Unknown"]
 
         with open(path_to_use, "r", encoding="utf-8") as f:
             html = f.read()
@@ -126,22 +130,21 @@ def get_battery_health():
         except Exception as e:
             log_event(f"Could not delete battery report file: {e}")
 
-        design = re.search(r"DESIGN CAPACITY.*?<td>([\d,]+)\s*mWh", html, re.IGNORECASE)
-        full = re.search(r"FULL CHARGE CAPACITY.*?<td>([\d,]+)\s*mWh", html, re.IGNORECASE)
+        design_matches = re.findall(r"DESIGN CAPACITY.*?<td>([\d,]+)\s*mWh", html, re.IGNORECASE)
+        full_matches = re.findall(r"FULL CHARGE CAPACITY.*?<td>([\d,]+)\s*mWh", html, re.IGNORECASE)
 
-        if design and full:
+        battery_healths = []
+        for d, f in zip(design_matches, full_matches):
             try:
-                design_mwh = int(design.group(1).replace(",", ""))
-                full_mwh = int(full.group(1).replace(",", ""))
-                if design_mwh > 0:
-                    health_percent = int((full_mwh / design_mwh) * 100)
-                    return f"{health_percent}%"
-                else:
-                    log_event("Design capacity is zero — cannot calculate battery health.")
-            except Exception as e:
-                log_event(f"Error converting battery values: {e}")
-        else:
-            log_event("Unable to parse battery capacity values from report.")
+                d_mwh = int(d.replace(",", ""))
+                f_mwh = int(f.replace(",", ""))
+                percent = int((f_mwh / d_mwh) * 100) if d_mwh else 0
+                battery_healths.append(percent)
+            except:
+                battery_healths.append("Unknown")
+
+        return battery_healths if battery_healths else ["Unknown"]
+
     except Exception as e:
         log_event(f"Exception in get_battery_health: {e}")
-    return "Unknown"
+    return ["Unknown"]
