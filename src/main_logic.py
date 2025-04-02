@@ -50,22 +50,50 @@ def search_order_logic(order_id, canvas, search_button, test_results, test_label
             cursor = conn.cursor()
             cursor.execute("SELECT sku FROM orders WHERE order_number = %s", (order_id,))
             rows = cursor.fetchall()
-            cursor.execute("""
-                SELECT test_keyboard, test_speaker, test_display, test_webcam, test_usb
-                FROM order_serials
-                WHERE order_number = %s AND serial_number = %s
-            """, (order_id, laptop_specs.get("Serial Number", "Unknown")))
-            test_row = cursor.fetchone()
 
-            if test_row:
-                test_results.update({
-                    "keyboard": test_row[0],
-                    "speaker": test_row[1],
-                    "display": test_row[2],
-                    "webcam": test_row[3],
-                    "usb": test_row[4],
-                })
+            try:
+                laptop_specs = get_laptop_specs()
+            except Exception as spec_err:
+                log_event(f"Error during get_laptop_specs: {spec_err}")
+                laptop_specs = {
+                    "Serial Number": "Unknown",
+                    "CPU": "Unknown",
+                    "RAM": "Unknown",
+                    "SSD": "Unknown",
+                    "Drive Type": "Unknown",
+                    "Model": "Unknown",
+                    "Resolution": "Unknown",
+                    "Windows": "Unknown",
+                    "Battery": "Unknown",
+                    "Battery 2": "Unknown",
+                }
+
+            serial_number = laptop_specs.get("Serial Number", "Unknown")
+
             conn.close()
+
+            # Load previous test results from DB
+            conn = get_db_connection()
+            if conn:
+                try:
+                    cursor = conn.cursor()
+                    cursor.execute("""
+                        SELECT test_keyboard, test_speaker, test_display, test_webcam, test_usb
+                        FROM order_serials
+                        WHERE order_number = %s AND serial_number = %s
+                    """, (order_id, serial_number))
+                    test_row = cursor.fetchone()
+                    if test_row:
+                        test_results.update({
+                            "keyboard": test_row[0],
+                            "speaker": test_row[1],
+                            "display": test_row[2],
+                            "webcam": test_row[3],
+                            "usb": test_row[4],
+                        })
+                    conn.close()
+                except Exception as err:
+                    log_event(f"Failed to load previous test results: {err}")
 
             if not rows:
                 root.after(0, lambda: messagebox.showwarning("No Results", f"No SKUs found for Order Number: {order_id}"))
