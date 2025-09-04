@@ -3,7 +3,7 @@ import tkinter as tk
 from ttkbootstrap import ttk
 from ui.tests import TestsWindow
 from main_logic import search_order_logic
-from utils.helpers import preload_previous_results, log_event
+from utils.helpers import log_event
 from tkinter import messagebox
 import threading
 import re
@@ -208,21 +208,17 @@ class AppController:
                     f'Start-Process powershell -ArgumentList \'-NoProfile -ExecutionPolicy Bypass -File "{temp_script}"\' -Verb RunAs -Wait; exit $LASTEXITCODE'
                 ]
 
-                result = subprocess.run(ps_command, check=True)
+                subprocess.run(ps_command, check=True)
                 self.root.after(0, lambda: messagebox.showinfo(
                     "Windows Update",
                     "Windows Update script has finished.\nCheck Windows Update history for details."
                 ))
-            except subprocess.CalledProcessError as e:
-                self.root.after(0, lambda: messagebox.showerror(
-                    "Update Error",
-                    f"Windows Update script failed to run:\n{e}"
-                ))
-            except Exception as e:
-                self.root.after(0, lambda: messagebox.showerror(
-                    "Update Error",
-                    f"Unexpected error running Windows Update script:\n{e}"
-                ))
+            except subprocess.CalledProcessError as err:
+                msg = f"Windows Update script failed to run:\n{err}"
+                self.root.after(0, lambda: messagebox.showerror("Update Error", msg))
+            except Exception as err:
+                msg = f"Unexpected error running Windows Update script:\n{err}"
+                self.root.after(0, lambda: messagebox.showerror("Update Error", msg))
             finally:
                 self.update_status("")  # Clear status
 

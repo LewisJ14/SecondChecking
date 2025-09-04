@@ -57,7 +57,8 @@ def open_serial_viewer(order_number):
                     view_window.after(0, lambda: update_rows(list(rows)))
                 except Exception as err:
                     log_event(f"Error loading serials: {err}\n{traceback.format_exc()}")
-                    view_window.after(0, lambda: messagebox.showerror("Error", f"Failed to load serials:\n{err}"))
+                    msg = f"Failed to load serials:\n{err}"
+                    view_window.after(0, lambda: messagebox.showerror("Error", msg))
                 finally:
                     if conn:
                         try:

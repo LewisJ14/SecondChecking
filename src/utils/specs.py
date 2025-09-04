@@ -1,17 +1,14 @@
 # utils/specs.py
 import re
 import psutil
-import platform
 import wmi
 import subprocess
 import os
-import tempfile
 from utils.helpers import log_event, ensure_batteryinfoview
 import pythoncom
 import configparser
 import getpass
 import sys
-import csv
 
 config = configparser.ConfigParser()
 config.read(os.path.join(os.path.dirname(__file__), '..', 'config.ini'))

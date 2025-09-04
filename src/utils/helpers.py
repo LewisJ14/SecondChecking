@@ -1,6 +1,5 @@
 import configparser
 import subprocess
-import winreg
 import os
 import datetime
 import re
@@ -8,6 +7,7 @@ import wmi
 import sys
 import zipfile
 import urllib.request
+import hashlib
 
 def log_event(message):
     log_path = "logs.txt"
@@ -212,15 +212,38 @@ def ensure_batteryinfoview(download_dir="assets/BatteryInfoView"):
 
     # Download if not present
     if not os.path.exists(zip_path):
-        print(f"Downloading {url}...")
-        urllib.request.urlretrieve(url, zip_path)
+        try:
+            print(f"Downloading {url}...")
+            urllib.request.urlretrieve(url, zip_path)
+        except Exception as err:
+            log_event(f"Failed to download BatteryInfoView: {err}")
+            raise
 
-    # Extract
-    with zipfile.ZipFile(zip_path, "r") as zip_ref:
-        zip_ref.extractall(download_dir)
+    expected_hash = os.getenv("BATTERYINFOVIEW_SHA256")
+    if expected_hash:
+        sha256 = hashlib.sha256()
+        with open(zip_path, "rb") as f:
+            for chunk in iter(lambda: f.read(8192), b""):
+                sha256.update(chunk)
+        file_hash = sha256.hexdigest()
+        if file_hash.lower() != expected_hash.lower():
+            log_event(
+                f"BatteryInfoView checksum mismatch: expected {expected_hash}, got {file_hash}"
+            )
+            os.remove(zip_path)
+            raise ValueError("BatteryInfoView checksum mismatch")
+    else:
+        log_event("BATTERYINFOVIEW_SHA256 not set; skipping checksum verification")
 
-    # Optionally, remove the zip after extraction
-    os.remove(zip_path)
+    try:
+        with zipfile.ZipFile(zip_path, "r") as zip_ref:
+            zip_ref.extractall(download_dir)
+    except Exception as err:
+        log_event(f"Failed to extract BatteryInfoView: {err}")
+        raise
+    finally:
+        if os.path.exists(zip_path):
+            os.remove(zip_path)
 
     if not os.path.exists(exe_path):
         raise FileNotFoundError(f"{exe_name} not found after extraction.")

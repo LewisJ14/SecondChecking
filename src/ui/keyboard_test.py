@@ -42,11 +42,11 @@ def run_keyboard_test(root, test_results, test_labels, tests_window=None):
             keyboard_test_window.lift()
             keyboard_test_window.focus_force()
             return
-    except:
+    except Exception:
         keyboard_test_window = None
 
     # Preload the layout
-    keyboard_layout = preload_keyboard_layout()
+    preload_keyboard_layout()
 
     keyboard_test_window = tk.Toplevel()
     keyboard_test_window.title("Keyboard Test")
@@ -63,7 +63,6 @@ def run_keyboard_test(root, test_results, test_labels, tests_window=None):
     keyboard_test_window.configure(bg="white")
 
     PRESSED_COLOR = HIGHLIGHT_COLORS["pressed"]
-    HIT_COLOR = HIGHLIGHT_COLORS["hit"]
     DEFAULT_COLOR = HIGHLIGHT_COLORS["default"]
     FN_COLOR = "#999999"
 
