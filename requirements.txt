@@ -1,0 +1,9 @@
+pyinstaller
+wmi
+psutil
+mysqlclient
+pywin32
+Pillow
+keyboard
+opencv-python
+requests

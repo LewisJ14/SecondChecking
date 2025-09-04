@@ -1,11 +1,18 @@
+# Entry point for the Second Checking Tool application
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-import tkinter as tk
+import ttkbootstrap as tb
 from app_controller import AppController
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = AppController(root)
-    root.mainloop()
+    try:
+        root = tb.Window(themename="flatly")
+        app = AppController(root)
+        root.mainloop()
+    except Exception as e:
+        import traceback
+        with open("startup_error.log", "w") as f:
+            f.write(traceback.format_exc())
+        raise

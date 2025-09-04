@@ -1,0 +1,353 @@
+[2025-05-14 15:28:34] User initiated search for order: 06-12848-61293
+[2025-05-14 15:28:35] Error loading DB config: No section: 'database'
+Traceback (most recent call last):
+  File "db\database.py", line 10, in get_db_connection
+  File "configparser.py", line 759, in get
+  File "configparser.py", line 1130, in _unify_values
+configparser.NoSectionError: No section: 'database'
+
+[2025-05-14 15:34:21] User initiated search for order: 06-12848-61293
+[2025-05-14 15:34:24] Battery health parsing failed: No matches found in HTML.
+[2025-05-14 15:34:24] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-14 15:34:24] [DEBUG] DigitalProductId present: True
+[2025-05-14 15:34:24] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 15:34:24] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-14 15:34:24] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 512GB + 512GB
+[2025-05-15 11:33:58] User initiated search for order: 06-12848-61293
+[2025-05-15 11:34:01] Battery health parsing failed: No matches found in HTML.
+[2025-05-15 11:34:01] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-15 11:34:01] [DEBUG] DigitalProductId present: True
+[2025-05-15 11:34:01] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-15 11:34:01] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-15 11:34:01] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 512GB+512GB
+[2025-05-15 11:34:26] User opened the Test Panel.
+[2025-05-15 11:34:40] User opened the Test Panel.
+[2025-05-15 11:34:55] User initiated search for order: 06-12848-61293
+[2025-05-15 11:34:58] User opened the Test Panel.
+[2025-05-15 11:34:58] Battery health parsing failed: No matches found in HTML.
+[2025-05-15 11:34:58] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-15 11:34:58] [DEBUG] DigitalProductId present: True
+[2025-05-15 11:34:58] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-15 11:34:58] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-15 11:34:58] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 512GB+512GB
+[2025-05-15 11:39:48] User opened the Test Panel.
+[2025-05-15 11:40:08] User opened the Test Panel.
+[2025-05-15 11:46:43] User initiated search for order: test
+[2025-05-15 11:46:46] Battery health parsing failed: No matches found in HTML.
+[2025-05-15 11:46:46] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-15 11:46:46] [DEBUG] DigitalProductId present: True
+[2025-05-15 11:46:46] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-15 11:48:07] User initiated search for order: testorder
+[2025-05-15 11:48:07] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-15 11:48:07] [DEBUG] DigitalProductId present: True
+[2025-05-15 11:48:07] [DEBUG] test_results['activation'] set to: pass for order testorder
+[2025-05-15 11:48:15] User initiated search for order: TESTORDER
+[2025-05-15 11:48:15] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-15 11:48:15] [DEBUG] DigitalProductId present: True
+[2025-05-15 11:48:15] [DEBUG] test_results['activation'] set to: pass for order TESTORDER
+[2025-05-15 11:55:33] User initiated search for order: test
+[2025-05-15 11:55:33] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-15 11:55:33] [DEBUG] DigitalProductId present: True
+[2025-05-15 11:55:33] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-15 11:55:42] User initiated search for order: test
+[2025-05-15 11:55:45] Battery health parsing failed: No matches found in HTML.
+[2025-05-15 11:55:45] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-15 11:55:45] [DEBUG] DigitalProductId present: True
+[2025-05-15 11:55:45] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-15 11:56:17] User initiated search for order: betest
+[2025-05-15 11:56:17] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-15 11:56:17] [DEBUG] DigitalProductId present: True
+[2025-05-15 11:56:17] [DEBUG] test_results['activation'] set to: pass for order betest
+[2025-05-15 11:56:18] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-15 11:56:56] User initiated search for order: test
+[2025-05-15 11:56:56] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-15 11:56:56] [DEBUG] DigitalProductId present: True
+[2025-05-15 11:56:56] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-15 11:56:56] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-16 15:43:36] User initiated search for order: test
+[2025-05-16 15:43:39] Could not open \\.\Battery0
+[2025-05-16 15:43:39] Could not open \\.\Battery1
+[2025-05-16 15:43:39] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-16 15:43:39] [DEBUG] DigitalProductId present: True
+[2025-05-16 15:43:39] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-16 15:43:39] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-27 14:31:14] User initiated search for order ID: 2902
+[2025-05-27 14:31:14] User initiated search for order: 2902
+[2025-05-27 14:31:14] Starting search for order ID: 2902
+[2025-05-27 14:31:14] Getting database connection...
+[2025-05-27 14:31:14] Attempting to establish database connection...
+[2025-05-27 14:31:14] Loading configuration file...
+[2025-05-27 14:31:14] Configuration file loaded successfully.
+[2025-05-27 14:31:14] Database connection attempt 1/3.
+[2025-05-27 14:31:14] Database connection established successfully.
+[2025-05-27 14:31:14] Fetching SKU from database.
+[2025-05-27 14:31:14] Fetched 0 rows for order ID: 2902
+[2025-05-27 14:31:14] No SKUs found for order ID: 2902, checking WooCommerce...
+[2025-05-27 14:31:14] Loading configuration file...
+[2025-05-27 14:31:14] Configuration file loaded successfully.
+[2025-05-27 14:31:14] Loaded config.ini from: C:\Users\PCR\Documents\GitHub\SecondChecking\dist\config.ini
+[2025-05-27 14:31:14] WooCommerce config loaded: url=None, consumer_key=missing, consumer_secret=missing
+[2025-05-27 14:31:14] WooCommerce API credentials missing in config.ini.
+[2025-05-27 14:31:20] User initiated search for order ID: 2092
+[2025-05-27 14:31:20] User initiated search for order: 2092
+[2025-05-27 14:31:20] Starting search for order ID: 2092
+[2025-05-27 14:31:20] Getting database connection...
+[2025-05-27 14:31:20] Attempting to establish database connection...
+[2025-05-27 14:31:20] Loading configuration file...
+[2025-05-27 14:31:20] Configuration file loaded successfully.
+[2025-05-27 14:31:20] Database connection attempt 1/3.
+[2025-05-27 14:31:20] Database connection established successfully.
+[2025-05-27 14:31:20] Fetching SKU from database.
+[2025-05-27 14:31:20] Fetched 0 rows for order ID: 2092
+[2025-05-27 14:31:20] No SKUs found for order ID: 2092, checking WooCommerce...
+[2025-05-27 14:31:20] Loading configuration file...
+[2025-05-27 14:31:20] Configuration file loaded successfully.
+[2025-05-27 14:31:20] Loaded config.ini from: C:\Users\PCR\Documents\GitHub\SecondChecking\dist\config.ini
+[2025-05-27 14:31:20] WooCommerce config loaded: url=None, consumer_key=missing, consumer_secret=missing
+[2025-05-27 14:31:20] WooCommerce API credentials missing in config.ini.
+[2025-05-27 14:31:36] User initiated search for order ID: 2092
+[2025-05-27 14:31:36] User initiated search for order: 2092
+[2025-05-27 14:31:36] Starting search for order ID: 2092
+[2025-05-27 14:31:36] Getting database connection...
+[2025-05-27 14:31:36] Attempting to establish database connection...
+[2025-05-27 14:31:36] Loading configuration file...
+[2025-05-27 14:31:36] Configuration file loaded successfully.
+[2025-05-27 14:31:36] Database connection attempt 1/3.
+[2025-05-27 14:31:36] Database connection established successfully.
+[2025-05-27 14:31:36] Fetching SKU from database.
+[2025-05-27 14:31:36] Fetched 0 rows for order ID: 2092
+[2025-05-27 14:31:36] No SKUs found for order ID: 2092, checking WooCommerce...
+[2025-05-27 14:31:36] Loading configuration file...
+[2025-05-27 14:31:36] Configuration file loaded successfully.
+[2025-05-27 14:31:36] Loaded config.ini from: C:\Users\PCR\Documents\GitHub\SecondChecking\dist\config.ini
+[2025-05-27 14:31:36] WooCommerce config loaded: url=None, consumer_key=missing, consumer_secret=missing
+[2025-05-27 14:31:36] WooCommerce API credentials missing in config.ini.
+[2025-05-27 14:33:18] User initiated search for order ID: 2092
+[2025-05-27 14:33:18] User initiated search for order: 2092
+[2025-05-27 14:33:18] Starting search for order ID: 2092
+[2025-05-27 14:33:18] Getting database connection...
+[2025-05-27 14:33:18] Attempting to establish database connection...
+[2025-05-27 14:33:18] Loading configuration file...
+[2025-05-27 14:33:18] Configuration file loaded successfully.
+[2025-05-27 14:33:18] Database connection attempt 1/3.
+[2025-05-27 14:33:18] Database connection established successfully.
+[2025-05-27 14:33:18] Fetching SKU from database.
+[2025-05-27 14:33:18] Fetched 0 rows for order ID: 2092
+[2025-05-27 14:33:18] No SKUs found for order ID: 2092, checking WooCommerce...
+[2025-05-27 14:33:18] Loading configuration file...
+[2025-05-27 14:33:18] Configuration file loaded successfully.
+[2025-05-27 14:33:18] Loaded config.ini from: C:\Users\PCR\Documents\GitHub\SecondChecking\dist\config.ini
+[2025-05-27 14:33:18] WooCommerce config loaded: url=https://www.pcrenewed.co.uk/wp-json/wc/v3/orders, consumer_key=set, consumer_secret=set
+[2025-05-27 14:33:18] Request headers: {'User-Agent': 'Mozilla/5.0'}
+[2025-05-27 14:33:18] Request URL: https://www.pcrenewed.co.uk/wp-json/wc/v3/orders | Params: {'search': '2092'}
+[2025-05-27 14:33:19] WooCommerce API response status: 200
+[2025-05-27 14:33:19] WooCommerce API final URL: https://www.pcrenewed.co.uk/wp-json/wc/v3/orders?search=2092
+[2025-05-27 14:33:19] WooCommerce API returned 1 orders
+[2025-05-27 14:33:19] WooCommerce API raw response: [{'id': 2092, 'parent_id': 0, 'status': 'on-hold', 'currency': 'GBP', 'version': '9.8.5', 'prices_include_tax': True, 'date_created': '2025-05-26T21:14:52', 'date_modified': '2025-05-27T09:08:55', 'discount_total': '0.00', 'discount_tax': '0.00', 'shipping_total': '0.00', 'shipping_tax': '0.00', 'cart_tax': '33.33', 'total': '199.99', 'total_tax': '33.33', 'customer_id': 0, 'order_key': 'wc_order_pHHHIYuvg6hGX', 'billing': {'first_name': 'Paschalis', 'last_name': 'Skouzos', 'company': '', 'address_1': '1208 6 Weaver Walk', 'address_2': '', 'city': 'London', 'state': '', 'postcode': 'HA9 0LG', 'country': 'GB', 'email': 'paschalis.skouzos@gmail.com', 'phone': ''}, 'shipping': {'first_name': 'Paschalis', 'last_name': 'Skouzos', 'company': '', 'address_1': '1208 6 Weaver Walk', 'address_2': '', 'city': 'London', 'state': '', 'postcode': 'HA9 0LG', 'country': 'GB', 'phone': ''}, 'payment_method': 'bacs', 'payment_method_title': 'Direct bank transfer', 'transaction_id': '', 'customer_ip_address': '178.238.10.129', 'customer_user_agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0', 'created_via': 'store-api', 'customer_note': '', 'date_completed': None, 'date_paid': '2025-05-27T09:06:11', 'cart_hash': '8d53d9cad1d087c15f5266dec1e8e611', 'number': '2092', 'meta_data': [{'id': 41540, 'key': '_shipping_hash', 'value': '9d4568c009d203ab10e33ea9953a0264'}, {'id': 41541, 'key': '_coupons_hash', 'value': 'd751713988987e9331980363e24189ce'}, {'id': 41542, 'key': '_fees_hash', 'value': 'd751713988987e9331980363e24189ce'}, {'id': 41543, 'key': '_taxes_hash', 'value': 'b7c1ca83121fce7d63e20be335397bc1'}, {'id': 41544, 'key': 'is_vat_exempt', 'value': 'no'}, {'id': 41557, 'key': '_wc_order_attribution_source_type', 'value': 'organic'}, {'id': 41558, 'key': '_wc_order_attribution_referrer', 'value': 'https://www.google.com/'}, {'id': 41559, 'key': '_wc_order_attribution_utm_source', 'value': 'google'}, {'id': 41560, 'key': '_wc_order_attribution_utm_medium', 'value': 'organic'}, {'id': 41561, 'key': '_wc_order_attribution_session_entry', 'value': 'https://www.pcrenewed.co.uk/product/lenovo-thinkpad-t480s-14-laptop-core-i5-8350u-8gb-ram-256gb-ssd-windows-11-pro/'}, {'id': 41562, 'key': '_wc_order_attribution_session_start_time', 'value': '2025-05-26 17:15:51'}, {'id': 41563, 'key': '_wc_order_attribution_session_pages', 'value': '2'}, {'id': 41564, 'key': '_wc_order_attribution_session_count', 'value': '6'}, {'id': 41565, 'key': '_wc_order_attribution_user_agent', 'value': 'Mozilla/5.0 (X11; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0'}, {'id': 41566, 'key': '_wc_order_attribution_device_type', 'value': 'Desktop'}, {'id': 41569, 'key': '_wcpdf_invoice_settings', 'value': {'display_email': '1', 'display_phone': '1', 'display_customer_notes': '1', 'display_shipping_address': 'when_different', 'display_number': 'invoice_number', 'display_date': 'invoice_date', 'header_logo': '54', 'header_logo_height': '1cm', 'vat_number': '', 'coc_number': '11825952', 'shop_name': {'default': 'PC Renewed Ltd'}, 'shop_phone_number': {'default': '02476 460 069'}, 'shop_address': {'default': 'Unit 1, 894 Charter Avenue\r\nCoventry\r\nWest Midlands\r\nCV4 8AT'}, 'footer': {'default': ''}, 'extra_1': {'default': ''}, 'extra_2': {'default': ''}, 'extra_3': {'default': ''}}}, {'id': 41570, 'key': '_wcpdf_invoice_display_date', 'value': 'document_date'}, {'id': 41571, 'key': '_wcpdf_invoice_creation_trigger', 'value': 'email_attachment'}, {'id': 41572, 'key': '_wcpdf_invoice_date', 'value': '1748290567'}, {'id': 41573, 'key': '_wcpdf_invoice_date_formatted', 'value': '2025-05-26 21:16:07'}, {'id': 41574, 'key': '_wcpdf_invoice_number', 'value': '24'}, {'id': 41575, 'key': '_wcpdf_invoice_number_data', 'value': {'number': 24, 'formatted_number': '24', 'prefix': '', 'suffix': '', 'document_type': 'invoice', 'order_id': 2092, 'padding': ''}}, {'id': 41576, 'key': '_ga_tracked', 'value': '1'}, {'id': 41673, 'key': '_xero_invoice_id', 'value': '35c00c97-4310-4a82-98b3-0a679c09905b'}, {'id': 41674, 'key': '_xero_currencyrate', 'value': '1.0000000000'}, {'id': 41675, 'key': '_xero_invoice_hash', 'value': '023471422240b1483ba5d815dbb1d682e7a7665c'}], 'line_items': [{'id': 616, 'name': 'Lenovo ThinkPad T480s 14" Laptop Core I5-8350U 8GB RAM 256GB SSD Windows 11 Pro - 256GB SSD, One Year Warranty', 'product_id': 987, 'variation_id': 989, 'quantity': 1, 'tax_class': '', 'subtotal': '166.66', 'subtotal_tax': '33.33', 'total': '166.66', 'total_tax': '33.33', 'taxes': [{'id': 1, 'total': '33.331667', 'subtotal': '33.331667'}], 'meta_data': [{'id': 5911, 'key': 'pa_ssd', 'value': '256gb-ssd', 'display_key': 'SSD', 'display_value': '256GB SSD'}, {'id': 5912, 'key': 'pa_warranty', 'value': 'one-year-warranty', 'display_key': 'Warranty', 'display_value': 'One Year Warranty'}, {'id': 6007, 'key': '_reduced_stock', 'value': '1', 'display_key': '_reduced_stock', 'display_value': '1'}], 'sku': 'T480S-I5-8RAM-256SSD-WIN11-1920X1080-AGRADE-BLACK-1YEAR', 'price': 166.658333, 'image': {'id': 988, 'src': 'https://www.pcrenewed.co.uk/wp-content/uploads/2024/10/T480s.jpg'}, 'parent_name': 'Lenovo ThinkPad T480s 14" Laptop Core I5-8350U 8GB RAM 256GB SSD Windows 11 Pro'}], 'tax_lines': [{'id': 625, 'rate_code': 'GB-VAT-1', 'rate_id': 1, 'label': 'VAT', 'compound': False, 'tax_total': '33.33', 'shipping_tax_total': '0.00', 'rate_percent': 20, 'meta_data': [{'id': 6003, 'key': '_wcpdf_rate_percentage', 'value': '20.0000', 'display_key': '_wcpdf_rate_percentage', 'display_value': '20.0000'}, {'id': 6004, 'key': '_wcpdf_ubl_tax_category', 'value': '', 'display_key': '_wcpdf_ubl_tax_category', 'display_value': ''}, {'id': 6005, 'key': '_wcpdf_ubl_tax_scheme', 'value': '', 'display_key': '_wcpdf_ubl_tax_scheme', 'display_value': ''}, {'id': 6006, 'key': '_wcpdf_ubl_tax_reason', 'value': '', 'display_key': '_wcpdf_ubl_tax_reason', 'display_value': ''}]}], 'shipping_lines': [], 'fee_lines': [], 'coupon_lines': [], 'refunds': [], 'payment_url': 'https://www.pcrenewed.co.uk/checkout/order-pay/2092/?pay_for_order=true&key=wc_order_pHHHIYuvg6hGX', 'is_editable': True, 'needs_payment': False, 'needs_processing': True, 'date_created_gmt': '2025-05-26T20:14:52', 'date_modified_gmt': '2025-05-27T08:08:55', 'date_completed_gmt': None, 'date_paid_gmt': '2025-05-27T08:06:11', 'currency_symbol': '£', '_links': {'self': [{'href': 'https://www.pcrenewed.co.uk/wp-json/wc/v3/orders/2092', 'targetHints': {'allow': ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']}}], 'collection': [{'href': 'https://www.pcrenewed.co.uk/wp-json/wc/v3/orders'}], 'email_templates': [{'embeddable': True, 'href': 'https://www.pcrenewed.co.uk/wp-json/wc/v3/orders/2092/actions/email_templates'}]}}]
+[2025-05-27 14:33:19] Order found in WooCommerce. SKU: T480S-I5-8RAM-256SSD-WIN11-1920X1080-AGRADE-BLACK-1YEAR
+[2025-05-27 14:33:19] Fetching laptop specs...
+[2025-05-27 14:33:19] Initialized WMI interface.
+[2025-05-27 14:33:20] Detected CPU: i5-8500
+[2025-05-27 14:33:20] Detected Serial Number: 8CC92524Q9
+[2025-05-27 14:33:20] Detected Resolution: 1920x1080
+[2025-05-27 14:33:21] Detected Windows Version: Windows 11
+[2025-05-27 14:33:21] Detected Model: HP EliteDesk 800 G4 DM 65W
+[2025-05-27 14:33:21] Detected RAM: 32GB
+[2025-05-27 14:33:22] Detected SSD: 512GB (SSD)
+[2025-05-27 14:33:23] Full Charged Capacity not found in line: Full Charged Capacity,,,,
+
+[2025-05-27 14:33:23] Designed Capacity not found in line: Designed Capacity,,,,
+
+[2025-05-27 14:33:23] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-05-27 14:33:23] Detected Battery Health: Unknown (batteryinfoview)
+[2025-05-27 14:33:23] Laptop specs fetched successfully.
+[2025-05-27 14:33:24] [DEBUG] test_results['activation'] set to: pass for order 2092
+[2025-05-27 14:33:24] Processing SKU: T480S-I5-8RAM-256SSD-WIN11-1920X1080-AGRADE-BLACK-1YEAR
+[2025-05-27 14:33:24] Loading configuration file...
+[2025-05-27 14:33:24] Configuration file loaded successfully.
+[2025-05-27 14:33:24] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-27 14:33:24] Spec mismatches detected for order 2092:
+⚠ Model: Expected T480S, Found HP EliteDesk 800 G4 DM 65W
+⚠ CPU: Expected i5, Found i5-8500
+⚠ SSD: Expected 256GB, Found 512GB
+⚠ RAM: Expected 8GB, Found 32GB
+[2025-05-27 14:33:34] Attempting to establish database connection...
+[2025-05-27 14:33:34] Loading configuration file...
+[2025-05-27 14:33:34] Configuration file loaded successfully.
+[2025-05-27 14:33:34] Database connection attempt 1/3.
+[2025-05-27 14:33:34] Database connection established successfully.
+[2025-05-27 14:33:35] Test results saved for serial 8CC92524Q9 (order 2092)
+[2025-05-27 14:33:35] Serial '8CC92524Q9' assigned to Order '2092' with specs.
+[2025-05-27 14:33:37] Attempting to establish database connection...
+[2025-05-27 14:33:37] Loading configuration file...
+[2025-05-27 14:33:37] Configuration file loaded successfully.
+[2025-05-27 14:33:37] Database connection attempt 1/3.
+[2025-05-27 14:33:37] Database connection established successfully.
+[2025-05-27 14:33:53] User initiated search for order ID: 2092
+[2025-05-27 14:33:53] User initiated search for order: 2092
+[2025-05-27 14:33:54] Starting search for order ID: 2092
+[2025-05-27 14:33:54] Getting database connection...
+[2025-05-27 14:33:54] Attempting to establish database connection...
+[2025-05-27 14:33:54] Loading configuration file...
+[2025-05-27 14:33:54] Configuration file loaded successfully.
+[2025-05-27 14:33:54] Database connection attempt 1/3.
+[2025-05-27 14:33:54] Database connection established successfully.
+[2025-05-27 14:33:54] Fetching SKU from database.
+[2025-05-27 14:33:54] Fetched 0 rows for order ID: 2092
+[2025-05-27 14:33:54] No SKUs found for order ID: 2092, checking WooCommerce...
+[2025-05-27 14:33:54] Loading configuration file...
+[2025-05-27 14:33:54] Configuration file loaded successfully.
+[2025-05-27 14:33:54] Loaded config.ini from: C:\Users\PCR\Documents\GitHub\SecondChecking\dist\config.ini
+[2025-05-27 14:33:54] WooCommerce config loaded: url=https://www.pcrenewed.co.uk/wp-json/wc/v3/orders, consumer_key=set, consumer_secret=set
+[2025-05-27 14:33:54] Request headers: {'User-Agent': 'Mozilla/5.0'}
+[2025-05-27 14:33:54] Request URL: https://www.pcrenewed.co.uk/wp-json/wc/v3/orders | Params: {'search': '2092'}
+[2025-05-27 14:33:54] WooCommerce API response status: 200
+[2025-05-27 14:33:54] WooCommerce API final URL: https://www.pcrenewed.co.uk/wp-json/wc/v3/orders?search=2092
+[2025-05-27 14:33:54] WooCommerce API returned 1 orders
+[2025-05-27 14:33:54] WooCommerce API raw response: [{'id': 2092, 'parent_id': 0, 'status': 'on-hold', 'currency': 'GBP', 'version': '9.8.5', 'prices_include_tax': True, 'date_created': '2025-05-26T21:14:52', 'date_modified': '2025-05-27T09:08:55', 'discount_total': '0.00', 'discount_tax': '0.00', 'shipping_total': '0.00', 'shipping_tax': '0.00', 'cart_tax': '33.33', 'total': '199.99', 'total_tax': '33.33', 'customer_id': 0, 'order_key': 'wc_order_pHHHIYuvg6hGX', 'billing': {'first_name': 'Paschalis', 'last_name': 'Skouzos', 'company': '', 'address_1': '1208 6 Weaver Walk', 'address_2': '', 'city': 'London', 'state': '', 'postcode': 'HA9 0LG', 'country': 'GB', 'email': 'paschalis.skouzos@gmail.com', 'phone': ''}, 'shipping': {'first_name': 'Paschalis', 'last_name': 'Skouzos', 'company': '', 'address_1': '1208 6 Weaver Walk', 'address_2': '', 'city': 'London', 'state': '', 'postcode': 'HA9 0LG', 'country': 'GB', 'phone': ''}, 'payment_method': 'bacs', 'payment_method_title': 'Direct bank transfer', 'transaction_id': '', 'customer_ip_address': '178.238.10.129', 'customer_user_agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0', 'created_via': 'store-api', 'customer_note': '', 'date_completed': None, 'date_paid': '2025-05-27T09:06:11', 'cart_hash': '8d53d9cad1d087c15f5266dec1e8e611', 'number': '2092', 'meta_data': [{'id': 41540, 'key': '_shipping_hash', 'value': '9d4568c009d203ab10e33ea9953a0264'}, {'id': 41541, 'key': '_coupons_hash', 'value': 'd751713988987e9331980363e24189ce'}, {'id': 41542, 'key': '_fees_hash', 'value': 'd751713988987e9331980363e24189ce'}, {'id': 41543, 'key': '_taxes_hash', 'value': 'b7c1ca83121fce7d63e20be335397bc1'}, {'id': 41544, 'key': 'is_vat_exempt', 'value': 'no'}, {'id': 41557, 'key': '_wc_order_attribution_source_type', 'value': 'organic'}, {'id': 41558, 'key': '_wc_order_attribution_referrer', 'value': 'https://www.google.com/'}, {'id': 41559, 'key': '_wc_order_attribution_utm_source', 'value': 'google'}, {'id': 41560, 'key': '_wc_order_attribution_utm_medium', 'value': 'organic'}, {'id': 41561, 'key': '_wc_order_attribution_session_entry', 'value': 'https://www.pcrenewed.co.uk/product/lenovo-thinkpad-t480s-14-laptop-core-i5-8350u-8gb-ram-256gb-ssd-windows-11-pro/'}, {'id': 41562, 'key': '_wc_order_attribution_session_start_time', 'value': '2025-05-26 17:15:51'}, {'id': 41563, 'key': '_wc_order_attribution_session_pages', 'value': '2'}, {'id': 41564, 'key': '_wc_order_attribution_session_count', 'value': '6'}, {'id': 41565, 'key': '_wc_order_attribution_user_agent', 'value': 'Mozilla/5.0 (X11; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0'}, {'id': 41566, 'key': '_wc_order_attribution_device_type', 'value': 'Desktop'}, {'id': 41569, 'key': '_wcpdf_invoice_settings', 'value': {'display_email': '1', 'display_phone': '1', 'display_customer_notes': '1', 'display_shipping_address': 'when_different', 'display_number': 'invoice_number', 'display_date': 'invoice_date', 'header_logo': '54', 'header_logo_height': '1cm', 'vat_number': '', 'coc_number': '11825952', 'shop_name': {'default': 'PC Renewed Ltd'}, 'shop_phone_number': {'default': '02476 460 069'}, 'shop_address': {'default': 'Unit 1, 894 Charter Avenue\r\nCoventry\r\nWest Midlands\r\nCV4 8AT'}, 'footer': {'default': ''}, 'extra_1': {'default': ''}, 'extra_2': {'default': ''}, 'extra_3': {'default': ''}}}, {'id': 41570, 'key': '_wcpdf_invoice_display_date', 'value': 'document_date'}, {'id': 41571, 'key': '_wcpdf_invoice_creation_trigger', 'value': 'email_attachment'}, {'id': 41572, 'key': '_wcpdf_invoice_date', 'value': '1748290567'}, {'id': 41573, 'key': '_wcpdf_invoice_date_formatted', 'value': '2025-05-26 21:16:07'}, {'id': 41574, 'key': '_wcpdf_invoice_number', 'value': '24'}, {'id': 41575, 'key': '_wcpdf_invoice_number_data', 'value': {'number': 24, 'formatted_number': '24', 'prefix': '', 'suffix': '', 'document_type': 'invoice', 'order_id': 2092, 'padding': ''}}, {'id': 41576, 'key': '_ga_tracked', 'value': '1'}, {'id': 41673, 'key': '_xero_invoice_id', 'value': '35c00c97-4310-4a82-98b3-0a679c09905b'}, {'id': 41674, 'key': '_xero_currencyrate', 'value': '1.0000000000'}, {'id': 41675, 'key': '_xero_invoice_hash', 'value': '023471422240b1483ba5d815dbb1d682e7a7665c'}], 'line_items': [{'id': 616, 'name': 'Lenovo ThinkPad T480s 14" Laptop Core I5-8350U 8GB RAM 256GB SSD Windows 11 Pro - 256GB SSD, One Year Warranty', 'product_id': 987, 'variation_id': 989, 'quantity': 1, 'tax_class': '', 'subtotal': '166.66', 'subtotal_tax': '33.33', 'total': '166.66', 'total_tax': '33.33', 'taxes': [{'id': 1, 'total': '33.331667', 'subtotal': '33.331667'}], 'meta_data': [{'id': 5911, 'key': 'pa_ssd', 'value': '256gb-ssd', 'display_key': 'SSD', 'display_value': '256GB SSD'}, {'id': 5912, 'key': 'pa_warranty', 'value': 'one-year-warranty', 'display_key': 'Warranty', 'display_value': 'One Year Warranty'}, {'id': 6007, 'key': '_reduced_stock', 'value': '1', 'display_key': '_reduced_stock', 'display_value': '1'}], 'sku': 'T480S-I5-8RAM-256SSD-WIN11-1920X1080-AGRADE-BLACK-1YEAR', 'price': 166.658333, 'image': {'id': 988, 'src': 'https://www.pcrenewed.co.uk/wp-content/uploads/2024/10/T480s.jpg'}, 'parent_name': 'Lenovo ThinkPad T480s 14" Laptop Core I5-8350U 8GB RAM 256GB SSD Windows 11 Pro'}], 'tax_lines': [{'id': 625, 'rate_code': 'GB-VAT-1', 'rate_id': 1, 'label': 'VAT', 'compound': False, 'tax_total': '33.33', 'shipping_tax_total': '0.00', 'rate_percent': 20, 'meta_data': [{'id': 6003, 'key': '_wcpdf_rate_percentage', 'value': '20.0000', 'display_key': '_wcpdf_rate_percentage', 'display_value': '20.0000'}, {'id': 6004, 'key': '_wcpdf_ubl_tax_category', 'value': '', 'display_key': '_wcpdf_ubl_tax_category', 'display_value': ''}, {'id': 6005, 'key': '_wcpdf_ubl_tax_scheme', 'value': '', 'display_key': '_wcpdf_ubl_tax_scheme', 'display_value': ''}, {'id': 6006, 'key': '_wcpdf_ubl_tax_reason', 'value': '', 'display_key': '_wcpdf_ubl_tax_reason', 'display_value': ''}]}], 'shipping_lines': [], 'fee_lines': [], 'coupon_lines': [], 'refunds': [], 'payment_url': 'https://www.pcrenewed.co.uk/checkout/order-pay/2092/?pay_for_order=true&key=wc_order_pHHHIYuvg6hGX', 'is_editable': True, 'needs_payment': False, 'needs_processing': True, 'date_created_gmt': '2025-05-26T20:14:52', 'date_modified_gmt': '2025-05-27T08:08:55', 'date_completed_gmt': None, 'date_paid_gmt': '2025-05-27T08:06:11', 'currency_symbol': '£', '_links': {'self': [{'href': 'https://www.pcrenewed.co.uk/wp-json/wc/v3/orders/2092', 'targetHints': {'allow': ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']}}], 'collection': [{'href': 'https://www.pcrenewed.co.uk/wp-json/wc/v3/orders'}], 'email_templates': [{'embeddable': True, 'href': 'https://www.pcrenewed.co.uk/wp-json/wc/v3/orders/2092/actions/email_templates'}]}}]
+[2025-05-27 14:33:54] Order found in WooCommerce. SKU: T480S-I5-8RAM-256SSD-WIN11-1920X1080-AGRADE-BLACK-1YEAR
+[2025-05-27 14:33:54] Fetching laptop specs...
+[2025-05-27 14:33:54] Initialized WMI interface.
+[2025-05-27 14:33:55] Detected CPU: i5-8500
+[2025-05-27 14:33:55] Detected Serial Number: 8CC92524Q9
+[2025-05-27 14:33:56] Detected Resolution: 1920x1080
+[2025-05-27 14:33:56] Detected Windows Version: Windows 11
+[2025-05-27 14:33:56] Detected Model: HP EliteDesk 800 G4 DM 65W
+[2025-05-27 14:33:56] Detected RAM: 32GB
+[2025-05-27 14:33:57] Detected SSD: 512GB (SSD)
+[2025-05-27 14:33:57] Full Charged Capacity not found in line: Full Charged Capacity,,,,
+
+[2025-05-27 14:33:57] Designed Capacity not found in line: Designed Capacity,,,,
+
+[2025-05-27 14:33:57] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-05-27 14:33:57] Detected Battery Health: Unknown (batteryinfoview)
+[2025-05-27 14:33:57] Laptop specs fetched successfully.
+[2025-05-27 14:33:58] [DEBUG] test_results['activation'] set to: pass for order 2092
+[2025-05-27 14:33:58] Processing SKU: T480S-I5-8RAM-256SSD-WIN11-1920X1080-AGRADE-BLACK-1YEAR
+[2025-05-27 14:33:58] Loading configuration file...
+[2025-05-27 14:33:58] Configuration file loaded successfully.
+[2025-05-27 14:33:58] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-27 14:33:58] Spec mismatches detected for order 2092:
+⚠ Model: Expected T480S, Found HP EliteDesk 800 G4 DM 65W
+⚠ CPU: Expected i5, Found i5-8500
+⚠ SSD: Expected 256GB, Found 512GB
+⚠ RAM: Expected 8GB, Found 32GB
+[2025-05-27 14:34:00] Attempting to establish database connection...
+[2025-05-27 14:34:00] Loading configuration file...
+[2025-05-27 14:34:00] Configuration file loaded successfully.
+[2025-05-27 14:34:00] Database connection attempt 1/3.
+[2025-05-27 14:34:00] Database connection established successfully.
+[2025-05-27 14:34:05] Attempting to establish database connection...
+[2025-05-27 14:34:05] Loading configuration file...
+[2025-05-27 14:34:05] Configuration file loaded successfully.
+[2025-05-27 14:34:05] Database connection attempt 1/3.
+[2025-05-27 14:34:05] Database connection established successfully.
+[2025-06-13 09:40:41] Opening test panel.
+[2025-06-13 09:40:55] User initiated search for order ID: test
+[2025-06-13 09:40:55] User initiated search for order: test
+[2025-06-13 09:40:55] Starting search for order ID: test
+[2025-06-13 09:40:55] Getting database connection...
+[2025-06-13 09:40:55] Attempting to establish database connection...
+[2025-06-13 09:40:55] Loading configuration file...
+[2025-06-13 09:40:55] Configuration file loaded successfully.
+[2025-06-13 09:40:55] Database connection attempt 1/3.
+[2025-06-13 09:40:55] Database connection established successfully.
+[2025-06-13 09:40:55] Fetching SKU from database.
+[2025-06-13 09:40:55] Fetched 1 rows for order ID: test
+[2025-06-13 09:40:55] Fetching laptop specs...
+[2025-06-13 09:40:55] Initialized WMI interface.
+[2025-06-13 09:40:57] Detected CPU: i5-8500
+[2025-06-13 09:40:57] Detected Serial Number: 8CC92524Q9
+[2025-06-13 09:40:57] Detected Resolution: 1920x1080
+[2025-06-13 09:40:57] Detected Windows Version: Windows 11
+[2025-06-13 09:40:57] Detected Model: HP EliteDesk 800 G4 DM 65W
+[2025-06-13 09:40:57] Detected RAM: 32GB
+[2025-06-13 09:40:58] Detected SSD: 512GB (SSD)
+[2025-06-13 09:40:58] Full Charged Capacity not found in line: Full Charged Capacity,,,,
+
+[2025-06-13 09:40:58] Designed Capacity not found in line: Designed Capacity,,,,
+
+[2025-06-13 09:40:58] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-06-13 09:40:58] Detected Battery Health: Unknown (batteryinfoview)
+[2025-06-13 09:40:58] Laptop specs fetched successfully.
+[2025-06-13 09:40:59] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-06-13 09:40:59] Processing SKU: TESTSKU
+[2025-06-13 09:40:59] Loading configuration file...
+[2025-06-13 09:40:59] Configuration file loaded successfully.
+[2025-06-13 09:40:59] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-06-13 09:57:13] User initiated search for order ID: 19-13181-57087
+[2025-06-13 09:57:13] User initiated search for order: 19-13181-57087
+[2025-06-13 09:57:13] Starting search for order ID: 19-13181-57087
+[2025-06-13 09:57:13] Getting database connection...
+[2025-06-13 09:57:13] Attempting to establish database connection...
+[2025-06-13 09:57:13] Loading configuration file...
+[2025-06-13 09:57:13] Configuration file loaded successfully.
+[2025-06-13 09:57:13] Database connection attempt 1/3.
+[2025-06-13 09:57:15] Database connection established successfully.
+[2025-06-13 09:57:15] Fetching SKU from database.
+[2025-06-13 09:57:15] Fetched 1 rows for order ID: 19-13181-57087
+[2025-06-13 09:57:15] Fetching laptop specs...
+[2025-06-13 09:57:15] Initialized WMI interface.
+[2025-06-13 09:57:17] Detected CPU: i5-8500
+[2025-06-13 09:57:17] Detected Serial Number: 8CC92524Q9
+[2025-06-13 09:57:17] Detected Resolution: 1920x1080
+[2025-06-13 09:57:17] Detected Windows Version: Windows 11
+[2025-06-13 09:57:17] Detected Model: HP EliteDesk 800 G4 DM 65W
+[2025-06-13 09:57:17] Detected RAM: 32GB
+[2025-06-13 09:57:18] Detected SSD: 512GB (SSD)
+[2025-06-13 09:57:18] Full Charged Capacity not found in line: Full Charged Capacity,,,,
+
+[2025-06-13 09:57:18] Designed Capacity not found in line: Designed Capacity,,,,
+
+[2025-06-13 09:57:18] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-06-13 09:57:18] Detected Battery Health: Unknown (batteryinfoview)
+[2025-06-13 09:57:18] Laptop specs fetched successfully.
+[2025-06-13 09:57:19] [DEBUG] test_results['activation'] set to: pass for order 19-13181-57087
+[2025-06-13 09:57:19] Processing SKU: T480-I7-16RAM-512SSD-Win11-MX150-1440P-AGRADE
+[2025-06-13 09:57:19] Loading configuration file...
+[2025-06-13 09:57:19] Configuration file loaded successfully.
+[2025-06-13 09:57:19] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-06-13 09:57:19] Spec mismatches detected for order 19-13181-57087:
+⚠ Model: Expected T480, Found HP EliteDesk 800 G4 DM 65W
+⚠ CPU: Expected i7, Found i5-8500
+⚠ RAM: Expected 16GB, Found 32GB
+[2025-06-13 09:57:28] Opening test panel.
+[2025-07-02 18:20:20] User initiated search for order ID: test
+[2025-07-02 18:20:20] User initiated search for order: test
+[2025-07-02 18:20:21] Starting search for order ID: test
+[2025-07-02 18:20:21] Getting database connection...
+[2025-07-02 18:20:21] Attempting to establish database connection...
+[2025-07-02 18:20:21] Loading configuration file...
+[2025-07-02 18:20:21] Configuration file loaded successfully.
+[2025-07-02 18:20:21] Database connection attempt 1/3.
+[2025-07-02 18:20:21] Database connection established successfully.
+[2025-07-02 18:20:21] Fetching SKU from database.
+[2025-07-02 18:20:21] Fetched 1 rows for order ID: test
+[2025-07-02 18:20:21] Fetching laptop specs...
+[2025-07-02 18:20:21] Initialized WMI interface.
+[2025-07-02 18:20:22] Detected CPU: i5-8500
+[2025-07-02 18:20:23] Detected Serial Number: 8CC92524Q9
+[2025-07-02 18:20:23] Detected Resolution: 1920x1080
+[2025-07-02 18:20:23] Detected Windows Version: Windows 11
+[2025-07-02 18:20:23] Detected Model: HP EliteDesk 800 G4 DM 65W
+[2025-07-02 18:20:23] Detected RAM: 32GB
+[2025-07-02 18:20:24] Detected SSD: 512GB (SSD)
+[2025-07-02 18:20:24] Full Charged Capacity not found in line: Full Charged Capacity,,,,
+
+[2025-07-02 18:20:24] Designed Capacity not found in line: Designed Capacity,,,,
+
+[2025-07-02 18:20:24] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-07-02 18:20:24] Detected Battery Health: Unknown (batteryinfoview)
+[2025-07-02 18:20:24] Laptop specs fetched successfully.
+[2025-07-02 18:20:25] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-07-02 18:20:25] Processing SKU: TESTSKU
+[2025-07-02 18:20:25] Loading configuration file...
+[2025-07-02 18:20:25] Configuration file loaded successfully.
+[2025-07-02 18:20:25] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-07-02 18:20:41] Opening test panel.

@@ -11,3 +11,4 @@ src/utils/config.ini
 src/output/config.ini
 /src/output
 src/utils/logs.txt
+py2exe.json

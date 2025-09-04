@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "C:\Users\PCR\Documents\GitHub\SecondChecking\src\main.py", line 11, in <module>
+    app = AppController(root)
+  File "C:\Users\PCR\Documents\GitHub\SecondChecking\src\app_controller.py", line 40, in __init__
+    style = tb.Style(self.root)
+  File "C:\Users\PCR\AppData\Roaming\Python\Python313\site-packages\ttkbootstrap\style.py", line 474, in __init__
+    Style.instance.theme_use(theme)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\PCR\AppData\Roaming\Python\Python313\site-packages\ttkbootstrap\style.py", line 595, in theme_use
+    raise TclError(themename, "is not a valid theme.")
+_tkinter.TclError: (<ttkbootstrap.window.Window object .>, 'is not a valid theme.')

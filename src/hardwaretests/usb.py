@@ -1,8 +1,13 @@
 # hardware_tests/usb.py
 import tkinter as tk
-import win32file
 
-def run_usb_test(root, test_results, test_labels):
+def run_usb_test(root, test_results, test_labels, tests_window=None):
+    try:
+        import win32file
+    except ImportError:
+        tk.messagebox.showerror("Missing Dependency", "win32file is required for USB test.")
+        return
+
     window = tk.Toplevel(root)
     window.title("USB Test")
     window.geometry("300x300")
@@ -12,7 +17,11 @@ def run_usb_test(root, test_results, test_labels):
     listbox.pack(expand=True, fill="both", padx=10, pady=10)
 
     def get_usb_devices():
-        drives = win32file.GetLogicalDrives()
+        try:
+            drives = win32file.GetLogicalDrives()
+        except Exception as e:
+            tk.messagebox.showerror("USB Error", f"Failed to enumerate USB devices:\n{e}")
+            return set()
         devices = set()
         for i in range(26):
             if drives & (1 << i):
@@ -36,7 +45,7 @@ def run_usb_test(root, test_results, test_labels):
                 listbox.insert(tk.END, dev)
             known.update(new)
         if window.winfo_exists():
-            window.after(500, poll)
+            window.after(1000, poll)  # Increased interval to 1000ms
 
     poll()
 
@@ -58,11 +67,14 @@ def run_usb_test(root, test_results, test_labels):
             test_results["usb"] = result
             if "usb_label" in test_labels:
                 test_labels["usb_label"].config(text="✅" if result == "pass" else "❌")
+            if tests_window and hasattr(tests_window, "update_icon"):
+                tests_window.update_icon("usb")
             result_window.destroy()
 
-        tk.Button(frame, text="Yes", width=10, bg="lightgreen", command=lambda: handle_response("pass")).pack(side="left", padx=5)
-        tk.Button(frame, text="Retry", width=10, bg="lightblue", command=lambda: [result_window.destroy(), run_usb_test(root, test_results, test_labels)]).pack(side="left", padx=5)
-        tk.Button(frame, text="No", width=10, bg="tomato", command=lambda: handle_response("fail")).pack(side="left", padx=5)
+        from ttkbootstrap import ttk
+        ttk.Button(frame, text="Yes", width=10, style="success.TButton", command=lambda: handle_response("pass")).pack(side="left", padx=5)
+        ttk.Button(frame, text="Retry", width=10, style="info.TButton", command=lambda: [result_window.destroy(), run_usb_test(root, test_results, test_labels, tests_window)]).pack(side="left", padx=5)
+        ttk.Button(frame, text="No", width=10, style="danger.TButton", command=lambda: handle_response("fail")).pack(side="left", padx=5)
 
         result_window.protocol("WM_DELETE_WINDOW", result_window.destroy)
 
