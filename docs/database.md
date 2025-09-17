@@ -65,5 +65,12 @@ against your MySQL instance to migrate to the consolidated schema:
 SOURCE sql/001_create_order.sql;
 ```
 
+When running directly from a shell, you can feed the schema file into MySQL in
+one step (replace the placeholders with your credentials):
+
+```bash
+MYSQL_PWD="${DB_PASSWORD}" mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" < sql/001_create_order.sql
+```
+
 The script uses `CREATE TABLE IF NOT EXISTS`, making it safe to execute during
 initial provisioning or incremental deployments.

@@ -30,5 +30,11 @@ Detailed table layouts, including the consolidated `order` table and the
 `order_serials` table that stores hardware test results and captured device
 specifications, are documented in [`docs/database.md`](docs/database.md). The
 companion script [`sql/001_create_order.sql`](sql/001_create_order.sql)
-contains the MySQL statements needed to provision the schema.
+contains the MySQL statements needed to provision the schema. Apply it either
+from inside the MySQL client (`SOURCE sql/001_create_order.sql;`) or directly
+from a shell:
+
+```bash
+MYSQL_PWD="${DB_PASSWORD}" mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" < sql/001_create_order.sql
+```
 
