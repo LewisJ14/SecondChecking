@@ -13,6 +13,7 @@ from utils.helpers import (
     parse_percent,
     check_mdm_lock_status,
     check_activation_status,
+    is_battery_charging,
 )
 from utils.specs import get_laptop_specs
 from logic.view_serials_logic import open_serial_viewer
@@ -90,19 +91,14 @@ except Exception as e:
     log_event(f"Error detecting batteries: {e}")
     battery_labels = ["Battery"]  # fallback to just one label
 
-_wmi_instance = None  # Cache WMI instance
-
 def battery_charging_status(index: int = 0) -> bool:
-    global _wmi_instance
+    """Return True when the specified battery reports an active charging state."""
+
     try:
-        if _wmi_instance is None:
-            _wmi_instance = wmi.WMI()
-        batteries = _wmi_instance.Win32_Battery()
-        if index < len(batteries):
-            return batteries[index].BatteryStatus in [2, 6]  # 2 = Charging, 6 = Charging and High
-    except Exception as e:
-        log_event(f"Error checking battery charging status: {e}")
-    return False
+        return is_battery_charging(index)
+    except Exception as exc:  # noqa: BLE001 - defensive logging path
+        log_event(f"Error checking battery charging status: {exc}")
+        return False
 
 
 def get_sku_from_db(cursor, order_reference):
@@ -513,7 +509,7 @@ def assign_serial_logic(
                     order_id, order_number, serial_number, cpu, ram, ssd, model, resolution, windows, battery,
                     test_keyboard, test_speaker, test_display, test_webcam, test_usb, activation
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                     %s, %s, %s, %s, %s, %s
                 )
             """,

@@ -239,18 +239,77 @@ def extract_details_from_sku(sku):
     return details
 
 _wmi_instance = None  # Cache WMI instance
+_last_wmi_error = None
+
+
+def _ensure_wmi_instance():
+    """Return a cached WMI instance, initialising when required."""
+
+    global _wmi_instance
+
+    if sys.platform != "win32":
+        return None
+
+    if _wmi_instance is not None:
+        return _wmi_instance
+
+    try:
+        try:
+            import pythoncom  # type: ignore[import]
+
+            pythoncom.CoInitialize()
+        except ImportError:
+            # pywin32 may not be installed when running unit tests on non-Windows platforms.
+            pass
+        _wmi_instance = wmi.WMI()
+    except Exception as exc:  # noqa: BLE001 - log details for supportability
+        _handle_wmi_error(exc)
+        return None
+
+    return _wmi_instance
+
+
+def _handle_wmi_error(error):
+    """Log WMI errors once and reset the cached client for a future retry."""
+
+    global _wmi_instance, _last_wmi_error
+
+    message = str(error)
+    if message != _last_wmi_error:
+        log_event(f"get_live_battery_percent error: {error}")
+        _last_wmi_error = message
+
+    _wmi_instance = None
+
 
 def get_live_battery_percent(index=0):
-    global _wmi_instance
+    instance = _ensure_wmi_instance()
+    if instance is None:
+        return None
+
     try:
-        if _wmi_instance is None:
-            _wmi_instance = wmi.WMI()
-        batteries = _wmi_instance.Win32_Battery()
+        batteries = instance.Win32_Battery()
         if index < len(batteries):
             return int(batteries[index].EstimatedChargeRemaining)
-    except Exception as e:
-        log_event(f"get_live_battery_percent error: {e}")
+    except Exception as exc:  # noqa: BLE001 - surface diagnostic info
+        _handle_wmi_error(exc)
     return None
+
+
+def is_battery_charging(index=0) -> bool:
+    """Return True if the indexed battery is actively charging."""
+
+    instance = _ensure_wmi_instance()
+    if instance is None:
+        return False
+
+    try:
+        batteries = instance.Win32_Battery()
+        if index < len(batteries):
+            return batteries[index].BatteryStatus in {2, 6}  # Charging states
+    except Exception as exc:  # noqa: BLE001 - surface diagnostic info
+        _handle_wmi_error(exc)
+    return False
 
 def preload_previous_results():
     # Load previous test results from the database for the current serial number
