@@ -23,14 +23,14 @@ application can look up an SKU regardless of the marketplace that produced it.
 | `order_date` | `DATETIME` | Timestamp from the marketplace payload. |
 | `raw_data` | `JSON` | Full raw connector payload for auditing and reprocessing. |
 | `created_at`, `updated_at` | `DATETIME` | Automatic timestamps tracking inserts and updates. |
-| `order_number` | generated `VARCHAR(16)` | Zero-padded five digit string derived from `local_id` (or `id` when `local_id` is null) to preserve compatibility with existing queries. |
+| `order_number` (virtual) | derived property | Within the application layer `LPAD(COALESCE(local_id, id), 5, '0')` is exposed as `order_number` so the UI can render five-digit identifiers (for example `00001`). |
 
 Additional integrity rules:
 
 - A unique constraint on `(platform, external_id, sku)` prevents duplicate line
   items when syncing the same order multiple times.
-- `local_id` and the generated `order_number` are individually unique so the UI
-  can safely display `00001`, `00002`, etc. without gaps.
+- `local_id` is unique so the UI can safely display `00001`, `00002`, etc.
+  using the derived `order_number` property without gaps.
 - An index on `platform` keeps marketplace specific lookups fast.
 
 ## `order_serials`

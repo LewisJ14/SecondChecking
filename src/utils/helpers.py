@@ -281,6 +281,10 @@ def preload_previous_results():
                 cleaned = result.strip().lower() if result else ""
                 if cleaned in ["pass", "fail"]:
                     results[keys[i]] = cleaned
+                elif cleaned in ["n/a", "na"]:
+                    results[keys[i]] = "Not Run"
+                elif cleaned == "":
+                    results[keys[i]] = "Not Run"
                 else:
                     log_event(f"Unexpected result value: {result} for {keys[i]}")
     except Exception as err:

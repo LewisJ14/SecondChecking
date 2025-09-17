@@ -3,6 +3,8 @@ import threading
 import tkinter as tk
 import wmi
 from tkinter import messagebox
+from typing import Optional, Tuple
+
 from db.database import get_db_connection
 from utils.helpers import (
     log_event,
@@ -17,8 +19,57 @@ from logic.view_serials_logic import open_serial_viewer
 import traceback
 import ttkbootstrap as tb
 from ttkbootstrap import ttk
-import requests
-import os
+
+
+ORDER_NUMBER_SQL = "LPAD(COALESCE(local_id, id), 5, '0')"
+
+
+def resolve_order_identity(cursor, order_reference: str) -> Optional[Tuple[int, str]]:
+    """Return the database id and display order number for a given reference."""
+
+    conditions = [f"{ORDER_NUMBER_SQL} = %s"]
+    params = [order_reference]
+
+    if order_reference.isdigit():
+        conditions.append("CAST(local_id AS CHAR) = %s")
+        params.append(order_reference)
+        conditions.append("CAST(id AS CHAR) = %s")
+        params.append(order_reference)
+
+    where_clause = " OR ".join(f"({clause})" for clause in conditions)
+    cursor.execute(
+        f"""
+            SELECT id, {ORDER_NUMBER_SQL} AS order_number
+            FROM orders
+            WHERE {where_clause}
+            LIMIT 1
+        """,
+        params,
+    )
+    row = cursor.fetchone()
+    if not row:
+        return None
+
+    order_id, order_number = row
+    if isinstance(order_number, (bytes, bytearray)):
+        order_number_str = order_number.decode("utf-8")
+    else:
+        order_number_str = str(order_number)
+    return int(order_id), order_number_str
+
+
+def normalise_test_result(value: Optional[str]) -> str:
+    """Convert UI test labels to the canonical database value."""
+
+    if not value:
+        return "n/a"
+
+    lowered = value.strip().lower()
+    if lowered in {"pass", "fail"}:
+        return lowered
+    if lowered in {"n/a", "na", "not run", "not_run", "pending"}:
+        return "n/a"
+    return "n/a"
 
 # Store the initial battery level
 initial_battery_level = get_live_battery_percent()
@@ -47,68 +98,16 @@ def battery_charging_status(index: int = 0) -> bool:
     return False
 
 
-def get_sku_from_db(cursor, order_id):
-    cursor.execute("SELECT sku FROM orders WHERE order_number = %s", (order_id,))
-    return cursor.fetchall()
+def get_sku_from_db(cursor, order_reference):
+    """Fetch SKUs for an order along with its canonical display number."""
 
+    identity = resolve_order_identity(cursor, order_reference)
+    if not identity:
+        return None, []
 
-def get_sku_from_woocommerce(order_id):
-    try:
-        from utils.helpers import load_config, get_config_path
-        config = load_config()
-        config_path = get_config_path()
-        log_event(f"Loaded config.ini from: {config_path}")
-    except Exception as config_err:
-        log_event(f"Error loading config.ini: {config_err}")
-        msg = f"Error loading config.ini:\n{config_err}"
-        return None, msg
-
-    wc_url = os.getenv('WC_URL', config.get('woocommerce', 'url', fallback=None))
-    wc_consumer_key = os.getenv('WC_CONSUMER_KEY', config.get('woocommerce', 'consumer_key', fallback=None))
-    wc_consumer_secret = os.getenv('WC_CONSUMER_SECRET', config.get('woocommerce', 'consumer_secret', fallback=None))
-    log_event(
-        f"WooCommerce config loaded: url={wc_url}, consumer_key={'set' if wc_consumer_key else 'missing'}, consumer_secret={'set' if wc_consumer_secret else 'missing'}"
-    )
-
-    if not (wc_url and wc_consumer_key and wc_consumer_secret):
-        return None, "WooCommerce API credentials missing in config or environment."
-
-    params = {"search": order_id}
-    headers = {"User-Agent": "Mozilla/5.0"}
-    log_event(f"Request headers: {headers}")
-    log_event(f"Request URL: {wc_url} | Params: {params}")
-    try:
-        response = requests.get(
-            wc_url,
-            params=params,
-            auth=(wc_consumer_key, wc_consumer_secret),
-            headers=headers,
-            timeout=10,
-        )
-        log_event(f"WooCommerce API response status: {response.status_code}")
-        log_event(f"WooCommerce API final URL: {response.url}")
-        response.raise_for_status()
-        wc_orders = response.json()
-        log_event(
-            f"WooCommerce API returned {len(wc_orders) if isinstance(wc_orders, list) else 'unknown'} orders"
-        )
-        log_event(f"WooCommerce API raw response: {wc_orders}")
-        if wc_orders:
-            line_items = wc_orders[0].get("line_items", [])
-            for item in line_items:
-                if item.get("sku"):
-                    return item["sku"], None
-        return None, f"Order not found in WooCommerce for Order Number: {order_id}"
-    except Exception as wc_err:
-        log_event(f"Error searching WooCommerce: {wc_err}\n{traceback.format_exc()}")
-        if hasattr(wc_err, 'response') and wc_err.response is not None:
-            try:
-                log_event(
-                    f"WooCommerce error response content: {wc_err.response.content.decode('utf-8', errors='replace')}"
-                )
-            except Exception as decode_err:
-                log_event(f"Could not decode error response content: {decode_err}")
-        return None, f"Error searching WooCommerce:\n{wc_err}"
+    order_db_id, order_number = identity
+    cursor.execute("SELECT sku FROM orders WHERE id = %s", (order_db_id,))
+    return (order_db_id, order_number), cursor.fetchall()
 
 
 def load_laptop_specs():
@@ -141,19 +140,31 @@ def load_test_results(cursor, order_id, serial_number):
     )
     row = cursor.fetchone()
     if row:
+        def to_ui_value(value: Optional[str]) -> str:
+            if not value:
+                return "Not Run"
+            lowered = value.strip().lower()
+            if lowered == "pass":
+                return "pass"
+            if lowered == "fail":
+                return "fail"
+            if lowered in {"n/a", "na"}:
+                return "Not Run"
+            return value
+
         return {
-            "keyboard": row[0],
-            "speaker": row[1],
-            "display": row[2],
-            "webcam": row[3],
-            "usb": row[4],
+            "keyboard": to_ui_value(row[0]),
+            "speaker": to_ui_value(row[1]),
+            "display": to_ui_value(row[2]),
+            "webcam": to_ui_value(row[3]),
+            "usb": to_ui_value(row[4]),
         }
     return {
-        "keyboard": "N/A",
-        "speaker": "N/A",
-        "display": "N/A",
-        "webcam": "N/A",
-        "usb": "N/A",
+        "keyboard": "Not Run",
+        "speaker": "Not Run",
+        "display": "Not Run",
+        "webcam": "Not Run",
+        "usb": "Not Run",
     }
 
 
@@ -380,24 +391,38 @@ def search_order_logic(
                     return
 
                 cursor = conn.cursor()
-                rows = get_sku_from_db(cursor, order_id)
-                log_event(f"Fetched {len(rows)} rows for order ID: {order_id}")
+                identity, rows = get_sku_from_db(cursor, order_id)
+                if not identity:
+                    log_event(f"Order {order_id} not found in consolidated database.")
+                    root.after(
+                        0,
+                        lambda: messagebox.showerror(
+                            "Order Not Found",
+                            f"No order matching '{order_id}' was found in the consolidated orders table.",
+                        ),
+                    )
+                    return
+
+                db_order_id, order_number = identity
+                log_event(f"Fetched {len(rows)} SKU rows for order {order_number} (id={db_order_id}).")
 
                 if not rows:
-                    log_event(f"No SKUs found for order ID: {order_id}, checking WooCommerce...")
-                    sku, error = get_sku_from_woocommerce(order_id)
-                    if error:
-                        root.after(0, lambda: messagebox.showerror("WooCommerce Error", error))
-                        return
-                    rows = [(sku,)]
+                    root.after(
+                        0,
+                        lambda: messagebox.showerror(
+                            "Order Missing Items",
+                            f"Order '{order_number}' does not have any SKUs recorded in the database.",
+                        ),
+                    )
+                    return
 
                 laptop_specs = load_laptop_specs()
                 serial_number = laptop_specs.get("Serial Number", "Unknown")
 
-                test_results.update(load_test_results(cursor, order_id, serial_number))
+                test_results.update(load_test_results(cursor, order_number, serial_number))
                 test_results["activation"] = "pass" if check_activation_status() else "fail"
                 log_event(
-                    f"[DEBUG] test_results['activation'] set to: {test_results['activation']} for order {order_id}"
+                    f"[DEBUG] test_results['activation'] set to: {test_results['activation']} for order {order_number}"
                 )
 
                 sku = rows[0][0]
@@ -409,7 +434,7 @@ def search_order_logic(
                     0,
                     lambda: render_results(
                         canvas,
-                        order_id,
+                        order_number,
                         sku,
                         serial_number,
                         laptop_specs,
@@ -451,20 +476,16 @@ def assign_serial_logic(
 
         cursor = conn.cursor()
 
-        # Check if order exists in ebay_orders
-        cursor.execute("SELECT 1 FROM orders WHERE order_number = %s", (order_number,))
-        in_ebay_orders = cursor.fetchone() is not None
+        identity = resolve_order_identity(cursor, order_number)
+        if not identity:
+            messagebox.showerror(
+                "Order Not Found",
+                f"Order '{order_number}' could not be found in the consolidated orders table.",
+            )
+            return
 
-        # If not in ebay_orders, add to website_orders if not already present
-        if not in_ebay_orders:
-            cursor.execute("SELECT 1 FROM website_orders WHERE order_number = %s", (order_number,))
-            in_website_orders = cursor.fetchone() is not None
-            if not in_website_orders:
-                # Insert minimal info; you can expand columns as needed
-                cursor.execute(
-                    "INSERT INTO website_orders (order_number, sku) VALUES (%s, %s)",
-                    (order_number, specs.get("SKU", ""))
-                )
+        order_db_id, canonical_order_number = identity
+        order_number = canonical_order_number
 
         cursor.execute("SELECT order_number FROM order_serials WHERE serial_number = %s", (serial_number,))
         existing = cursor.fetchall()
@@ -479,21 +500,35 @@ def assign_serial_logic(
                 return
             cursor.execute("DELETE FROM order_serials WHERE serial_number = %s", (serial_number,))
 
-        cursor.execute("""
-            INSERT INTO order_serials (
-                order_number, serial_number, cpu, ram, ssd, model, resolution, windows, battery,
-                test_keyboard, test_speaker, test_display, test_webcam, test_usb, activation
-            ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                %s, %s, %s, %s, %s, %s
-            )
-        """, (
-            order_number, serial_number,
-            specs.get("CPU", ""), specs.get("RAM", ""), specs.get("SSD", ""), specs.get("Model", ""),
-            specs.get("Resolution", ""), specs.get("Windows", ""), specs.get("Battery", ""),
-            test_results.get("keyboard", ""), test_results.get("speaker", ""), test_results.get("display", ""),
-            test_results.get("webcam", ""), test_results.get("usb", ""), test_results.get("activation", "")
-        ))
+        cursor.execute(
+            """
+                INSERT INTO order_serials (
+                    order_id, order_number, serial_number, cpu, ram, ssd, model, resolution, windows, battery,
+                    test_keyboard, test_speaker, test_display, test_webcam, test_usb, activation
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s, %s
+                )
+            """,
+            (
+                order_db_id,
+                order_number,
+                serial_number,
+                specs.get("CPU", ""),
+                specs.get("RAM", ""),
+                specs.get("SSD", ""),
+                specs.get("Model", ""),
+                specs.get("Resolution", ""),
+                specs.get("Windows", ""),
+                specs.get("Battery", ""),
+                normalise_test_result(test_results.get("keyboard")),
+                normalise_test_result(test_results.get("speaker")),
+                normalise_test_result(test_results.get("display")),
+                normalise_test_result(test_results.get("webcam")),
+                normalise_test_result(test_results.get("usb")),
+                normalise_test_result(test_results.get("activation")),
+            ),
+        )
         conn.commit()
         messagebox.showinfo("Success", f"Serial '{serial_number}' assigned to order '{order_number}'.")
     except Exception as e:

@@ -15,14 +15,14 @@ CREATE TABLE IF NOT EXISTS orders (
     raw_data JSON NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    -- Persist the zero-padded order number for compatibility with existing queries.
-    order_number VARCHAR(16) AS (LPAD(COALESCE(local_id, id), 5, '0')) STORED,
     PRIMARY KEY (id),
     UNIQUE KEY uq_orders_local_id (local_id),
     UNIQUE KEY uq_orders_source_item (platform, external_id, sku),
-    UNIQUE KEY uq_orders_order_number (order_number),
     KEY idx_orders_platform (platform)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Display order numbers are produced in application logic using
+-- LPAD(COALESCE(local_id, id), 5, '0').
 
 CREATE TABLE IF NOT EXISTS order_serials (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
