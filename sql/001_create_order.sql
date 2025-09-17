@@ -1,7 +1,7 @@
 -- Schema for the consolidated marketplace order database.
 -- Applies to MySQL 8.0+ so JSON columns and generated columns are available.
 
-CREATE TABLE IF NOT EXISTS orders (
+CREATE TABLE IF NOT EXISTS `order` (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     local_id INT UNSIGNED NULL,
     platform VARCHAR(32) NOT NULL,
@@ -16,9 +16,9 @@ CREATE TABLE IF NOT EXISTS orders (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    UNIQUE KEY uq_orders_local_id (local_id),
-    UNIQUE KEY uq_orders_source_item (platform, external_id, sku),
-    KEY idx_orders_platform (platform)
+    UNIQUE KEY uq_order_local_id (local_id),
+    UNIQUE KEY uq_order_source_item (platform, external_id, sku),
+    KEY idx_order_platform (platform)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Display order numbers are produced in application logic using
@@ -49,6 +49,6 @@ CREATE TABLE IF NOT EXISTS order_serials (
     UNIQUE KEY uq_order_serial (order_id, serial_number),
     KEY idx_order_serials_order_number (order_number),
     KEY idx_order_serials_serial (serial_number),
-    CONSTRAINT fk_order_serials_orders FOREIGN KEY (order_id)
-        REFERENCES orders (id) ON DELETE CASCADE ON UPDATE CASCADE
+    CONSTRAINT fk_order_serials_order FOREIGN KEY (order_id)
+        REFERENCES `order` (id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -27,20 +27,27 @@ ORDER_NUMBER_SQL = "LPAD(COALESCE(local_id, id), 5, '0')"
 def resolve_order_identity(cursor, order_reference: str) -> Optional[Tuple[int, str]]:
     """Return the database id and display order number for a given reference."""
 
-    conditions = [f"{ORDER_NUMBER_SQL} = %s"]
-    params = [order_reference]
+    if order_reference is None:
+        return None
 
-    if order_reference.isdigit():
+    trimmed_reference = order_reference.strip()
+    if not trimmed_reference:
+        return None
+
+    conditions = ["external_id = %s", f"{ORDER_NUMBER_SQL} = %s"]
+    params = [trimmed_reference, trimmed_reference]
+
+    if trimmed_reference.isdigit():
         conditions.append("CAST(local_id AS CHAR) = %s")
-        params.append(order_reference)
+        params.append(trimmed_reference)
         conditions.append("CAST(id AS CHAR) = %s")
-        params.append(order_reference)
+        params.append(trimmed_reference)
 
     where_clause = " OR ".join(f"({clause})" for clause in conditions)
     cursor.execute(
         f"""
             SELECT id, {ORDER_NUMBER_SQL} AS order_number
-            FROM orders
+            FROM `order`
             WHERE {where_clause}
             LIMIT 1
         """,
@@ -106,7 +113,7 @@ def get_sku_from_db(cursor, order_reference):
         return None, []
 
     order_db_id, order_number = identity
-    cursor.execute("SELECT sku FROM orders WHERE id = %s", (order_db_id,))
+    cursor.execute("SELECT sku FROM `order` WHERE id = %s", (order_db_id,))
     return (order_db_id, order_number), cursor.fetchall()
 
 
@@ -398,7 +405,7 @@ def search_order_logic(
                         0,
                         lambda: messagebox.showerror(
                             "Order Not Found",
-                            f"No order matching '{order_id}' was found in the consolidated orders table.",
+                            f"No order matching '{order_id}' was found in the consolidated order table.",
                         ),
                     )
                     return
@@ -480,7 +487,7 @@ def assign_serial_logic(
         if not identity:
             messagebox.showerror(
                 "Order Not Found",
-                f"Order '{order_number}' could not be found in the consolidated orders table.",
+                f"Order '{order_number}' could not be found in the consolidated order table.",
             )
             return
 
