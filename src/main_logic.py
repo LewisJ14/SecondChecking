@@ -451,6 +451,21 @@ def assign_serial_logic(
 
         cursor = conn.cursor()
 
+        # Ensure we have the parent order id required by the new schema.
+        cursor.execute("SELECT id FROM `order` WHERE order_number = %s", (order_number,))
+        order_row = cursor.fetchone()
+        if order_row:
+            order_pk = order_row[0]
+        else:
+            cursor.execute(
+                "INSERT INTO `order` (order_number, status) VALUES (%s, %s)",
+                (order_number, "pending"),
+            )
+            order_pk = cursor.lastrowid
+            log_event(
+                f"Created placeholder order entry {order_pk} for order number {order_number}"
+            )
+
         # Check if order exists in ebay_orders
         cursor.execute("SELECT 1 FROM orders WHERE order_number = %s", (order_number,))
         in_ebay_orders = cursor.fetchone() is not None
@@ -479,21 +494,35 @@ def assign_serial_logic(
                 return
             cursor.execute("DELETE FROM order_serials WHERE serial_number = %s", (serial_number,))
 
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO order_serials (
-                order_number, serial_number, cpu, ram, ssd, model, resolution, windows, battery,
+                order_id, order_number, serial_number, cpu, ram, ssd, model, resolution, windows, battery,
                 test_keyboard, test_speaker, test_display, test_webcam, test_usb, activation
             ) VALUES (
                 %s, %s, %s, %s, %s, %s, %s, %s, %s,
                 %s, %s, %s, %s, %s, %s
             )
-        """, (
-            order_number, serial_number,
-            specs.get("CPU", ""), specs.get("RAM", ""), specs.get("SSD", ""), specs.get("Model", ""),
-            specs.get("Resolution", ""), specs.get("Windows", ""), specs.get("Battery", ""),
-            test_results.get("keyboard", ""), test_results.get("speaker", ""), test_results.get("display", ""),
-            test_results.get("webcam", ""), test_results.get("usb", ""), test_results.get("activation", "")
-        ))
+        """,
+            (
+                order_pk,
+                order_number,
+                serial_number,
+                specs.get("CPU", ""),
+                specs.get("RAM", ""),
+                specs.get("SSD", ""),
+                specs.get("Model", ""),
+                specs.get("Resolution", ""),
+                specs.get("Windows", ""),
+                specs.get("Battery", ""),
+                test_results.get("keyboard", ""),
+                test_results.get("speaker", ""),
+                test_results.get("display", ""),
+                test_results.get("webcam", ""),
+                test_results.get("usb", ""),
+                test_results.get("activation", ""),
+            ),
+        )
         conn.commit()
         messagebox.showinfo("Success", f"Serial '{serial_number}' assigned to order '{order_number}'.")
     except Exception as e:
