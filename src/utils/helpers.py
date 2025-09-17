@@ -1,6 +1,5 @@
 import configparser
 import subprocess
-import winreg
 import os
 import datetime
 import re
@@ -8,6 +7,8 @@ import wmi
 import sys
 import zipfile
 import urllib.request
+import hashlib
+from typing import Dict
 
 def log_event(message):
     log_path = "logs.txt"
@@ -74,6 +75,99 @@ def check_activation_status():
     except Exception as e:
         log_event(f"check_activation_status error: {e}")
     return False
+
+
+def is_internet_available(timeout: int = 5) -> bool:
+    """Return True when outbound HTTP requests succeed within the timeout."""
+
+    test_urls = (
+        "https://www.msftconnecttest.com/connecttest.txt",
+        "https://www.google.com/generate_204",
+    )
+
+    failures = []
+    for url in test_urls:
+        try:
+            with urllib.request.urlopen(url, timeout=timeout):
+                return True
+        except Exception as exc:  # noqa: BLE001 - logging the specific failure
+            failures.append(f"{url}: {exc}")
+    for failure in failures:
+        log_event(f"Internet connectivity probe failed: {failure}")
+    return False
+
+
+def check_mdm_lock_status() -> Dict[str, str]:
+    """Inspect Autopilot registry values to determine Microsoft MDM lock status."""
+
+    if sys.platform != "win32":
+        message = "Microsoft MDM lock checks are only available on Windows."
+        log_event(message)
+        return {"state": "unsupported", "details": message}
+
+    import winreg  # type: ignore[import]
+
+    autopilot_key_path = r"SOFTWARE\Microsoft\Provisioning\Diagnostics\Autopilot"
+
+    try:
+        autopilot_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, autopilot_key_path)
+    except FileNotFoundError:
+        message = "Autopilot diagnostics registry key not found; device is likely not MDM locked."
+        log_event(message)
+        return {"state": "not_locked", "details": message}
+    except OSError as exc:
+        message = f"Failed to open Autopilot diagnostics registry key: {exc}"
+        log_event(message)
+        return {"state": "error", "details": message}
+
+    def _query_value(key, value_name):
+        try:
+            value, _ = winreg.QueryValueEx(key, value_name)
+            return value
+        except FileNotFoundError:
+            return None
+        except OSError as exc:
+            log_event(f"Error reading Autopilot registry value '{value_name}': {exc}")
+            return None
+
+    tenant_id = _query_value(autopilot_key, "CloudAssignedTenantId")
+    tenant_domain = _query_value(autopilot_key, "CloudAssignedTenantDomain")
+
+    entdm_id = None
+    ztd_id = None
+    try:
+        correlations_key = winreg.OpenKey(autopilot_key, "EstablishedCorrelations")
+    except FileNotFoundError:
+        correlations_key = None
+    except OSError as exc:
+        log_event(f"Unable to open EstablishedCorrelations subkey: {exc}")
+        correlations_key = None
+
+    if correlations_key is not None:
+        entdm_id = _query_value(correlations_key, "EntDMID")
+        ztd_id = _query_value(correlations_key, "ZTDRegistrationID")
+        winreg.CloseKey(correlations_key)
+
+    winreg.CloseKey(autopilot_key)
+
+    details_parts = []
+    if tenant_id:
+        details_parts.append(f"Tenant ID: {tenant_id}")
+    if tenant_domain:
+        details_parts.append(f"Tenant Domain: {tenant_domain}")
+    if entdm_id:
+        details_parts.append(f"EntDMID: {entdm_id}")
+    if ztd_id:
+        details_parts.append(f"ZTDID: {ztd_id}")
+
+    if tenant_id:
+        detail_text = " | ".join(details_parts) if details_parts else "Autopilot profile detected."
+        log_event(f"Microsoft MDM lock detected: {detail_text}")
+        return {"state": "locked", "details": detail_text}
+
+    detail_text = "No Autopilot tenant information was found." if not details_parts else " | ".join(details_parts)
+    log_event("Microsoft MDM lock not detected.")
+    return {"state": "not_locked", "details": detail_text}
 
 def extract_details_from_sku(sku):
     # Extract hardware details from the SKU string using keywords from the config
@@ -212,15 +306,38 @@ def ensure_batteryinfoview(download_dir="assets/BatteryInfoView"):
 
     # Download if not present
     if not os.path.exists(zip_path):
-        print(f"Downloading {url}...")
-        urllib.request.urlretrieve(url, zip_path)
+        try:
+            print(f"Downloading {url}...")
+            urllib.request.urlretrieve(url, zip_path)
+        except Exception as err:
+            log_event(f"Failed to download BatteryInfoView: {err}")
+            raise
 
-    # Extract
-    with zipfile.ZipFile(zip_path, "r") as zip_ref:
-        zip_ref.extractall(download_dir)
+    expected_hash = os.getenv("BATTERYINFOVIEW_SHA256")
+    if expected_hash:
+        sha256 = hashlib.sha256()
+        with open(zip_path, "rb") as f:
+            for chunk in iter(lambda: f.read(8192), b""):
+                sha256.update(chunk)
+        file_hash = sha256.hexdigest()
+        if file_hash.lower() != expected_hash.lower():
+            log_event(
+                f"BatteryInfoView checksum mismatch: expected {expected_hash}, got {file_hash}"
+            )
+            os.remove(zip_path)
+            raise ValueError("BatteryInfoView checksum mismatch")
+    else:
+        log_event("BATTERYINFOVIEW_SHA256 not set; skipping checksum verification")
 
-    # Optionally, remove the zip after extraction
-    os.remove(zip_path)
+    try:
+        with zipfile.ZipFile(zip_path, "r") as zip_ref:
+            zip_ref.extractall(download_dir)
+    except Exception as err:
+        log_event(f"Failed to extract BatteryInfoView: {err}")
+        raise
+    finally:
+        if os.path.exists(zip_path):
+            os.remove(zip_path)
 
     if not os.path.exists(exe_path):
         raise FileNotFoundError(f"{exe_name} not found after extraction.")

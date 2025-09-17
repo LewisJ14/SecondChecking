@@ -11,7 +11,7 @@ if __name__ == "__main__":
         root = tb.Window(themename="flatly")
         app = AppController(root)
         root.mainloop()
-    except Exception as e:
+    except Exception:
         import traceback
         with open("startup_error.log", "w") as f:
             f.write(traceback.format_exc())

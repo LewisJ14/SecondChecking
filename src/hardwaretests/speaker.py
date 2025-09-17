@@ -1,7 +1,6 @@
 # hardware_tests/speaker.py
 import tkinter as tk
 import winsound
-from pathlib import Path
 import os
 import sys
 from utils.helpers import log_event

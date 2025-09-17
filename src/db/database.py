@@ -1,3 +1,4 @@
+import os
 import MySQLdb
 from tkinter import messagebox
 
@@ -10,10 +11,10 @@ def get_db_connection(retries=3, delay=5):
 
     try:
         config = load_config()
-        DB_HOST = config.get("database", "host")
-        DB_USER = config.get("database", "user")
-        DB_PASSWORD = config.get("database", "password")
-        DB_NAME = config.get("database", "database")
+        DB_HOST = os.getenv("DB_HOST", config.get("database", "host"))
+        DB_USER = os.getenv("DB_USER", config.get("database", "user"))
+        DB_PASSWORD = os.getenv("DB_PASSWORD", config.get("database", "password"))
+        DB_NAME = os.getenv("DB_NAME", config.get("database", "database"))
     except Exception as config_err:
         log_event(f"Error loading DB config: {config_err}\n{traceback.format_exc()}")
         messagebox.showerror("Config Error", f"Error loading database configuration:\n{config_err}")

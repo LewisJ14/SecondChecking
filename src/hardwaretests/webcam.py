@@ -3,6 +3,7 @@ import tkinter as tk
 from PIL import Image, ImageTk
 import cv2
 import threading
+from utils.helpers import log_event
 
 def run_webcam_test(root, test_results, test_labels, tests_window=None):
     # Create loading popup
