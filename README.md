@@ -26,3 +26,11 @@ pre-configured virtual environment) pass the `-SkipInstall` switch:
 ./compile.ps1 -SkipInstall
 ```
 
+## Database schema
+
+Detailed table layouts, including the consolidated `orders` table and the
+`order_serials` table that stores hardware test results and captured device
+specifications, are documented in [`docs/database.md`](docs/database.md). The
+companion script [`sql/001_create_orders.sql`](sql/001_create_orders.sql)
+contains the MySQL statements needed to provision the schema.
+
