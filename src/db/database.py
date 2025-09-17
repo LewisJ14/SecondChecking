@@ -64,9 +64,7 @@ def ensure_schema(conn, database_name, log_event):
     import traceback
 
     required_tables = {"order", "order_serials"}
-    script_path = (
-        Path(__file__).resolve().parent.parent / "sql" / "001_create_order.sql"
-    )
+    script_path = Path(__file__).resolve().parents[2] / "sql" / "001_create_order.sql"
 
     try:
         with conn.cursor() as cursor:

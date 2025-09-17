@@ -13,7 +13,7 @@ application can look up an SKU regardless of the marketplace that produced it.
 
 | Column | Type | Notes |
 | --- | --- | --- |
-| `id` | `BIGINT` | Surrogate primary key for internal joins. |
+| `id` | `INT` | Surrogate primary key for internal joins. |
 | `local_id` | `INT` | Optional sequential identifier used for human friendly numbering. |
 | `platform` | `VARCHAR(32)` | Marketplace identifier such as `ebay` or `woocommerce`. |
 | `external_id` | `VARCHAR(128)` | Order reference from the originating marketplace. |
@@ -42,19 +42,18 @@ results.
 | Column | Type | Notes |
 | --- | --- | --- |
 | `id` | `BIGINT` | Surrogate primary key. |
-| `order_id` | `BIGINT` | Foreign key pointing at `order.id`. |
-| `order_number` | `VARCHAR(16)` | Cached string used by the existing UI for lookups without an extra join. |
+| `order_id` | `INT` | Foreign key pointing at `order.id`. |
+| `order_number` | `VARCHAR(64)` | Cached string used by the existing UI for lookups without an extra join. |
 | `serial_number` | `VARCHAR(64)` | Unique hardware identifier. |
-| `cpu`, `ram`, `ssd`, `model`, `resolution`, `windows`, `battery` | `VARCHAR` fields | Specification snapshot captured when the device was assigned. |
-| `test_keyboard`, `test_speaker`, `test_display`, `test_webcam`, `test_usb`, `activation` | `ENUM('pass','fail','n/a')` | Structured outcomes for each hardware test. |
-| `notes` | `TEXT` | Free form technician notes. |
-| `assigned_at`, `updated_at` | `DATETIME` | Audit columns for tracking when the serial was linked or updated. |
+| `cpu`, `ram`, `ssd`, `model`, `resolution`, `windows`, `battery` | `VARCHAR(128)` | Specification snapshot captured when the device was assigned. |
+| `test_keyboard`, `test_speaker`, `test_display`, `test_webcam`, `test_usb`, `activation` | `VARCHAR(16)` | Stored test outcomes normalised to `pass`, `fail`, or `n/a`. |
+| `assigned_at` | `DATETIME` | Timestamp capturing when the serial was linked to the order. |
 
-`order_serials` enforces a unique pair of `(order_id, serial_number)` so the
-same device cannot be assigned twice to a single order, and separate indexes on
-`order_number` and `serial_number` support the direct lookup paths used by the
-current application logic. The foreign key inherits cascade rules from `order`
-so removing an order automatically clears related serial assignments.
+`order_serials` enforces a unique serial number so a device can only appear once
+in the table. Indexes on `order_id` and `order_number` support the direct lookup
+paths used by the current application logic. The foreign key inherits cascade
+rules from `order` so removing an order automatically clears related serial
+assignments.
 
 ## Applying the schema
 
