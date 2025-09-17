@@ -4,10 +4,16 @@ import tkinter as tk
 import wmi
 from tkinter import messagebox
 from db.database import get_db_connection
-from utils.helpers import log_event, extract_details_from_sku, get_live_battery_percent, parse_percent
+from utils.helpers import (
+    log_event,
+    extract_details_from_sku,
+    get_live_battery_percent,
+    parse_percent,
+    check_mdm_lock_status,
+    check_activation_status,
+)
 from utils.specs import get_laptop_specs
 from logic.view_serials_logic import open_serial_viewer
-from utils.helpers import check_activation_status
 import traceback
 import ttkbootstrap as tb
 from ttkbootstrap import ttk
@@ -151,7 +157,17 @@ def load_test_results(cursor, order_id, serial_number):
     }
 
 
-def render_results(canvas, order_id, sku, serial_number, laptop_specs, details, test_results, root):
+def render_results(
+    canvas,
+    order_id,
+    sku,
+    serial_number,
+    laptop_specs,
+    details,
+    test_results,
+    mdm_status,
+    root,
+):
     canvas.delete("all")
     canvas_width = canvas.winfo_width() or 800
     center_x = canvas_width // 2
@@ -240,9 +256,10 @@ def render_results(canvas, order_id, sku, serial_number, laptop_specs, details, 
 
     mismatch_text = "\n".join(mismatches) if mismatches else "✅ All specs match"
     mismatch_color = danger if mismatches else success
+    mismatch_origin_y = bottom_y + 30
     canvas.create_text(
         canvas_width * 0.35,
-        bottom_y + 30,
+        mismatch_origin_y,
         text=mismatch_text,
         fill=mismatch_color,
         font=("Arial", 10, "bold"),
@@ -251,6 +268,50 @@ def render_results(canvas, order_id, sku, serial_number, laptop_specs, details, 
 
     if mismatches:
         log_event(f"Spec mismatches detected for order {order_id}:\n" + mismatch_text)
+
+    estimated_line_height = 18
+    mismatch_lines = mismatch_text.count("\n") + 1
+    mdm_origin_y = mismatch_origin_y + mismatch_lines * estimated_line_height
+
+    status = mdm_status or {}
+    mdm_state = status.get("state", "error")
+    mdm_details = status.get("details", "")
+
+    if mdm_state == "locked":
+        mdm_text = "❌ Microsoft MDM lock detected."
+        if mdm_details:
+            mdm_text = f"{mdm_text}\n{mdm_details}"
+        mdm_color = danger
+    elif mdm_state == "not_locked":
+        mdm_text = "✅ No Microsoft MDM lock detected."
+        if mdm_details:
+            mdm_text = f"{mdm_text}\n{mdm_details}"
+        mdm_color = success
+    elif mdm_state == "unsupported":
+        mdm_text = mdm_details or "ℹ️ Microsoft MDM lock checks are not supported on this platform."
+        mdm_color = secondary
+    else:
+        fallback_details = mdm_details or "Unable to retrieve Microsoft MDM lock status."
+        mdm_text = f"⚠️ {fallback_details}"
+        mdm_color = warning
+
+    if mdm_state == "locked":
+        log_event(f"Microsoft MDM lock warning for order {order_id}: {mdm_details}")
+    elif mdm_state not in {"not_locked", "unsupported"}:
+        log_event(f"Microsoft MDM lock status indeterminate ({mdm_state}): {mdm_details}")
+
+    canvas.create_text(
+        canvas_width * 0.35,
+        mdm_origin_y + 10,
+        text=mdm_text,
+        fill=mdm_color,
+        font=("Arial", 10, "bold"),
+        anchor="nw",
+    )
+
+    mdm_lines = mdm_text.count("\n") + 1
+    mdm_height = mdm_lines * estimated_line_height
+    battery_base_y = max(bottom_y + 70, mdm_origin_y + mdm_height + 30)
 
     pulse_index = [0]
     pulse_ticks = 4
@@ -284,15 +345,16 @@ def render_results(canvas, order_id, sku, serial_number, laptop_specs, details, 
         if len(battery_labels) == 1:
             percent = get_live_battery_percent()
             charging = battery_charging_status()
-            draw_battery_bar(10, canvas.winfo_height() - 30, battery_labels[0], percent or "NONE", charging, "battery_bar")
+            bar_y = max(battery_base_y, canvas.winfo_height() - 30)
+            draw_battery_bar(10, bar_y, battery_labels[0], percent or "NONE", charging, "battery_bar")
         else:
             percent1 = get_live_battery_percent(index=0)
             charging1 = battery_charging_status(index=0)
-            draw_battery_bar(10, bottom_y + 70, battery_labels[0], percent1 or "NONE", charging1, "battery_bar")
+            draw_battery_bar(10, battery_base_y, battery_labels[0], percent1 or "NONE", charging1, "battery_bar")
 
             percent2 = get_live_battery_percent(index=1)
             charging2 = battery_charging_status(index=1)
-            draw_battery_bar(10, bottom_y + 100, battery_labels[1], percent2 or "NONE", charging2, "battery_bar2")
+            draw_battery_bar(10, battery_base_y + 30, battery_labels[1], percent2 or "NONE", charging2, "battery_bar2")
 
         pulse_index[0] = (pulse_index[0] + 1) % (pulse_ticks + 1)
         canvas.after(150, animate)
@@ -341,11 +403,20 @@ def search_order_logic(
                 sku = rows[0][0]
                 log_event(f"Processing SKU: {sku}")
                 details = extract_details_from_sku(sku)
+                mdm_status = check_mdm_lock_status()
 
                 root.after(
                     0,
                     lambda: render_results(
-                        canvas, order_id, sku, serial_number, laptop_specs, details, test_results, root
+                        canvas,
+                        order_id,
+                        sku,
+                        serial_number,
+                        laptop_specs,
+                        details,
+                        test_results,
+                        mdm_status,
+                        root,
                     ),
                 )
 
