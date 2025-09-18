@@ -15,11 +15,13 @@ def open_serial_viewer(order_number):
         view_window.title("Assigned Serial Numbers")
         view_window.geometry("350x450")
 
-        treeview = ttk.Treeview(view_window, columns=("Serial Number", "Assigned At"), show="headings")
+        treeview = ttk.Treeview(view_window, columns=("Serial Number", "SKU", "Assigned At"), show="headings")
         treeview.heading("Serial Number", text="Serial Number")
+        treeview.heading("SKU", text="SKU")
         treeview.heading("Assigned At", text="Assigned At")
-        treeview.column("Serial Number", anchor="center", width=150, stretch=True)
-        treeview.column("Assigned At", anchor="center", width=150, stretch=True)
+        treeview.column("Serial Number", anchor="center", width=120, stretch=True)
+        treeview.column("SKU", anchor="center", width=120, stretch=True)
+        treeview.column("Assigned At", anchor="center", width=120, stretch=True)
         treeview.pack(pady=10, expand=True, fill=tk.BOTH)
 
         # Pagination state
@@ -52,7 +54,10 @@ def open_serial_viewer(order_number):
                 try:
                     conn = get_db_connection()
                     cursor = conn.cursor()
-                    cursor.execute("SELECT serial_number, assigned_at FROM order_serials WHERE order_number = %s", (order_number,))
+                    cursor.execute(
+                        "SELECT serial_number, sku, assigned_at FROM order_serials WHERE order_number = %s",
+                        (order_number,),
+                    )
                     rows = cursor.fetchall()
                     view_window.after(0, lambda: update_rows(list(rows)))
                 except Exception as err:
@@ -78,7 +83,7 @@ def open_serial_viewer(order_number):
             treeview.delete(*treeview.get_children())
             start = page[0] * SERIALS_PER_PAGE
             end = start + SERIALS_PER_PAGE
-            for serial, assigned_at in all_rows[start:end]:
+            for serial, sku_value, assigned_at in all_rows[start:end]:
                 try:
                     if hasattr(assigned_at, "strftime"):
                         display_time = assigned_at.strftime("%d/%m/%Y %H:%M")
@@ -87,7 +92,16 @@ def open_serial_viewer(order_number):
                 except Exception as e:
                     log_event(f"Error formatting assigned_at: {assigned_at} ({e})")
                     display_time = "Unknown"
-                treeview.insert("", "end", values=(serial, display_time))
+                if isinstance(serial, (bytes, bytearray)):
+                    serial_display = serial.decode("utf-8", errors="ignore")
+                else:
+                    serial_display = serial
+                if isinstance(sku_value, (bytes, bytearray)):
+                    sku_display = sku_value.decode("utf-8", errors="ignore")
+                else:
+                    sku_display = sku_value or ""
+
+                treeview.insert("", "end", values=(serial_display, sku_display, display_time))
             page_label.config(text=f"Page {page[0]+1} of {max(1, (len(all_rows)-1)//SERIALS_PER_PAGE+1)}")
 
         load_rows()
@@ -150,16 +164,26 @@ def open_serial_viewer(order_number):
             try:
                 conn = get_db_connection()
                 cursor = conn.cursor()
-                cursor.execute("""
-                    SELECT cpu, ram, ssd, model, resolution, windows, battery
-                    FROM order_serials WHERE order_number = %s AND serial_number = %s
-                """, (order_number, serial))
+                cursor.execute(
+                    """
+                        SELECT sku, cpu, ram, ssd, model, resolution, windows, battery
+                        FROM order_serials
+                        WHERE order_number = %s AND serial_number = %s
+                    """,
+                    (order_number, serial),
+                )
                 row = cursor.fetchone()
 
                 if row:
+                    sku_value, cpu, ram, ssd, model, resolution, windows, battery = row
+                    if isinstance(sku_value, (bytes, bytearray)):
+                        sku_display = sku_value.decode("utf-8", errors="ignore")
+                    else:
+                        sku_display = sku_value or "Unknown"
                     info = (
-                        f"CPU: {row[0]}\nRAM: {row[1]}\nSSD: {row[2]}\nModel: {row[3]}\n"
-                        f"Resolution: {row[4]}\nWindows: {row[5]}\nBattery: {row[6]}"
+                        f"SKU: {sku_display}\n"
+                        f"CPU: {cpu}\nRAM: {ram}\nSSD: {ssd}\nModel: {model}\n"
+                        f"Resolution: {resolution}\nWindows: {windows}\nBattery: {battery}"
                     )
                     messagebox.showinfo(f"Specs for {serial}", info)
                 else:

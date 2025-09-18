@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS `order_serials` (
     order_id INT NOT NULL,
     order_number VARCHAR(64) NOT NULL,
     serial_number VARCHAR(64) NOT NULL,
+    sku VARCHAR(128) NULL,
     cpu VARCHAR(128) NULL,
     ram VARCHAR(128) NULL,
     ssd VARCHAR(128) NULL,
@@ -47,6 +48,7 @@ CREATE TABLE IF NOT EXISTS `order_serials` (
     UNIQUE KEY uniq_serial_number (serial_number),
     KEY idx_order_serials_order_id (order_id),
     KEY idx_order_serials_order_number (order_number),
+    KEY idx_order_serials_sku (sku),
     CONSTRAINT fk_order_serials_order FOREIGN KEY (order_id)
         REFERENCES `order`(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

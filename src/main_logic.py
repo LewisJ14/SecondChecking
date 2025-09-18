@@ -3,7 +3,7 @@ import threading
 import tkinter as tk
 import wmi
 from tkinter import messagebox
-from typing import Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from db.database import get_db_connection
 from utils.helpers import (
@@ -79,6 +79,80 @@ def normalise_test_result(value: Optional[str]) -> str:
         return "n/a"
     return "n/a"
 
+
+def prompt_for_sku_selection(root: tk.Tk, sku_options: List[str]) -> Optional[str]:
+    """Display a modal prompt so the user can choose which SKU to process."""
+
+    unique_options: List[str] = []
+    seen = set()
+    for option in sku_options:
+        if not option:
+            continue
+        candidate = option.strip()
+        if not candidate or candidate in seen:
+            continue
+        seen.add(candidate)
+        unique_options.append(candidate)
+
+    if not unique_options:
+        return None
+    if len(unique_options) == 1:
+        return unique_options[0]
+
+    selection_event = threading.Event()
+    selection: Dict[str, Optional[str]] = {"value": None}
+    dialog_holder: Dict[str, tk.Toplevel] = {}
+
+    def close_dialog(value: Optional[str]) -> None:
+        selection["value"] = value
+        selection_event.set()
+        dialog = dialog_holder.get("dialog")
+        if dialog is not None:
+            dialog.destroy()
+
+    def show_dialog() -> None:
+        dialog = tk.Toplevel(root)
+        dialog_holder["dialog"] = dialog
+        dialog.title("Select SKU")
+        dialog.transient(root)
+        dialog.grab_set()
+
+        ttk.Label(
+            dialog,
+            text="Multiple SKUs were found for this order.\nSelect the one you want to process:",
+            anchor="center",
+            justify="center",
+        ).pack(padx=20, pady=(20, 10))
+
+        for option in unique_options:
+            ttk.Button(
+                dialog,
+                text=option,
+                command=lambda value=option: close_dialog(value),
+                style="secondary.TButton",
+            ).pack(fill="x", padx=20, pady=4)
+
+        ttk.Button(dialog, text="Cancel", command=lambda: close_dialog(None)).pack(padx=20, pady=(10, 20))
+        dialog.protocol("WM_DELETE_WINDOW", lambda: close_dialog(None))
+
+        dialog.update_idletasks()
+        try:
+            root_x = root.winfo_rootx()
+            root_y = root.winfo_rooty()
+            root_width = root.winfo_width() or dialog.winfo_width()
+            root_height = root.winfo_height() or dialog.winfo_height()
+            dialog_width = dialog.winfo_width()
+            dialog_height = dialog.winfo_height()
+            pos_x = root_x + max(0, (root_width - dialog_width) // 2)
+            pos_y = root_y + max(0, (root_height - dialog_height) // 2)
+            dialog.geometry(f"+{pos_x}+{pos_y}")
+        except Exception:
+            dialog.geometry("+200+200")
+
+    root.after(0, show_dialog)
+    selection_event.wait()
+    return selection["value"]
+
 # Store the initial battery level
 initial_battery_level = get_live_battery_percent()
 
@@ -110,7 +184,24 @@ def get_sku_from_db(cursor, order_reference):
 
     order_db_id, order_number = identity
     cursor.execute("SELECT sku FROM `order` WHERE id = %s", (order_db_id,))
-    return (order_db_id, order_number), cursor.fetchall()
+
+    sku_options: List[str] = []
+    seen = set()
+    for (raw_value,) in cursor.fetchall():
+        if raw_value is None:
+            continue
+        if isinstance(raw_value, (bytes, bytearray)):
+            decoded = raw_value.decode("utf-8", errors="ignore")
+        else:
+            decoded = str(raw_value)
+        for part in decoded.split(","):
+            candidate = part.strip()
+            if not candidate or candidate in seen:
+                continue
+            seen.add(candidate)
+            sku_options.append(candidate)
+
+    return (order_db_id, order_number), sku_options
 
 
 def load_laptop_specs():
@@ -200,7 +291,7 @@ def render_results(
         canvas,
         text="Assign Serial",
         style="success.TButton",
-        command=lambda: assign_serial_logic(order_id, serial_number, laptop_specs, test_results, root),
+        command=lambda: assign_serial_logic(order_id, serial_number, laptop_specs, test_results, sku, root),
     )
     canvas.create_window(center_x + 90, 40, window=assign_button, anchor="w")
 
@@ -394,7 +485,7 @@ def search_order_logic(
                     return
 
                 cursor = conn.cursor()
-                identity, rows = get_sku_from_db(cursor, order_id)
+                identity, sku_options = get_sku_from_db(cursor, order_id)
                 if not identity:
                     log_event(f"Order {order_id} not found in consolidated database.")
                     root.after(
@@ -407,14 +498,30 @@ def search_order_logic(
                     return
 
                 db_order_id, order_number = identity
-                log_event(f"Fetched {len(rows)} SKU rows for order {order_number} (id={db_order_id}).")
+                log_event(
+                    f"Fetched {len(sku_options)} SKU candidates for order {order_number} (id={db_order_id})."
+                )
 
-                if not rows:
+                if not sku_options:
                     root.after(
                         0,
                         lambda: messagebox.showerror(
                             "Order Missing Items",
                             f"Order '{order_number}' does not have any SKUs recorded in the database.",
+                        ),
+                    )
+                    return
+
+                selected_sku = prompt_for_sku_selection(root, sku_options)
+                if not selected_sku:
+                    log_event(
+                        f"User cancelled SKU selection for order {order_number} (candidates={sku_options})."
+                    )
+                    root.after(
+                        0,
+                        lambda: messagebox.showinfo(
+                            "Selection Cancelled",
+                            "No SKU was selected. Please search again when you are ready to continue.",
                         ),
                     )
                     return
@@ -428,9 +535,8 @@ def search_order_logic(
                     f"[DEBUG] test_results['activation'] set to: {test_results['activation']} for order {order_number}"
                 )
 
-                sku = rows[0][0]
-                log_event(f"Processing SKU: {sku}")
-                details = extract_details_from_sku(sku)
+                log_event(f"Processing SKU: {selected_sku}")
+                details = extract_details_from_sku(selected_sku)
                 mdm_status = check_mdm_lock_status()
 
                 root.after(
@@ -438,7 +544,7 @@ def search_order_logic(
                     lambda: render_results(
                         canvas,
                         order_number,
-                        sku,
+                        selected_sku,
                         serial_number,
                         laptop_specs,
                         details,
@@ -461,7 +567,8 @@ def assign_serial_logic(
     serial_number: str,
     specs: dict,
     test_results: dict,
-    root: tk.Tk
+    sku: str,
+    root: tk.Tk,
 ) -> None:
     """
     Assign a serial number to an order and update test results.
@@ -503,13 +610,15 @@ def assign_serial_logic(
                 return
             cursor.execute("DELETE FROM order_serials WHERE serial_number = %s", (serial_number,))
 
+        sku_value = sku or ""
+
         cursor.execute(
             """
                 INSERT INTO order_serials (
-                    order_id, order_number, serial_number, cpu, ram, ssd, model, resolution, windows, battery,
+                    order_id, order_number, serial_number, sku, cpu, ram, ssd, model, resolution, windows, battery,
                     test_keyboard, test_speaker, test_display, test_webcam, test_usb, activation
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                     %s, %s, %s, %s, %s, %s
                 )
             """,
@@ -517,6 +626,7 @@ def assign_serial_logic(
                 order_db_id,
                 order_number,
                 serial_number,
+                sku_value,
                 specs.get("CPU", ""),
                 specs.get("RAM", ""),
                 specs.get("SSD", ""),
@@ -533,7 +643,10 @@ def assign_serial_logic(
             ),
         )
         conn.commit()
-        messagebox.showinfo("Success", f"Serial '{serial_number}' assigned to order '{order_number}'.")
+        messagebox.showinfo(
+            "Success",
+            f"Serial '{serial_number}' (SKU '{sku_value or 'Unknown'}') assigned to order '{order_number}'.",
+        )
     except Exception as e:
         if conn:
             conn.rollback()

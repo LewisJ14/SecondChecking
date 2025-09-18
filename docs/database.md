@@ -45,15 +45,16 @@ results.
 | `order_id` | `INT` | Foreign key pointing at `order.id`. |
 | `order_number` | `VARCHAR(64)` | Cached string used by the existing UI for lookups without an extra join. |
 | `serial_number` | `VARCHAR(64)` | Unique hardware identifier. |
+| `sku` | `VARCHAR(128)` | SKU selected during assignment so later views can display the matched item. |
 | `cpu`, `ram`, `ssd`, `model`, `resolution`, `windows`, `battery` | `VARCHAR(128)` | Specification snapshot captured when the device was assigned. |
 | `test_keyboard`, `test_speaker`, `test_display`, `test_webcam`, `test_usb`, `activation` | `VARCHAR(16)` | Stored test outcomes normalised to `pass`, `fail`, or `n/a`. |
 | `assigned_at` | `DATETIME` | Timestamp capturing when the serial was linked to the order. |
 
 `order_serials` enforces a unique serial number so a device can only appear once
-in the table. Indexes on `order_id` and `order_number` support the direct lookup
-paths used by the current application logic. The foreign key inherits cascade
-rules from `order` so removing an order automatically clears related serial
-assignments.
+in the table. Indexes on `order_id`, `order_number`, and `sku` support the
+direct lookup paths used by the current application logic. The foreign key
+inherits cascade rules from `order` so removing an order automatically clears
+related serial assignments.
 
 ## Applying the schema
 

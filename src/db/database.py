@@ -82,20 +82,37 @@ def ensure_schema(conn, database_name, log_event):
             }
 
         missing = required_tables - existing
-        if not missing:
-            return
+        if missing:
+            script = script_path.read_text(encoding="utf-8")
+            statements = [stmt.strip() for stmt in script.split(";") if stmt.strip()]
 
-        script = script_path.read_text(encoding="utf-8")
-        statements = [stmt.strip() for stmt in script.split(";") if stmt.strip()]
+            with conn.cursor() as cursor:
+                for statement in statements:
+                    cursor.execute(statement)
+
+            conn.commit()
+            log_event(
+                "Provisioned missing tables: " + ", ".join(sorted(missing))
+            )
 
         with conn.cursor() as cursor:
-            for statement in statements:
-                cursor.execute(statement)
+            cursor.execute(
+                """
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = %s AND table_name = %s AND column_name = %s
+                """,
+                (database_name, "order_serials", "sku"),
+            )
+            has_sku_column = cursor.fetchone() is not None
 
-        conn.commit()
-        log_event(
-            "Provisioned missing tables: " + ", ".join(sorted(missing))
-        )
+        if not has_sku_column:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "ALTER TABLE order_serials ADD COLUMN sku VARCHAR(128) NULL AFTER serial_number"
+                )
+            conn.commit()
+            log_event("Added missing 'sku' column to order_serials table.")
     except FileNotFoundError as file_err:
         log_event(f"Schema file missing at {script_path}: {file_err}")
         raise
