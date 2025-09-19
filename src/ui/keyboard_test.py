@@ -1,7 +1,12 @@
 # ui/keyboard_test.py
 import tkinter as tk
-import keyboard
+from tkinter import messagebox
 import traceback
+
+try:
+    import keyboard
+except ImportError:  # pragma: no cover - optional dependency
+    keyboard = None
 
 SPECIAL_KEYS = {
     "caps lock": "caps lock", "windows": "win", "win": "win", "left windows": "win",
@@ -23,6 +28,10 @@ release_hook_id = None
 
 def run_keyboard_test(root, test_results, test_labels, tests_window=None):
     global keyboard_test_window, press_hook_id, release_hook_id
+
+    if keyboard is None:
+        messagebox.showerror("Keyboard Test Error", "Keyboard module is not available. Install the 'keyboard' package to run this test.")
+        return
 
     # Preload the keyboard layout
     def preload_keyboard_layout():
