@@ -5,6 +5,7 @@ import os
 import sys
 import threading
 from utils.helpers import log_event
+from utils.audio_controls import force_max_system_volume
 
 try:
     import numpy as np
@@ -93,7 +94,7 @@ def run_speaker_test(root, test_results, test_labels, tests_window=None, complet
     if "microphone" not in test_results:
         test_results["microphone"] = "Not Run"
 
-    log_event("Skipping automatic system volume adjustment for speaker test.")
+    force_max_system_volume()
 
     def finalize(result=None):
         if result is not None:
