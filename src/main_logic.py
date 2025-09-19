@@ -226,7 +226,7 @@ def load_laptop_specs():
 def load_test_results(cursor, order_id, serial_number):
     cursor.execute(
         """
-            SELECT test_keyboard, test_speaker, test_display, test_webcam, test_usb
+            SELECT test_keyboard, test_speaker, test_microphone, test_display, test_webcam, test_usb
             FROM order_serials
             WHERE order_number = %s AND serial_number = %s
         """,
@@ -249,13 +249,15 @@ def load_test_results(cursor, order_id, serial_number):
         return {
             "keyboard": to_ui_value(row[0]),
             "speaker": to_ui_value(row[1]),
-            "display": to_ui_value(row[2]),
-            "webcam": to_ui_value(row[3]),
-            "usb": to_ui_value(row[4]),
+            "microphone": to_ui_value(row[2]),
+            "display": to_ui_value(row[3]),
+            "webcam": to_ui_value(row[4]),
+            "usb": to_ui_value(row[5]),
         }
     return {
         "keyboard": "Not Run",
         "speaker": "Not Run",
+        "microphone": "Not Run",
         "display": "Not Run",
         "webcam": "Not Run",
         "usb": "Not Run",
@@ -616,10 +618,10 @@ def assign_serial_logic(
             """
                 INSERT INTO order_serials (
                     order_id, order_number, serial_number, sku, cpu, ram, ssd, model, resolution, windows, battery,
-                    test_keyboard, test_speaker, test_display, test_webcam, test_usb, activation
+                    test_keyboard, test_speaker, test_microphone, test_display, test_webcam, test_usb, activation
                 ) VALUES (
                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                    %s, %s, %s, %s, %s, %s
+                    %s, %s, %s, %s, %s, %s, %s
                 )
             """,
             (
@@ -636,6 +638,7 @@ def assign_serial_logic(
                 specs.get("Battery", ""),
                 normalise_test_result(test_results.get("keyboard")),
                 normalise_test_result(test_results.get("speaker")),
+                normalise_test_result(test_results.get("microphone")),
                 normalise_test_result(test_results.get("display")),
                 normalise_test_result(test_results.get("webcam")),
                 normalise_test_result(test_results.get("usb")),

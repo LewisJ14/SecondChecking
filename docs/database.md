@@ -47,7 +47,7 @@ results.
 | `serial_number` | `VARCHAR(64)` | Unique hardware identifier. |
 | `sku` | `VARCHAR(128)` | SKU selected during assignment so later views can display the matched item. |
 | `cpu`, `ram`, `ssd`, `model`, `resolution`, `windows`, `battery` | `VARCHAR(128)` | Specification snapshot captured when the device was assigned. |
-| `test_keyboard`, `test_speaker`, `test_display`, `test_webcam`, `test_usb`, `activation` | `VARCHAR(16)` | Stored test outcomes normalised to `pass`, `fail`, or `n/a`. |
+| `test_keyboard`, `test_speaker`, `test_microphone`, `test_display`, `test_webcam`, `test_usb`, `activation` | `VARCHAR(16)` | Stored test outcomes normalised to `pass`, `fail`, or `n/a`. |
 | `assigned_at` | `DATETIME` | Timestamp capturing when the serial was linked to the order. |
 
 `order_serials` enforces a unique serial number so a device can only appear once

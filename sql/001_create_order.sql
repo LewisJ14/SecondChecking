@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS `order_serials` (
     battery VARCHAR(128) NULL,
     test_keyboard VARCHAR(16) NULL,
     test_speaker VARCHAR(16) NULL,
+    test_microphone VARCHAR(16) NULL,
     test_display VARCHAR(16) NULL,
     test_webcam VARCHAR(16) NULL,
     test_usb VARCHAR(16) NULL,

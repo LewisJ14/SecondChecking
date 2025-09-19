@@ -167,7 +167,7 @@ class AppController:
             self.tests_window.focus_force()
             return
 
-        test_keys = ["keyboard", "speaker", "display", "webcam", "usb"]
+        test_keys = ["keyboard", "speaker", "microphone", "display", "webcam", "usb"]
         test_values = [self.test_results.get(k, "Not Run") for k in test_keys]
 
         if all(v == "Not Run" for v in test_values):

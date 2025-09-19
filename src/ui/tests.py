@@ -38,6 +38,7 @@ class TestsWindow:
         self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.add_test_row("Speaker Test", lambda: self.run_test_threaded(run_speaker_test, "speaker"), "speaker")
+        self.add_status_row("Microphone (auto)", "microphone")
         self.add_test_row("Display Test", lambda: self.run_test_threaded(run_display_test, "display"), "display")
         self.add_test_row("Keyboard Test", lambda: self.run_test_threaded(run_keyboard_test, "keyboard"), "keyboard")
         self.add_test_row("Webcam Test", lambda: self.run_test_threaded(run_webcam_test, "webcam"), "webcam")
@@ -211,3 +212,16 @@ class TestsWindow:
         lbl.pack(side="left", padx=5)
         self.test_labels[f"{key}_label"] = lbl
         self.test_buttons[key] = btn
+
+    def add_status_row(self, label, key):
+        row = tk.Frame(self.main_frame)
+        row.pack(pady=5, fill="x", expand=True)
+
+        title = tk.Label(row, text=label, font=("Arial", 10, "bold"))
+        title.pack(side="left", padx=5)
+
+        result = self.test_results.get(key)
+        icon = "✅" if result == "pass" else "❌" if result == "fail" else "Not Run"
+        lbl = tk.Label(row, text=icon, font=("Arial", 11))
+        lbl.pack(side="left", padx=5)
+        self.test_labels[f"{key}_label"] = lbl

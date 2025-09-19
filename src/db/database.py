@@ -98,21 +98,32 @@ def ensure_schema(conn, database_name, log_event):
         with conn.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT 1
+                SELECT column_name
                 FROM information_schema.columns
-                WHERE table_schema = %s AND table_name = %s AND column_name = %s
+                WHERE table_schema = %s AND table_name = %s AND column_name IN (%s, %s)
                 """,
-                (database_name, "order_serials", "sku"),
+                (database_name, "order_serials", "sku", "test_microphone"),
             )
-            has_sku_column = cursor.fetchone() is not None
+            existing_columns = {
+                (row[0].decode("utf-8") if isinstance(row[0], (bytes, bytearray)) else row[0])
+                for row in cursor.fetchall()
+            }
 
-        if not has_sku_column:
+        if "sku" not in existing_columns:
             with conn.cursor() as cursor:
                 cursor.execute(
                     "ALTER TABLE order_serials ADD COLUMN sku VARCHAR(128) NULL AFTER serial_number"
                 )
             conn.commit()
             log_event("Added missing 'sku' column to order_serials table.")
+
+        if "test_microphone" not in existing_columns:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "ALTER TABLE order_serials ADD COLUMN test_microphone VARCHAR(16) NULL AFTER test_speaker"
+                )
+            conn.commit()
+            log_event("Added missing 'test_microphone' column to order_serials table.")
     except FileNotFoundError as file_err:
         log_event(f"Schema file missing at {script_path}: {file_err}")
         raise

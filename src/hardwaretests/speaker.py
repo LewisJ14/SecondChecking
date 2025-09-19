@@ -79,6 +79,9 @@ def run_speaker_test(root, test_results, test_labels, tests_window=None):
         tk.messagebox.showerror("File Not Found", "AudioCheck.wav not found in assets directory.")
         return
 
+    if "microphone" not in test_results:
+        test_results["microphone"] = "Not Run"
+
     auto_attempted = False
     auto_passed = False
     auto_message = None
@@ -113,10 +116,14 @@ def run_speaker_test(root, test_results, test_labels, tests_window=None):
 
     if auto_attempted and auto_passed:
         test_results["speaker"] = "pass"
+        test_results["microphone"] = "pass"
         if "speaker_label" in test_labels:
             test_labels["speaker_label"].config(text="✅")
+        if "microphone_label" in test_labels:
+            test_labels["microphone_label"].config(text="✅")
         if tests_window and hasattr(tests_window, "update_icon"):
             tests_window.update_icon("speaker")
+            tests_window.update_icon("microphone")
         detail = "" if peak_level is None else f"\nPeak level: {peak_level:.3f}\nRMS level: {rms_level:.3f}"
         tk.messagebox.showinfo("Speaker Test", "Automatic speaker and microphone test passed." + detail)
         log_event(
@@ -152,10 +159,14 @@ def run_speaker_test(root, test_results, test_labels, tests_window=None):
 
     if test_results.get("speaker") != "pass":
         test_results["speaker"] = "fail"
+        test_results["microphone"] = "fail"
         if "speaker_label" in test_labels:
             test_labels["speaker_label"].config(text="❌")
+        if "microphone_label" in test_labels:
+            test_labels["microphone_label"].config(text="❌")
         if tests_window and hasattr(tests_window, "update_icon"):
             tests_window.update_icon("speaker")
+            tests_window.update_icon("microphone")
 
     result_window = tk.Toplevel(root)
     result_window.title("Speaker Test Result")
@@ -177,10 +188,14 @@ def run_speaker_test(root, test_results, test_labels, tests_window=None):
 
     def handle_response(result):
         test_results["speaker"] = result
+        test_results["microphone"] = result
         if "speaker_label" in test_labels:
             test_labels["speaker_label"].config(text="✅" if result == "pass" else "❌")
+        if "microphone_label" in test_labels:
+            test_labels["microphone_label"].config(text="✅" if result == "pass" else "❌")
         if tests_window and hasattr(tests_window, "update_icon"):
             tests_window.update_icon("speaker")
+            tests_window.update_icon("microphone")
         result_window.destroy()
 
     from ttkbootstrap import ttk

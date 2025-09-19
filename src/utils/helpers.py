@@ -325,7 +325,7 @@ def preload_previous_results():
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT test_keyboard, test_speaker, test_display, test_webcam, test_usb
+            SELECT test_keyboard, test_speaker, test_microphone, test_display, test_webcam, test_usb
             FROM order_serials
             WHERE serial_number = %s
         """, (serial_number,))
@@ -335,7 +335,7 @@ def preload_previous_results():
         print(f"Row from DB: {row}")  # 🧪 Debug output
 
         if row:
-            keys = ["keyboard", "speaker", "display", "webcam", "usb"]
+            keys = ["keyboard", "speaker", "microphone", "display", "webcam", "usb"]
             for i, result in enumerate(row):
                 cleaned = result.strip().lower() if result else ""
                 if cleaned in ["pass", "fail"]:
