@@ -26,11 +26,22 @@ keyboard_test_window = None
 press_hook_id = None
 release_hook_id = None
 
-def run_keyboard_test(root, test_results, test_labels, tests_window=None):
+def run_keyboard_test(root, test_results, test_labels, tests_window=None, completion_event=None):
     global keyboard_test_window, press_hook_id, release_hook_id
+
+    def finalize(result=None):
+        if result is not None:
+            test_results["keyboard"] = result
+            if "keyboard_label" in test_labels:
+                test_labels["keyboard_label"].config(text="✅" if result == "pass" else "❌")
+            if tests_window and hasattr(tests_window, "update_icon"):
+                root.after(0, lambda: tests_window.update_icon("keyboard"))
+        if completion_event and not completion_event.is_set():
+            completion_event.set()
 
     if keyboard is None:
         messagebox.showerror("Keyboard Test Error", "Keyboard module is not available. Install the 'keyboard' package to run this test.")
+        finalize("fail")
         return
 
     # Preload the keyboard layout
@@ -308,17 +319,28 @@ def run_keyboard_test(root, test_results, test_labels, tests_window=None):
         btn_frame = tk.Frame(prompt)
         btn_frame.pack()
         def on_response(result):
-            test_results["keyboard"] = result
-            if "keyboard_label" in test_labels:
-                test_labels["keyboard_label"].config(text="✅" if result == "pass" else "❌")
-            if tests_window and hasattr(tests_window, "update_icon"):
-                root.after(0, lambda: tests_window.update_icon("keyboard"))
+            finalize(result)
             prompt.destroy()
         from ttkbootstrap import ttk
         ttk.Button(btn_frame, text="Yes", width=10, style="success.TButton", command=lambda: on_response("pass")).pack(side="left", padx=5)
-        ttk.Button(btn_frame, text="Retry", width=10, style="info.TButton", command=lambda: [prompt.destroy(), run_keyboard_test(root, test_results, test_labels, tests_window)]).pack(side="left", padx=5)
+        ttk.Button(
+            btn_frame,
+            text="Retry",
+            width=10,
+            style="info.TButton",
+            command=lambda: [
+                prompt.destroy(),
+                run_keyboard_test(
+                    root,
+                    test_results,
+                    test_labels,
+                    tests_window,
+                    completion_event=completion_event,
+                ),
+            ],
+        ).pack(side="left", padx=5)
         ttk.Button(btn_frame, text="No", width=10, style="danger.TButton", command=lambda: on_response("fail")).pack(side="left", padx=5)
-        prompt.protocol("WM_DELETE_WINDOW", prompt.destroy)
+        prompt.protocol("WM_DELETE_WINDOW", lambda: on_response("fail"))
 
     def on_close():
         global keyboard_test_window

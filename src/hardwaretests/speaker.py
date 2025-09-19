@@ -73,14 +73,32 @@ if getattr(sys, 'frozen', False):
 else:
     base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # <-- Go up one level
 
-def run_speaker_test(root, test_results, test_labels, tests_window=None):
+def run_speaker_test(root, test_results, test_labels, tests_window=None, completion_event=None):
     audio_path = os.path.join(base_path, "assets", "AudioCheck.wav")
     if not os.path.exists(audio_path):
         tk.messagebox.showerror("File Not Found", "AudioCheck.wav not found in assets directory.")
+        if completion_event and not completion_event.is_set():
+            test_results["speaker"] = "fail"
+            test_results["microphone"] = "fail"
+            completion_event.set()
         return
 
     if "microphone" not in test_results:
         test_results["microphone"] = "Not Run"
+
+    def finalize(result=None):
+        if result is not None:
+            test_results["speaker"] = result
+            test_results["microphone"] = result
+            if "speaker_label" in test_labels:
+                test_labels["speaker_label"].config(text="✅" if result == "pass" else "❌")
+            if "microphone_label" in test_labels:
+                test_labels["microphone_label"].config(text="✅" if result == "pass" else "❌")
+            if tests_window and hasattr(tests_window, "update_icon"):
+                tests_window.update_icon("speaker")
+                tests_window.update_icon("microphone")
+        if completion_event and not completion_event.is_set():
+            completion_event.set()
 
     auto_attempted = False
     auto_passed = False
@@ -115,21 +133,13 @@ def run_speaker_test(root, test_results, test_labels, tests_window=None):
         log_event(auto_message)
 
     if auto_attempted and auto_passed:
-        test_results["speaker"] = "pass"
-        test_results["microphone"] = "pass"
-        if "speaker_label" in test_labels:
-            test_labels["speaker_label"].config(text="✅")
-        if "microphone_label" in test_labels:
-            test_labels["microphone_label"].config(text="✅")
-        if tests_window and hasattr(tests_window, "update_icon"):
-            tests_window.update_icon("speaker")
-            tests_window.update_icon("microphone")
         detail = "" if peak_level is None else f"\nPeak level: {peak_level:.3f}\nRMS level: {rms_level:.3f}"
         tk.messagebox.showinfo("Speaker Test", "Automatic speaker and microphone test passed." + detail)
         log_event(
             "Speaker test passed automatically"
             + (f" (peak={peak_level:.4f}, rms={rms_level:.4f})" if peak_level is not None else "")
         )
+        finalize("pass")
         return
 
     if not playback_performed:
@@ -138,14 +148,17 @@ def run_speaker_test(root, test_results, test_labels, tests_window=None):
         except RuntimeError as e:
             log_event(f"Speaker hardware error: {e}")
             tk.messagebox.showerror("Audio Error", "No audio device found or audio playback failed.")
+            finalize("fail")
             return
         except FileNotFoundError as e:
             log_event(f"Audio file not found: {e}")
             tk.messagebox.showerror("Audio Error", "Audio file missing.")
+            finalize("fail")
             return
         except Exception as e:
             log_event(f"Error playing audio: {e}")
             tk.messagebox.showerror("Audio Error", f"Failed to play audio:\n{e}")
+            finalize("fail")
             return
 
     if auto_attempted and not auto_passed:
@@ -187,15 +200,7 @@ def run_speaker_test(root, test_results, test_labels, tests_window=None):
     frame.pack(pady=(0, 10))
 
     def handle_response(result):
-        test_results["speaker"] = result
-        test_results["microphone"] = result
-        if "speaker_label" in test_labels:
-            test_labels["speaker_label"].config(text="✅" if result == "pass" else "❌")
-        if "microphone_label" in test_labels:
-            test_labels["microphone_label"].config(text="✅" if result == "pass" else "❌")
-        if tests_window and hasattr(tests_window, "update_icon"):
-            tests_window.update_icon("speaker")
-            tests_window.update_icon("microphone")
+        finalize(result)
         result_window.destroy()
 
     from ttkbootstrap import ttk
@@ -208,10 +213,19 @@ def run_speaker_test(root, test_results, test_labels, tests_window=None):
         text="Retry",
         width=10,
         style="info.TButton",
-        command=lambda: [result_window.destroy(), run_speaker_test(root, test_results, test_labels, tests_window)],
+        command=lambda: [
+            result_window.destroy(),
+            run_speaker_test(
+                root,
+                test_results,
+                test_labels,
+                tests_window,
+                completion_event=completion_event,
+            ),
+        ],
     ).pack(side="left", padx=5)
     ttk.Button(frame, text="No", width=10, style="danger.TButton", command=lambda: handle_response("fail")).pack(
         side="left", padx=5
     )
 
-    result_window.protocol("WM_DELETE_WINDOW", result_window.destroy)
+    result_window.protocol("WM_DELETE_WINDOW", lambda: handle_response("fail"))

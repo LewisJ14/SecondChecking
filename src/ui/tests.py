@@ -22,15 +22,15 @@ class TestsWindow:
         self.tests_window = tk.Toplevel(self.root)
         self.tests_window.title("Hardware Tests")
 
-        # --- Set a more compact fixed size and center the window ---
-        width = 280
-        height = 340
+        # --- Ensure the window comfortably fits all controls and center it ---
+        width = 360
+        height = 520
         screen_width = self.tests_window.winfo_screenwidth()
         screen_height = self.tests_window.winfo_screenheight()
         x = (screen_width - width) // 2
         y = (screen_height - height) // 2
         self.tests_window.geometry(f"{width}x{height}+{x}+{y}")
-        self.tests_window.minsize(260, 200)
+        self.tests_window.minsize(320, 480)
         self.tests_window.resizable(True, True)
 
         self.tests_window.protocol("WM_DELETE_WINDOW", self.on_close)
@@ -46,6 +46,8 @@ class TestsWindow:
         self.add_test_row("Webcam Test", run_webcam_test, "webcam")
         self.add_test_row("USB Test", run_usb_test, "usb")
 
+        self.add_activation_row()
+
         self.run_all_button = ttk.Button(
             self.main_frame,
             text="Run All Tests",
@@ -53,8 +55,6 @@ class TestsWindow:
             style="primary.TButton",
         )
         self.run_all_button.pack(pady=(5, 10), fill="x")
-
-        self.add_activation_row()
 
         # Make all rows expand horizontally
         for child in self.main_frame.winfo_children():
@@ -64,16 +64,30 @@ class TestsWindow:
         threading.Thread(target=lambda: self._execute_test(test_func, key), daemon=True).start()
 
     def _execute_test(self, test_func, key):
+        completion_event = threading.Event()
+
         try:
             self.update_status(f"Running {key} test...")
-            test_func(self.root, self.test_results, self.test_labels, self)
-            self.update_icon(key)
+            test_func(
+                self.root,
+                self.test_results,
+                self.test_labels,
+                self,
+                completion_event=completion_event,
+            )
         except Exception as e:
             log_event(f"Error running {key} test: {e}")
             self.test_results[key] = "fail"
-            self.update_icon(key)
-            self.root.after(0, lambda: messagebox.showerror("Test Error", f"An error occurred during the {key} test."))
+            completion_event.set()
+            self.root.after(
+                0,
+                lambda: messagebox.showerror(
+                    "Test Error", f"An error occurred during the {key} test."
+                ),
+            )
         finally:
+            completion_event.wait()
+            self.update_icon(key)
             self.update_status("")
 
     def run_all_tests(self):

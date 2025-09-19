@@ -1,11 +1,22 @@
 # hardware_tests/usb.py
 import tkinter as tk
 
-def run_usb_test(root, test_results, test_labels, tests_window=None):
+def run_usb_test(root, test_results, test_labels, tests_window=None, completion_event=None):
+    def finalize(result=None):
+        if result is not None:
+            test_results["usb"] = result
+            if "usb_label" in test_labels:
+                test_labels["usb_label"].config(text="✅" if result == "pass" else "❌")
+            if tests_window and hasattr(tests_window, "update_icon"):
+                tests_window.update_icon("usb")
+        if completion_event and not completion_event.is_set():
+            completion_event.set()
+
     try:
         import win32file
     except ImportError:
         tk.messagebox.showerror("Missing Dependency", "win32file is required for USB test.")
+        finalize("fail")
         return
 
     window = tk.Toplevel(root)
@@ -64,18 +75,29 @@ def run_usb_test(root, test_results, test_labels, tests_window=None):
         frame.pack()
 
         def handle_response(result):
-            test_results["usb"] = result
-            if "usb_label" in test_labels:
-                test_labels["usb_label"].config(text="✅" if result == "pass" else "❌")
-            if tests_window and hasattr(tests_window, "update_icon"):
-                tests_window.update_icon("usb")
+            finalize(result)
             result_window.destroy()
 
         from ttkbootstrap import ttk
         ttk.Button(frame, text="Yes", width=10, style="success.TButton", command=lambda: handle_response("pass")).pack(side="left", padx=5)
-        ttk.Button(frame, text="Retry", width=10, style="info.TButton", command=lambda: [result_window.destroy(), run_usb_test(root, test_results, test_labels, tests_window)]).pack(side="left", padx=5)
+        ttk.Button(
+            frame,
+            text="Retry",
+            width=10,
+            style="info.TButton",
+            command=lambda: [
+                result_window.destroy(),
+                run_usb_test(
+                    root,
+                    test_results,
+                    test_labels,
+                    tests_window,
+                    completion_event=completion_event,
+                ),
+            ],
+        ).pack(side="left", padx=5)
         ttk.Button(frame, text="No", width=10, style="danger.TButton", command=lambda: handle_response("fail")).pack(side="left", padx=5)
 
-        result_window.protocol("WM_DELETE_WINDOW", result_window.destroy)
+        result_window.protocol("WM_DELETE_WINDOW", lambda: handle_response("fail"))
 
     window.protocol("WM_DELETE_WINDOW", on_close)
