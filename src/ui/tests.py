@@ -17,18 +17,20 @@ class TestsWindow:
         self.test_results = test_results
         self.test_labels = test_labels
         self.test_buttons = {}  # Store references to test buttons
+        self.test_sequence = []  # Preserve execution order for run-all support
+        self._running_all = False
         self.tests_window = tk.Toplevel(self.root)
         self.tests_window.title("Hardware Tests")
 
-        # --- Set a more compact fixed size and center the window ---
-        width = 280
-        height = 340
+        # --- Ensure the window comfortably fits all controls and center it ---
+        width = 360
+        height = 520
         screen_width = self.tests_window.winfo_screenwidth()
         screen_height = self.tests_window.winfo_screenheight()
         x = (screen_width - width) // 2
         y = (screen_height - height) // 2
         self.tests_window.geometry(f"{width}x{height}+{x}+{y}")
-        self.tests_window.minsize(260, 200)
+        self.tests_window.minsize(320, 480)
         self.tests_window.resizable(True, True)
 
         self.tests_window.protocol("WM_DELETE_WINDOW", self.on_close)
@@ -37,47 +39,103 @@ class TestsWindow:
         self.main_frame = tk.Frame(self.tests_window)
         self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-        self.add_test_row("Speaker Test", lambda: self.run_test_threaded(run_speaker_test, "speaker"), "speaker")
-        self.add_test_row("Display Test", lambda: self.run_test_threaded(run_display_test, "display"), "display")
-        self.add_test_row("Keyboard Test", lambda: self.run_test_threaded(run_keyboard_test, "keyboard"), "keyboard")
-        self.add_test_row("Webcam Test", lambda: self.run_test_threaded(run_webcam_test, "webcam"), "webcam")
-        self.add_test_row("USB Test", lambda: self.run_test_threaded(run_usb_test, "usb"), "usb")
+        self.add_test_row("Speaker Test", run_speaker_test, "speaker")
+        self.add_status_row("Microphone (auto)", "microphone")
+        self.add_test_row("Display Test", run_display_test, "display")
+        self.add_test_row("Keyboard Test", run_keyboard_test, "keyboard")
+        self.add_test_row("Webcam Test", run_webcam_test, "webcam")
+        self.add_test_row("USB Test", run_usb_test, "usb")
+
         self.add_activation_row()
+
+        self.run_all_button = ttk.Button(
+            self.main_frame,
+            text="Run All Tests",
+            command=self.run_all_tests,
+            style="primary.TButton",
+        )
+        self.run_all_button.pack(pady=(5, 10), fill="x")
 
         # Make all rows expand horizontally
         for child in self.main_frame.winfo_children():
             child.pack_configure(fill="x", expand=True)
 
     def run_test_threaded(self, test_func, key):
-        def run():
+        threading.Thread(target=lambda: self._execute_test(test_func, key), daemon=True).start()
+
+    def _execute_test(self, test_func, key):
+        completion_event = threading.Event()
+
+        try:
+            self.update_status(f"Running {key} test...")
+            test_func(
+                self.root,
+                self.test_results,
+                self.test_labels,
+                self,
+                completion_event=completion_event,
+            )
+        except Exception as e:
+            log_event(f"Error running {key} test: {e}")
+            self.test_results[key] = "fail"
+            completion_event.set()
+            self.root.after(
+                0,
+                lambda: messagebox.showerror(
+                    "Test Error", f"An error occurred during the {key} test."
+                ),
+            )
+        finally:
+            completion_event.wait()
+            self.update_icon(key)
+            self.update_status("")
+
+    def run_all_tests(self):
+        if self._running_all:
+            return
+        if not self.test_sequence:
+            return
+
+        self._running_all = True
+        self.run_all_button.config(state="disabled")
+        self._set_test_buttons_state("disabled")
+
+        def run_sequence():
             try:
-                self.update_status(f"Running {key} test...")
-                test_func(self.root, self.test_results, self.test_labels, self)  # Pass self!
-                self.update_icon(key)
-            except Exception as e:
-                log_event(f"Error running {key} test: {e}")
-                self.test_results[key] = "fail"
-                self.update_icon(key)
-                messagebox.showerror("Test Error", f"An error occurred during the {key} test.")
+                for key, test_func in self.test_sequence:
+                    self._execute_test(test_func, key)
             finally:
-                self.update_status("")  # Clear status
-        threading.Thread(target=run, daemon=True).start()
+                self.update_status("")
+                self._set_test_buttons_state("normal")
+                self.root.after(0, lambda: self.run_all_button.config(state="normal"))
+                self._running_all = False
+
+        threading.Thread(target=run_sequence, daemon=True).start()
+
+    def _set_test_buttons_state(self, state):
+        def apply():
+            for key, btn in self.test_buttons.items():
+                btn.config(state=state)
+        self.root.after(0, apply)
 
     def update_icon(self, key):
-        icon = "✅" if self.test_results.get(key) == "pass" else "❌" if self.test_results.get(key) == "fail" else "Not Run"
-        label_key = f"{key}_label"
-        if label_key in self.test_labels:
-            self.test_labels[label_key].config(text=icon)
-        # Update button style as well
-        btn = self.test_buttons.get(key)
-        if btn:
-            result = self.test_results.get(key)
-            if result == "pass":
-                btn.config(style="success.TButton")
-            elif result == "fail":
-                btn.config(style="danger.TButton")
-            else:
-                btn.config(style="info.TButton")
+        def apply():
+            icon = ("✅" if self.test_results.get(key) == "pass" else "❌" if self.test_results.get(key) == "fail" else "Not Run")
+            label_key = f"{key}_label"
+            if label_key in self.test_labels:
+                self.test_labels[label_key].config(text=icon)
+            # Update button style as well
+            btn = self.test_buttons.get(key)
+            if btn:
+                result = self.test_results.get(key)
+                if result == "pass":
+                    btn.config(style="success.TButton")
+                elif result == "fail":
+                    btn.config(style="danger.TButton")
+                else:
+                    btn.config(style="info.TButton")
+
+        self.root.after(0, apply)
 
     def on_close(self):
         self.tests_window.destroy()
@@ -147,10 +205,13 @@ class TestsWindow:
     def update_status(self, message):
         # Add a status label or update an existing one
         if hasattr(self, "status_label"):
-            self.status_label.config(text=message)
+            self.root.after(0, lambda: self.status_label.config(text=message))
         else:
-            self.status_label = tk.Label(self.main_frame, text=message, font=("Arial", 10, "italic"))
-            self.status_label.pack(pady=5, fill="x")
+            def create_label():
+                self.status_label = tk.Label(self.main_frame, text=message, font=("Arial", 10, "italic"))
+                self.status_label.pack(pady=5, fill="x")
+
+            self.root.after(0, create_label)
 
     def add_activation_row(self):
         row = tk.Frame(self.main_frame)
@@ -194,7 +255,7 @@ class TestsWindow:
         activate_btn = ttk.Button(dialog, text="Reactivate (BIOS Key)", command=lambda: [self.attempt_activation(), dialog.destroy()], style="success.TButton")
         activate_btn.pack(pady=5, fill="x", expand=True)
 
-    def add_test_row(self, label, command, key):
+    def add_test_row(self, label, test_func, key):
         row = tk.Frame(self.main_frame)
         row.pack(pady=10, fill="x", expand=True)
         result = self.test_results.get(key)
@@ -204,10 +265,24 @@ class TestsWindow:
             style = "danger.TButton"
         else:
             style = "secondary.TButton"
-        btn = ttk.Button(row, text=label, command=command, style=style, width=15)
+        btn = ttk.Button(row, text=label, command=lambda: self.run_test_threaded(test_func, key), style=style, width=15)
         btn.pack(side="left", padx=5)
         icon = "✅" if result == "pass" else "❌" if result == "fail" else "Not Run"
         lbl = tk.Label(row, text=icon, font=("Arial", 11))
         lbl.pack(side="left", padx=5)
         self.test_labels[f"{key}_label"] = lbl
         self.test_buttons[key] = btn
+        self.test_sequence.append((key, test_func))
+
+    def add_status_row(self, label, key):
+        row = tk.Frame(self.main_frame)
+        row.pack(pady=5, fill="x", expand=True)
+
+        title = tk.Label(row, text=label, font=("Arial", 10, "bold"))
+        title.pack(side="left", padx=5)
+
+        result = self.test_results.get(key)
+        icon = "✅" if result == "pass" else "❌" if result == "fail" else "Not Run"
+        lbl = tk.Label(row, text=icon, font=("Arial", 11))
+        lbl.pack(side="left", padx=5)
+        self.test_labels[f"{key}_label"] = lbl

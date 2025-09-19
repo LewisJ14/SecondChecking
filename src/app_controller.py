@@ -3,7 +3,7 @@ import tkinter as tk
 from ttkbootstrap import ttk
 from ui.tests import TestsWindow
 from main_logic import search_order_logic
-from utils.helpers import log_event, is_internet_available
+from utils.helpers import log_event
 from tkinter import messagebox
 import threading
 import re
@@ -111,14 +111,6 @@ class AppController:
 
         log_event(f"User initiated search for order: {order_id}")
 
-        if not is_internet_available():
-            log_event("Search aborted: internet connection unavailable.")
-            messagebox.showwarning(
-                "No Internet Connection",
-                "An active internet connection is required to search for orders. Please connect and try again.",
-            )
-            return
-
         self.search_button.config(state="disabled")
         self.test_panel_button.config(state="disabled")
         self.canvas.delete("search_status")
@@ -175,7 +167,7 @@ class AppController:
             self.tests_window.focus_force()
             return
 
-        test_keys = ["keyboard", "speaker", "display", "webcam", "usb"]
+        test_keys = ["keyboard", "speaker", "microphone", "display", "webcam", "usb"]
         test_values = [self.test_results.get(k, "Not Run") for k in test_keys]
 
         if all(v == "Not Run" for v in test_values):
