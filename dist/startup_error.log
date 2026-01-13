@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "main.py", line 18, in <module>
+  File "app_controller.py", line 36, in __init__
+  File "auth\login.py", line 178, in __init__
+  File "tkinter\__init__.py", line 540, in __init__
+  File "tkinter\__init__.py", line 371, in __init__
+  File "tkinter\__init__.py", line 297, in _get_default_root
+RuntimeError: Too early to create variable: no default root window

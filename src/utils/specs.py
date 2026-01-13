@@ -1,10 +1,14 @@
 # utils/specs.py
+import json
 import re
+import time
 import psutil
 import wmi
 import subprocess
 import os
-from utils.helpers import log_event, ensure_batteryinfoview
+from pathlib import Path
+from typing import Optional
+from utils.helpers import log_event, ensure_batteryinfoview, get_app_dir
 import pythoncom
 import configparser
 import getpass
@@ -12,6 +16,39 @@ import sys
 
 config = configparser.ConfigParser()
 config.read(os.path.join(os.path.dirname(__file__), '..', 'config.ini'))
+
+SPECS_CACHE_TTL = 300  # seconds
+
+
+def _specs_cache_path() -> Path:
+    return Path(get_app_dir()) / "specs_cache.json"
+
+
+def _load_cached_specs() -> Optional[dict]:
+    path = _specs_cache_path()
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        ts = float(data.get("timestamp", 0))
+        if time.time() - ts > SPECS_CACHE_TTL:
+            return None
+        specs = data.get("specs")
+        if isinstance(specs, dict):
+            log_event("Loaded cached laptop specs.")
+            return specs
+    except Exception as exc:
+        log_event(f"Failed to load specs cache: {exc}")
+    return None
+
+
+def _save_specs_cache(specs: dict) -> None:
+    path = _specs_cache_path()
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"timestamp": time.time(), "specs": specs}), encoding="utf-8")
+    except Exception as exc:
+        log_event(f"Failed to save specs cache: {exc}")
 
 def get_ssd_thresholds():
     # Retrieve SSD thresholds from the configuration file or use hardcoded defaults
@@ -46,16 +83,17 @@ def parse_cpu_family_and_model(cpu_name):
         AMD Ryzen 7 5800H -> Ryzen 7 5800H
     """
     cpu_name = cpu_name.strip()
+    cpu_name = re.sub(r"with\s+[\w\-]+\s+Graphics", "", cpu_name, flags=re.IGNORECASE).strip()
     # Intel Core iX-YYYY
     intel = re.search(r'(i[3579]-[A-Za-z0-9]+)', cpu_name, re.IGNORECASE)
     if intel:
         return intel.group(1)
-    # AMD Ryzen X YYYY
-    amd = re.search(r'(Ryzen\s*[3579]\s*\d+[A-Za-z0-9]*)', cpu_name, re.IGNORECASE)
+    # AMD Ryzen <series> (capture up to CPU/@ or end)
+    amd = re.search(r'(Ryzen\s[\w\-\s]+?)(?:\s+CPU|\s*@|$)', cpu_name, re.IGNORECASE)
     if amd:
-        return amd.group(1).replace("  ", " ")
+        return amd.group(1).strip()
     # Fallback: just return the first 2 words
-    return " ".join(cpu_name.split()[:2])
+    return cpu_name
 
 _laptop_specs_cache = None
 
@@ -64,6 +102,12 @@ def get_laptop_specs(force_refresh=False):
     if _laptop_specs_cache is not None and not force_refresh:
         log_event("Returning cached laptop specs.")
         return _laptop_specs_cache.copy()
+
+    if not force_refresh:
+        cached_specs = _load_cached_specs()
+        if cached_specs:
+            _laptop_specs_cache = cached_specs.copy()
+            return _laptop_specs_cache.copy()
 
     log_event("Fetching laptop specs...")
     pythoncom.CoInitialize()
@@ -163,6 +207,7 @@ def get_laptop_specs(force_refresh=False):
         pythoncom.CoUninitialize()
 
     _laptop_specs_cache = specs.copy()
+    _save_specs_cache(specs)
     log_event("Laptop specs fetched successfully.")
     return specs
 
@@ -225,47 +270,5 @@ def get_battery_health_batteryinfoview():
 
 # --- Main battery health function ---
 def get_battery_health():
-    # Retrieve battery health using multiple fallback methods
-    try:
-        # Attempt to parse battery health from an HTML report
-        temp_path = os.path.join(os.environ.get("TEMP", "/tmp"), "battery-report.html")
-        user_path = os.path.join("C:\\Users", getpass.getuser(), "battery-report.html")
-        html = None
-
-        if os.path.exists(temp_path):
-            with open(temp_path, encoding="utf-8", errors="ignore") as f:
-                html = f.read()
-        elif os.path.exists(user_path):
-            with open(user_path, encoding="utf-8", errors="ignore") as f:
-                html = f.read()
-
-        if html:
-            if "No batteries are currently installed" in html:
-                log_event("Battery report: No batteries are currently installed.")
-                return ["No battery installed"]
-
-            # Try to parse design and full charge capacity
-            design_matches = re.findall(r"DESIGN CAPACITY.*?<td>([\d,]+)\s*mWh", html, re.IGNORECASE)
-            full_matches = re.findall(r"FULL CHARGE CAPACITY.*?<td>([\d,]+)\s*mWh", html, re.IGNORECASE)
-
-            if design_matches and full_matches:
-                battery_healths = []
-                for design, full in zip(design_matches, full_matches):
-                    try:
-                        design = int(design.replace(",", ""))
-                        full = int(full.replace(",", ""))
-                        percent = int((full / design) * 100)
-                        battery_healths.append(f"{percent}%")
-                    except Exception as e:
-                        log_event(f"Battery health calculation error: {e}")
-                        battery_healths.append("Unknown")
-                return battery_healths
-
-            log_event("Battery health parsing failed: No matches found in HTML.")
-
-    except Exception as e:
-        log_event(f"Battery health HTML parsing failed: {e}")
-
-    # Fallback to BatteryInfoView if HTML parsing fails
-    biv_health = get_battery_health_batteryinfoview()
-    return biv_health
+    log_event("Gathering battery health via BatteryInfoView.")
+    return get_battery_health_batteryinfoview()

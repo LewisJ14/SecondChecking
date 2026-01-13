@@ -1,0 +1,35 @@
+﻿2026-01-13T15:34:01 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-13T15:34:01 GitHub CLI available
+2026-01-13T15:34:01 Skipped compile.ps1
+2026-01-13T15:34:01 Copied C:\Users\lewie\Documents\GitHub\SecondChecking-codex-provide-suggestions-for-improvements\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking-codex-provide-suggestions-for-improvements\dist\SecondChecking-0.1.0.exe
+2026-01-13T15:34:01 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking-codex-provide-suggestions-for-improvements\update.json
+2026-01-13T15:34:01 Created release v0.1.0
+2026-01-13T15:34:01 Release v0.1.0 uploaded
+2026-01-13T15:35:47 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-13T15:35:47 GitHub CLI available
+2026-01-13T15:35:47 Skipped compile.ps1
+2026-01-13T15:35:47 Copied C:\Users\lewie\Documents\GitHub\SecondChecking-codex-provide-suggestions-for-improvements\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking-codex-provide-suggestions-for-improvements\dist\SecondChecking-0.1.0.exe
+2026-01-13T15:35:47 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking-codex-provide-suggestions-for-improvements\update.json
+2026-01-13T15:35:47 Created release v0.1.0
+2026-01-13T15:35:47 Release v0.1.0 uploaded
+2026-01-13T15:36:33 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-13T15:36:33 GitHub CLI available
+2026-01-13T15:36:33 Skipped compile.ps1
+2026-01-13T15:36:33 Copied C:\Users\lewie\Documents\GitHub\SecondChecking-codex-provide-suggestions-for-improvements\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking-codex-provide-suggestions-for-improvements\dist\SecondChecking-0.1.0.exe
+2026-01-13T15:36:33 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking-codex-provide-suggestions-for-improvements\update.json
+2026-01-13T15:36:33 Created release v0.1.0
+2026-01-13T15:36:33 Release v0.1.0 uploaded
+2026-01-13T15:38:14 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-13T15:38:14 GitHub CLI available
+2026-01-13T15:38:14 Skipped compile.ps1
+2026-01-13T15:38:14 Copied C:\Users\lewie\Documents\GitHub\SecondChecking-codex-provide-suggestions-for-improvements\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking-codex-provide-suggestions-for-improvements\dist\SecondChecking-0.1.0.exe
+2026-01-13T15:38:15 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking-codex-provide-suggestions-for-improvements\update.json
+2026-01-13T15:38:15 Created release v0.1.0
+2026-01-13T15:38:15 Release v0.1.0 uploaded
+2026-01-13T15:38:51 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-13T15:38:51 GitHub CLI available
+2026-01-13T15:38:51 Skipped compile.ps1
+2026-01-13T15:38:52 Copied C:\Users\lewie\Documents\GitHub\SecondChecking-codex-provide-suggestions-for-improvements\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking-codex-provide-suggestions-for-improvements\dist\SecondChecking-0.1.0.exe
+2026-01-13T15:38:52 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking-codex-provide-suggestions-for-improvements\update.json
+2026-01-13T15:38:52 Created release v0.1.0
+2026-01-13T15:38:52 Release v0.1.0 uploaded

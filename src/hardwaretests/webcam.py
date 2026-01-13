@@ -5,7 +5,17 @@ import cv2
 import threading
 from utils.helpers import log_event
 
-def run_webcam_test(root, test_results, test_labels, tests_window=None):
+def run_webcam_test(root, test_results, test_labels, tests_window=None, completion_event=None):
+    def finalize(result=None):
+        if result is not None:
+            test_results["webcam"] = result
+            if "webcam_label" in test_labels:
+                test_labels["webcam_label"].config(text="✅" if result == "pass" else "❌")
+            if tests_window and hasattr(tests_window, "update_icon"):
+                tests_window.update_icon("webcam")
+        if completion_event and not completion_event.is_set():
+            completion_event.set()
+
     # Create loading popup
     loading_popup = tk.Toplevel(root)
     loading_popup.title("Loading")
@@ -43,6 +53,7 @@ def run_webcam_test(root, test_results, test_labels, tests_window=None):
             if not available_cams:
                 loading_popup.destroy()
                 tk.messagebox.showerror("Webcam Error", "No camera found.")
+                finalize("fail")
                 return
 
             cap = cv2.VideoCapture(available_cams[0], cv2.CAP_DSHOW)
@@ -94,19 +105,30 @@ def run_webcam_test(root, test_results, test_labels, tests_window=None):
             frame.pack()
 
             def handle_response(result):
-                test_results["webcam"] = result
-                if "webcam_label" in test_labels:
-                    test_labels["webcam_label"].config(text="✅" if result == "pass" else "❌")
-                if tests_window and hasattr(tests_window, "update_icon"):
-                    tests_window.update_icon("webcam")
+                finalize(result)
                 result_window.destroy()
 
             from ttkbootstrap import ttk
             ttk.Button(frame, text="Yes", width=10, style="success.TButton", command=lambda: handle_response("pass")).pack(side="left", padx=5)
-            ttk.Button(frame, text="Retry", width=10, style="info.TButton", command=lambda: [result_window.destroy(), run_webcam_test(root, test_results, test_labels, tests_window)]).pack(side="left", padx=5)
+            ttk.Button(
+                frame,
+                text="Retry",
+                width=10,
+                style="info.TButton",
+                command=lambda: [
+                    result_window.destroy(),
+                    run_webcam_test(
+                        root,
+                        test_results,
+                        test_labels,
+                        tests_window,
+                        completion_event=completion_event,
+                    ),
+                ],
+            ).pack(side="left", padx=5)
             ttk.Button(frame, text="No", width=10, style="danger.TButton", command=lambda: handle_response("fail")).pack(side="left", padx=5)
 
-            result_window.protocol("WM_DELETE_WINDOW", result_window.destroy)
+            result_window.protocol("WM_DELETE_WINDOW", lambda: handle_response("fail"))
 
         window.protocol("WM_DELETE_WINDOW", on_close)
 

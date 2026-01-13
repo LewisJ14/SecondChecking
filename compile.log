@@ -1,0 +1,240 @@
+﻿2025-11-24 13:42:18 Starting compile script (Python=python SkipInstall=False)
+2025-11-24 13:42:18 Installing dependencies via pip.
+2025-11-24 13:42:20 Dependency installation completed.
+2025-11-24 13:42:20 Cleaning dist directory before building.
+2025-11-24 13:43:16 Starting compile script (Python=python SkipInstall=False)
+2025-11-24 13:43:16 Installing dependencies via pip.
+2025-11-24 13:43:18 Dependency installation completed.
+2025-11-24 13:43:18 Cleaning dist directory before building.
+2025-11-24 13:45:07 Starting compile script (Python=python SkipInstall=False)
+2025-11-24 13:45:07 Installing dependencies via pip.
+2025-11-24 13:45:09 Dependency installation completed.
+2025-11-24 13:45:09 Cleaning dist directory before building.
+2025-11-24 13:45:09 Failed to delete dist\main.exe (locked). Attempting to stop running process.
+2025-11-24 13:45:09 Stopped running 'main' process.
+2025-11-24 13:45:10 Removed dist\main.exe after terminating process.
+2025-11-24 13:45:10 Invoking PyInstaller.
+2025-11-24 13:45:50 PyInstaller build completed successfully.
+2025-11-24 13:53:09 Starting compile script (Python=python SkipInstall=False)
+2025-11-24 13:53:09 Installing dependencies via pip.
+2025-11-24 13:53:11 Dependency installation completed.
+2025-11-24 13:53:11 Cleaning dist directory before building.
+2025-11-24 13:53:11 Removed existing dist\main.exe.
+2025-11-24 13:53:11 Invoking PyInstaller.
+2025-11-24 13:53:50 PyInstaller build completed successfully.
+2025-11-24 13:59:05 Starting compile script (Python=python SkipInstall=False)
+2025-11-24 13:59:05 Installing dependencies via pip.
+2025-11-24 13:59:07 Dependency installation completed.
+2025-11-24 13:59:07 Cleaning dist directory before building.
+2025-11-24 13:59:07 Removed existing dist\main.exe.
+2025-11-24 13:59:07 Invoking PyInstaller.
+2025-11-24 13:59:47 PyInstaller build completed successfully.
+2025-11-24 14:03:56 Starting compile script (Python=python SkipInstall=False)
+2025-11-24 14:03:57 Installing dependencies via pip.
+2025-11-24 14:03:58 Dependency installation completed.
+2025-11-24 14:03:58 Cleaning dist directory before building.
+2025-11-24 14:03:58 Failed to delete dist\main.exe (locked). Attempting to stop running process.
+2025-11-24 14:03:58 Stopped running 'main' process.
+2025-11-24 14:03:59 Removed dist\main.exe after terminating process.
+2025-11-24 14:03:59 Invoking PyInstaller.
+2025-11-24 14:04:39 PyInstaller build completed successfully.
+2025-11-24 14:20:17 Starting compile script (Python=python SkipInstall=False)
+2025-11-24 14:20:17 Installing dependencies via pip.
+2025-11-24 14:20:19 Dependency installation completed.
+2025-11-24 14:20:19 Cleaning dist directory before building.
+2025-11-24 14:20:19 Removed existing dist\main.exe.
+2025-11-24 14:20:19 Invoking PyInstaller.
+2025-11-24 14:20:58 PyInstaller build completed successfully.
+2025-11-24 14:22:39 Starting compile script (Python=python SkipInstall=False)
+2025-11-24 14:22:39 Installing dependencies via pip.
+2025-11-24 14:22:41 Dependency installation completed.
+2025-11-24 14:22:41 Cleaning dist directory before building.
+2025-11-24 14:22:41 Invoking PyInstaller.
+2025-11-24 14:23:20 PyInstaller build completed successfully.
+2025-11-24 14:35:09 Starting compile script (Python=python SkipInstall=False)
+2025-11-24 14:35:09 Installing dependencies via pip.
+2025-11-24 14:35:11 Dependency installation completed.
+2025-11-24 14:35:11 Cleaning dist directory before building.
+2025-11-24 14:35:11 Removed existing dist\main.exe.
+2025-11-24 14:35:11 Invoking PyInstaller.
+2025-11-24 14:35:50 PyInstaller build completed successfully.
+2025-11-24 14:52:12 Starting compile script (Python=python SkipInstall=False)
+2025-11-24 14:52:12 Installing dependencies via pip.
+2025-11-24 14:52:14 Dependency installation completed.
+2025-11-24 14:52:14 Cleaning dist directory before building.
+2025-11-24 14:52:14 Removed existing dist\main.exe.
+2025-11-24 14:52:14 Invoking PyInstaller.
+2025-11-24 14:52:54 PyInstaller build completed successfully.
+2025-11-24 14:54:59 Starting compile script (Python=python SkipInstall=False)
+2025-11-24 14:54:59 Installing dependencies via pip.
+2025-11-24 14:55:02 Dependency installation completed.
+2025-11-24 14:55:02 Cleaning dist directory before building.
+2025-11-24 14:55:02 Removed existing dist\main.exe.
+2025-11-24 14:55:02 Invoking PyInstaller.
+2025-11-24 14:55:42 PyInstaller build completed successfully.
+2025-11-24 15:00:39 Starting compile script (Python=python SkipInstall=False)
+2025-11-24 15:00:39 Installing dependencies via pip.
+2025-11-24 15:00:41 Dependency installation completed.
+2025-11-24 15:00:41 Cleaning dist directory before building.
+2025-11-24 15:00:41 Removed existing dist\main.exe.
+2025-11-24 15:00:41 Invoking PyInstaller.
+2025-11-24 15:01:21 PyInstaller build completed successfully.
+2025-11-24 15:22:08 Starting compile script (Python=python SkipInstall=False)
+2025-11-24 15:22:08 Installing dependencies via pip.
+2025-11-24 15:22:10 Dependency installation completed.
+2025-11-24 15:22:10 Cleaning dist directory before building.
+2025-11-24 15:22:10 Removed existing dist\main.exe.
+2025-11-24 15:22:10 Invoking PyInstaller.
+2025-11-24 15:22:50 PyInstaller build completed successfully.
+2025-11-24 15:44:31 Starting compile script (Python=python SkipInstall=False)
+2025-11-24 15:44:31 Installing dependencies via pip.
+2025-11-24 15:44:33 Dependency installation completed.
+2025-11-24 15:44:33 Cleaning dist directory before building.
+2025-11-24 15:44:33 Removed existing dist\main.exe.
+2025-11-24 15:44:33 Invoking PyInstaller.
+2025-11-24 15:45:15 PyInstaller build completed successfully.
+2025-11-25 11:42:50 Starting compile script (Python=python SkipInstall=False)
+2025-11-25 11:42:50 Installing dependencies via pip.
+2025-11-25 11:42:58 Dependency installation completed.
+2025-11-25 11:42:58 Cleaning dist directory before building.
+2025-11-25 11:42:58 Invoking PyInstaller.
+2025-11-25 11:43:55 PyInstaller build completed successfully.
+2025-11-25 11:59:59 Starting compile script (Python=python SkipInstall=False)
+2025-11-25 11:59:59 Installing dependencies via pip.
+2025-11-25 12:00:00 Dependency installation completed.
+2025-11-25 12:00:00 Cleaning dist directory before building.
+2025-11-25 12:00:00 Removed existing dist\main.exe.
+2025-11-25 12:00:00 Invoking PyInstaller.
+2025-11-25 12:00:41 PyInstaller build completed successfully.
+2025-11-25 12:04:13 Starting compile script (Python=python SkipInstall=False)
+2025-11-25 12:04:13 Installing dependencies via pip.
+2025-11-25 12:04:15 Dependency installation completed.
+2025-11-25 12:04:15 Cleaning dist directory before building.
+2025-11-25 12:04:15 Invoking PyInstaller.
+2025-11-25 12:04:55 PyInstaller build completed successfully.
+2025-11-25 12:06:19 Starting compile script (Python=python SkipInstall=False)
+2025-11-25 12:06:19 Installing dependencies via pip.
+2025-11-25 12:06:21 Dependency installation completed.
+2025-11-25 12:06:21 Cleaning dist directory before building.
+2025-11-25 12:06:21 Removed existing dist\main.exe.
+2025-11-25 12:06:21 Invoking PyInstaller.
+2025-11-25 12:07:01 PyInstaller build completed successfully.
+2025-11-25 12:08:50 Starting compile script (Python=python SkipInstall=False)
+2025-11-25 12:08:50 Installing dependencies via pip.
+2025-11-25 12:08:53 Dependency installation completed.
+2025-11-25 12:08:53 Cleaning dist directory before building.
+2025-11-25 12:08:53 Removed existing dist\main.exe.
+2025-11-25 12:08:53 Invoking PyInstaller.
+2025-11-25 12:09:33 PyInstaller build completed successfully.
+2025-11-25 12:18:03 Starting compile script (Python=python SkipInstall=False)
+2025-11-25 12:18:03 Installing dependencies via pip.
+2025-11-25 12:18:04 Dependency installation completed.
+2025-11-25 12:18:04 Cleaning dist directory before building.
+2025-11-25 12:18:04 Removed existing dist\main.exe.
+2025-11-25 12:18:04 Invoking PyInstaller.
+2025-11-25 12:18:44 PyInstaller build completed successfully.
+2025-11-25 13:20:55 Starting compile script (Python=python SkipInstall=False)
+2025-11-25 13:20:55 Installing dependencies via pip.
+2025-11-25 13:20:57 Dependency installation completed.
+2025-11-25 13:20:57 Cleaning dist directory before building.
+2025-11-25 13:20:57 Removed existing dist\main.exe.
+2025-11-25 13:20:57 Invoking PyInstaller.
+2025-11-25 13:21:37 PyInstaller build completed successfully.
+2025-11-25 14:52:16 Starting compile script (Python=python SkipInstall=False)
+2025-11-25 14:52:16 Installing dependencies via pip.
+2025-11-25 14:52:18 Dependency installation completed.
+2025-11-25 14:52:18 Cleaning dist directory before building.
+2025-11-25 14:52:18 Removed existing dist\main.exe.
+2025-11-25 14:52:18 Invoking PyInstaller.
+2025-11-25 14:53:02 PyInstaller build completed successfully.
+2025-11-25 15:24:51 Starting compile script (Python=python SkipInstall=False)
+2025-11-25 15:24:51 Installing dependencies via pip.
+2025-11-25 15:24:53 Dependency installation completed.
+2025-11-25 15:24:53 Cleaning dist directory before building.
+2025-11-25 15:24:53 Removed existing dist\main.exe.
+2025-11-25 15:24:53 Invoking PyInstaller.
+2025-11-25 15:25:34 PyInstaller build completed successfully.
+2025-11-25 15:31:12 Starting compile script (Python=python SkipInstall=False)
+2025-11-25 15:31:12 Installing dependencies via pip.
+2025-11-25 15:31:14 Dependency installation completed.
+2025-11-25 15:31:14 Cleaning dist directory before building.
+2025-11-25 15:31:14 Removed existing dist\main.exe.
+2025-11-25 15:31:14 Invoking PyInstaller.
+2025-11-25 15:31:56 PyInstaller build completed successfully.
+2025-11-25 15:35:00 Starting compile script (Python=python SkipInstall=False)
+2025-11-25 15:35:00 Installing dependencies via pip.
+2025-11-25 15:35:02 Dependency installation completed.
+2025-11-25 15:35:02 Cleaning dist directory before building.
+2025-11-25 15:35:02 Removed existing dist\main.exe.
+2025-11-25 15:35:02 Invoking PyInstaller.
+2025-11-25 15:35:43 PyInstaller build completed successfully.
+2025-11-26 10:16:09 Starting compile script (Python=python SkipInstall=False)
+2025-11-26 10:16:09 Installing dependencies via pip.
+2025-11-26 10:16:17 Dependency installation completed.
+2025-11-26 10:16:17 Cleaning dist directory before building.
+2025-11-26 10:16:17 Removed existing dist\main.exe.
+2025-11-26 10:16:17 Invoking PyInstaller.
+2025-11-26 10:17:06 PyInstaller build completed successfully.
+2025-11-26 10:24:58 Starting compile script (Python=python SkipInstall=False)
+2025-11-26 10:24:58 Installing dependencies via pip.
+2025-11-26 10:25:00 Dependency installation completed.
+2025-11-26 10:25:00 Cleaning dist directory before building.
+2025-11-26 10:25:00 Removed existing dist\main.exe.
+2025-11-26 10:25:00 Invoking PyInstaller.
+2025-11-26 10:25:32 PyInstaller build completed successfully.
+2025-11-26 10:27:33 Starting compile script (Python=python SkipInstall=False)
+2025-11-26 10:27:33 Installing dependencies via pip.
+2025-11-26 10:27:35 Dependency installation completed.
+2025-11-26 10:27:35 Cleaning dist directory before building.
+2025-11-26 10:27:35 Removed existing dist\main.exe.
+2025-11-26 10:27:35 Invoking PyInstaller.
+2025-11-26 10:28:06 PyInstaller build completed successfully.
+2025-11-26 10:29:25 Starting compile script (Python=python SkipInstall=False)
+2025-11-26 10:29:25 Installing dependencies via pip.
+2025-11-26 10:29:28 Dependency installation completed.
+2025-11-26 10:29:28 Cleaning dist directory before building.
+2025-11-26 10:29:28 Removed existing dist\main.exe.
+2025-11-26 10:29:28 Invoking PyInstaller.
+2025-11-26 10:29:58 PyInstaller build completed successfully.
+2025-11-26 10:33:05 Starting compile script (Python=python SkipInstall=False)
+2025-11-26 10:33:05 Installing dependencies via pip.
+2025-11-26 10:33:08 Dependency installation completed.
+2025-11-26 10:33:08 Cleaning dist directory before building.
+2025-11-26 10:33:08 Removed existing dist\main.exe.
+2025-11-26 10:33:08 Invoking PyInstaller.
+2025-11-26 10:34:05 PyInstaller build completed successfully.
+2025-11-26 10:55:29 Starting compile script (Python=python SkipInstall=False)
+2025-11-26 10:55:29 Installing dependencies via pip.
+2025-11-26 10:55:31 Dependency installation completed.
+2025-11-26 10:55:31 Cleaning dist directory before building.
+2025-11-26 10:55:31 Removed existing dist\main.exe.
+2025-11-26 10:55:31 Invoking PyInstaller.
+2025-11-26 10:56:12 PyInstaller build completed successfully.
+2025-11-26 11:03:35 Starting compile script (Python=python SkipInstall=False)
+2025-11-26 11:03:35 Installing dependencies via pip.
+2025-11-26 11:03:37 Dependency installation completed.
+2025-11-26 11:03:37 Cleaning dist directory before building.
+2025-11-26 11:03:37 Failed to delete dist\main.exe (locked). Attempting to stop running process.
+2025-11-26 11:03:37 Stopped running 'main' process.
+2025-11-26 11:03:38 Removed dist\main.exe after terminating process.
+2025-11-26 11:03:38 Invoking PyInstaller.
+2025-11-26 11:04:20 PyInstaller build completed successfully.
+2025-12-08 14:47:28 Starting compile script (Python=python SkipInstall=False)
+2025-12-08 14:47:28 Installing dependencies via pip.
+2025-12-08 14:47:36 Dependency installation completed.
+2025-12-08 14:47:36 Cleaning dist directory before building.
+2025-12-08 14:47:36 Removed existing dist\main.exe.
+2025-12-08 14:47:36 Invoking PyInstaller.
+2025-12-08 14:48:31 PyInstaller build completed successfully.
+2026-01-13 11:23:20 Starting compile script (Python=python SkipInstall=False)
+2026-01-13 11:23:20 Installing dependencies via pip.
+2026-01-13 11:23:28 Dependency installation completed.
+2026-01-13 11:23:28 Cleaning dist directory before building.
+2026-01-13 11:23:28 Removed existing dist\main.exe.
+2026-01-13 11:23:28 Invoking PyInstaller.
+2026-01-13 11:24:26 PyInstaller build completed successfully.
+2026-01-13 15:31:47 Starting compile script (Python=python SkipInstall=True)
+2026-01-13 15:31:47 Cleaning dist directory before building.
+2026-01-13 15:31:47 Removed existing dist\main.exe.
+2026-01-13 15:31:47 Invoking PyInstaller.
+2026-01-13 15:32:40 PyInstaller build completed successfully.

@@ -3,6 +3,8 @@ import threading
 import tkinter as tk
 import wmi
 from tkinter import messagebox
+from typing import Dict, List, Optional, Tuple
+
 from db.database import get_db_connection
 from utils.helpers import (
     log_event,
@@ -11,14 +13,145 @@ from utils.helpers import (
     parse_percent,
     check_mdm_lock_status,
     check_activation_status,
+    is_battery_charging,
 )
 from utils.specs import get_laptop_specs
 from logic.view_serials_logic import open_serial_viewer
 import traceback
 import ttkbootstrap as tb
 from ttkbootstrap import ttk
-import requests
-import os
+
+
+ORDER_NUMBER_SQL = "LPAD(COALESCE(local_id, id), 5, '0')"
+
+
+def resolve_order_identity(cursor, order_reference: str) -> Optional[Tuple[int, str]]:
+    """Return the database id and display order number for a given reference."""
+
+    if order_reference is None:
+        return None
+
+    trimmed_reference = order_reference.strip()
+    if not trimmed_reference:
+        return None
+
+    conditions = ["external_id = %s", f"{ORDER_NUMBER_SQL} = %s"]
+    params = [trimmed_reference, trimmed_reference]
+
+    if trimmed_reference.isdigit():
+        conditions.append("CAST(local_id AS CHAR) = %s")
+        params.append(trimmed_reference)
+        conditions.append("CAST(id AS CHAR) = %s")
+        params.append(trimmed_reference)
+
+    where_clause = " OR ".join(f"({clause})" for clause in conditions)
+    cursor.execute(
+        f"""
+            SELECT id, {ORDER_NUMBER_SQL} AS order_number
+            FROM `order`
+            WHERE {where_clause}
+            LIMIT 1
+        """,
+        params,
+    )
+    row = cursor.fetchone()
+    if not row:
+        return None
+
+    order_id, order_number = row
+    if isinstance(order_number, (bytes, bytearray)):
+        order_number_str = order_number.decode("utf-8")
+    else:
+        order_number_str = str(order_number)
+    return int(order_id), order_number_str
+
+
+def normalise_test_result(value: Optional[str]) -> str:
+    """Convert UI test labels to the canonical database value."""
+
+    if not value:
+        return "n/a"
+
+    lowered = value.strip().lower()
+    if lowered in {"pass", "fail"}:
+        return lowered
+    if lowered in {"n/a", "na", "not run", "not_run", "pending"}:
+        return "n/a"
+    return "n/a"
+
+
+def prompt_for_sku_selection(root: tk.Tk, sku_options: List[str]) -> Optional[str]:
+    """Display a modal prompt so the user can choose which SKU to process."""
+
+    unique_options: List[str] = []
+    seen = set()
+    for option in sku_options:
+        if not option:
+            continue
+        candidate = option.strip()
+        if not candidate or candidate in seen:
+            continue
+        seen.add(candidate)
+        unique_options.append(candidate)
+
+    if not unique_options:
+        return None
+    if len(unique_options) == 1:
+        return unique_options[0]
+
+    selection_event = threading.Event()
+    selection: Dict[str, Optional[str]] = {"value": None}
+    dialog_holder: Dict[str, tk.Toplevel] = {}
+
+    def close_dialog(value: Optional[str]) -> None:
+        selection["value"] = value
+        selection_event.set()
+        dialog = dialog_holder.get("dialog")
+        if dialog is not None:
+            dialog.destroy()
+
+    def show_dialog() -> None:
+        dialog = tk.Toplevel(root)
+        dialog_holder["dialog"] = dialog
+        dialog.title("Select SKU")
+        dialog.transient(root)
+        dialog.grab_set()
+
+        ttk.Label(
+            dialog,
+            text="Multiple SKUs were found for this order.\nSelect the one you want to process:",
+            anchor="center",
+            justify="center",
+        ).pack(padx=20, pady=(20, 10))
+
+        for option in unique_options:
+            ttk.Button(
+                dialog,
+                text=option,
+                command=lambda value=option: close_dialog(value),
+                style="secondary.TButton",
+            ).pack(fill="x", padx=20, pady=4)
+
+        ttk.Button(dialog, text="Cancel", command=lambda: close_dialog(None)).pack(padx=20, pady=(10, 20))
+        dialog.protocol("WM_DELETE_WINDOW", lambda: close_dialog(None))
+
+        dialog.update_idletasks()
+        try:
+            root_x = root.winfo_rootx()
+            root_y = root.winfo_rooty()
+            root_width = root.winfo_width() or dialog.winfo_width()
+            root_height = root.winfo_height() or dialog.winfo_height()
+            dialog_width = dialog.winfo_width()
+            dialog_height = dialog.winfo_height()
+            pos_x = root_x + max(0, (root_width - dialog_width) // 2)
+            pos_y = root_y + max(0, (root_height - dialog_height) // 2)
+            dialog.geometry(f"+{pos_x}+{pos_y}")
+        except Exception:
+            dialog.geometry("+200+200")
+
+    root.after(0, show_dialog)
+    selection_event.wait()
+    return selection["value"]
 
 # Store the initial battery level
 initial_battery_level = get_live_battery_percent()
@@ -32,83 +165,43 @@ except Exception as e:
     log_event(f"Error detecting batteries: {e}")
     battery_labels = ["Battery"]  # fallback to just one label
 
-_wmi_instance = None  # Cache WMI instance
-
 def battery_charging_status(index: int = 0) -> bool:
-    global _wmi_instance
+    """Return True when the specified battery reports an active charging state."""
+
     try:
-        if _wmi_instance is None:
-            _wmi_instance = wmi.WMI()
-        batteries = _wmi_instance.Win32_Battery()
-        if index < len(batteries):
-            return batteries[index].BatteryStatus in [2, 6]  # 2 = Charging, 6 = Charging and High
-    except Exception as e:
-        log_event(f"Error checking battery charging status: {e}")
-    return False
+        return is_battery_charging(index)
+    except Exception as exc:  # noqa: BLE001 - defensive logging path
+        log_event(f"Error checking battery charging status: {exc}")
+        return False
 
 
-def get_sku_from_db(cursor, order_id):
-    cursor.execute("SELECT sku FROM orders WHERE order_number = %s", (order_id,))
-    return cursor.fetchall()
+def get_sku_from_db(cursor, order_reference):
+    """Fetch SKUs for an order along with its canonical display number."""
 
+    identity = resolve_order_identity(cursor, order_reference)
+    if not identity:
+        return None, []
 
-def get_sku_from_woocommerce(order_id):
-    try:
-        from utils.helpers import load_config, get_config_path
-        config = load_config()
-        config_path = get_config_path()
-        log_event(f"Loaded config.ini from: {config_path}")
-    except Exception as config_err:
-        log_event(f"Error loading config.ini: {config_err}")
-        msg = f"Error loading config.ini:\n{config_err}"
-        return None, msg
+    order_db_id, order_number = identity
+    cursor.execute("SELECT sku FROM `order` WHERE id = %s", (order_db_id,))
 
-    wc_url = os.getenv('WC_URL', config.get('woocommerce', 'url', fallback=None))
-    wc_consumer_key = os.getenv('WC_CONSUMER_KEY', config.get('woocommerce', 'consumer_key', fallback=None))
-    wc_consumer_secret = os.getenv('WC_CONSUMER_SECRET', config.get('woocommerce', 'consumer_secret', fallback=None))
-    log_event(
-        f"WooCommerce config loaded: url={wc_url}, consumer_key={'set' if wc_consumer_key else 'missing'}, consumer_secret={'set' if wc_consumer_secret else 'missing'}"
-    )
+    sku_options: List[str] = []
+    seen = set()
+    for (raw_value,) in cursor.fetchall():
+        if raw_value is None:
+            continue
+        if isinstance(raw_value, (bytes, bytearray)):
+            decoded = raw_value.decode("utf-8", errors="ignore")
+        else:
+            decoded = str(raw_value)
+        for part in decoded.split(","):
+            candidate = part.strip()
+            if not candidate or candidate in seen:
+                continue
+            seen.add(candidate)
+            sku_options.append(candidate)
 
-    if not (wc_url and wc_consumer_key and wc_consumer_secret):
-        return None, "WooCommerce API credentials missing in config or environment."
-
-    params = {"search": order_id}
-    headers = {"User-Agent": "Mozilla/5.0"}
-    log_event(f"Request headers: {headers}")
-    log_event(f"Request URL: {wc_url} | Params: {params}")
-    try:
-        response = requests.get(
-            wc_url,
-            params=params,
-            auth=(wc_consumer_key, wc_consumer_secret),
-            headers=headers,
-            timeout=10,
-        )
-        log_event(f"WooCommerce API response status: {response.status_code}")
-        log_event(f"WooCommerce API final URL: {response.url}")
-        response.raise_for_status()
-        wc_orders = response.json()
-        log_event(
-            f"WooCommerce API returned {len(wc_orders) if isinstance(wc_orders, list) else 'unknown'} orders"
-        )
-        log_event(f"WooCommerce API raw response: {wc_orders}")
-        if wc_orders:
-            line_items = wc_orders[0].get("line_items", [])
-            for item in line_items:
-                if item.get("sku"):
-                    return item["sku"], None
-        return None, f"Order not found in WooCommerce for Order Number: {order_id}"
-    except Exception as wc_err:
-        log_event(f"Error searching WooCommerce: {wc_err}\n{traceback.format_exc()}")
-        if hasattr(wc_err, 'response') and wc_err.response is not None:
-            try:
-                log_event(
-                    f"WooCommerce error response content: {wc_err.response.content.decode('utf-8', errors='replace')}"
-                )
-            except Exception as decode_err:
-                log_event(f"Could not decode error response content: {decode_err}")
-        return None, f"Error searching WooCommerce:\n{wc_err}"
+    return (order_db_id, order_number), sku_options
 
 
 def load_laptop_specs():
@@ -133,7 +226,7 @@ def load_laptop_specs():
 def load_test_results(cursor, order_id, serial_number):
     cursor.execute(
         """
-            SELECT test_keyboard, test_speaker, test_display, test_webcam, test_usb
+            SELECT test_keyboard, test_speaker, test_microphone, test_display, test_webcam, test_usb
             FROM order_serials
             WHERE order_number = %s AND serial_number = %s
         """,
@@ -141,19 +234,33 @@ def load_test_results(cursor, order_id, serial_number):
     )
     row = cursor.fetchone()
     if row:
+        def to_ui_value(value: Optional[str]) -> str:
+            if not value:
+                return "Not Run"
+            lowered = value.strip().lower()
+            if lowered == "pass":
+                return "pass"
+            if lowered == "fail":
+                return "fail"
+            if lowered in {"n/a", "na"}:
+                return "Not Run"
+            return value
+
         return {
-            "keyboard": row[0],
-            "speaker": row[1],
-            "display": row[2],
-            "webcam": row[3],
-            "usb": row[4],
+            "keyboard": to_ui_value(row[0]),
+            "speaker": to_ui_value(row[1]),
+            "microphone": to_ui_value(row[2]),
+            "display": to_ui_value(row[3]),
+            "webcam": to_ui_value(row[4]),
+            "usb": to_ui_value(row[5]),
         }
     return {
-        "keyboard": "N/A",
-        "speaker": "N/A",
-        "display": "N/A",
-        "webcam": "N/A",
-        "usb": "N/A",
+        "keyboard": "Not Run",
+        "speaker": "Not Run",
+        "microphone": "Not Run",
+        "display": "Not Run",
+        "webcam": "Not Run",
+        "usb": "Not Run",
     }
 
 
@@ -166,6 +273,8 @@ def render_results(
     details,
     test_results,
     mdm_status,
+    assigned_by,
+    show_serial_controls: bool,
     root,
 ):
     canvas.delete("all")
@@ -182,21 +291,31 @@ def render_results(
     canvas.create_text(center_x, 20, text=f"🔍 SKU: {sku}", font=("Arial", 14, "bold"), anchor="center")
     canvas.create_text(center_x, 40, text=f"Serial: {serial_number}", font=("Arial", 10, "bold"), anchor="center")
 
-    assign_button = ttk.Button(
-        canvas,
-        text="Assign Serial",
-        style="success.TButton",
-        command=lambda: assign_serial_logic(order_id, serial_number, laptop_specs, test_results, root),
-    )
-    canvas.create_window(center_x + 90, 40, window=assign_button, anchor="w")
+    if show_serial_controls:
+        assign_button = ttk.Button(
+            canvas,
+            text="Assign Serial",
+            style="success.TButton",
+            command=lambda: assign_serial_logic(
+                order_id,
+                serial_number,
+                laptop_specs,
+                test_results,
+                sku,
+                mdm_status,
+                assigned_by,
+                root,
+            ),
+        )
+        canvas.create_window(center_x + 90, 40, window=assign_button, anchor="w")
 
-    view_serials_button = ttk.Button(
-        canvas,
-        text="View Serials",
-        style="info.TButton",
-        command=lambda: open_serial_viewer(order_id),
-    )
-    canvas.create_window(center_x + 200, 40, window=view_serials_button, anchor="w")
+        view_serials_button = ttk.Button(
+            canvas,
+            text="View Serials",
+            style="info.TButton",
+            command=lambda: open_serial_viewer(order_id),
+        )
+        canvas.create_window(center_x + 200, 40, window=view_serials_button, anchor="w")
 
     col_spec = 0.165
     col_sku = 0.45
@@ -341,6 +460,13 @@ def render_results(
             bar_x + bar_width // 2, bar_y + bar_height // 2, text=display_text, fill="black", font=("Arial", 10, "bold"), tags=tag
         )
 
+    existing_animation = getattr(canvas, "_battery_animation_id", None)
+    if existing_animation:
+        try:
+            canvas.after_cancel(existing_animation)
+        except Exception:  # pragma: no cover - defensive
+            pass
+
     def animate():
         if len(battery_labels) == 1:
             percent = get_live_battery_percent()
@@ -357,7 +483,7 @@ def render_results(
             draw_battery_bar(10, battery_base_y + 30, battery_labels[1], percent2 or "NONE", charging2, "battery_bar2")
 
         pulse_index[0] = (pulse_index[0] + 1) % (pulse_ticks + 1)
-        canvas.after(150, animate)
+        canvas._battery_animation_id = canvas.after(150, animate)
 
     animate()
 
@@ -368,6 +494,7 @@ def search_order_logic(
     test_results: dict,
     test_labels: dict,
     root: tk.Tk,
+    assigned_by: Optional[str] = None,
 ) -> None:
     """Search for an order, compare laptop specs, and update the UI."""
     log_event(f"Starting search for order ID: {order_id}")
@@ -380,44 +507,75 @@ def search_order_logic(
                     return
 
                 cursor = conn.cursor()
-                rows = get_sku_from_db(cursor, order_id)
-                log_event(f"Fetched {len(rows)} rows for order ID: {order_id}")
+                identity, sku_options = get_sku_from_db(cursor, order_id)
+                if not identity:
+                    log_event(f"Order {order_id} not found in consolidated database.")
+                    root.after(
+                        0,
+                        lambda: messagebox.showerror(
+                            "Order Not Found",
+                            f"No order matching '{order_id}' was found in the consolidated order table.",
+                        ),
+                    )
+                    return
 
-                if not rows:
-                    log_event(f"No SKUs found for order ID: {order_id}, checking WooCommerce...")
-                    sku, error = get_sku_from_woocommerce(order_id)
-                    if error:
-                        root.after(0, lambda: messagebox.showerror("WooCommerce Error", error))
-                        return
-                    rows = [(sku,)]
+                db_order_id, order_number = identity
+                log_event(
+                    f"Fetched {len(sku_options)} SKU candidates for order {order_number} (id={db_order_id})."
+                )
+
+                if not sku_options:
+                    root.after(
+                        0,
+                        lambda: messagebox.showerror(
+                            "Order Missing Items",
+                            f"Order '{order_number}' does not have any SKUs recorded in the database.",
+                        ),
+                    )
+                    return
+
+                selected_sku = prompt_for_sku_selection(root, sku_options)
+                if not selected_sku:
+                    log_event(
+                        f"User cancelled SKU selection for order {order_number} (candidates={sku_options})."
+                    )
+                    root.after(
+                        0,
+                        lambda: messagebox.showinfo(
+                            "Selection Cancelled",
+                            "No SKU was selected. Please search again when you are ready to continue.",
+                        ),
+                    )
+                    return
 
                 laptop_specs = load_laptop_specs()
                 serial_number = laptop_specs.get("Serial Number", "Unknown")
 
-                test_results.update(load_test_results(cursor, order_id, serial_number))
+                test_results.update(load_test_results(cursor, order_number, serial_number))
                 test_results["activation"] = "pass" if check_activation_status() else "fail"
                 log_event(
-                    f"[DEBUG] test_results['activation'] set to: {test_results['activation']} for order {order_id}"
+                    f"[DEBUG] test_results['activation'] set to: {test_results['activation']} for order {order_number}"
                 )
 
-                sku = rows[0][0]
-                log_event(f"Processing SKU: {sku}")
-                details = extract_details_from_sku(sku)
+                log_event(f"Processing SKU: {selected_sku}")
+                details = extract_details_from_sku(selected_sku)
                 mdm_status = check_mdm_lock_status()
 
                 root.after(
                     0,
-                    lambda: render_results(
-                        canvas,
-                        order_id,
-                        sku,
-                        serial_number,
-                        laptop_specs,
-                        details,
-                        test_results,
-                        mdm_status,
-                        root,
-                    ),
+                lambda: render_results(
+                    canvas,
+                    order_number,
+                    selected_sku,
+                    serial_number,
+                    laptop_specs,
+                    details,
+                    test_results,
+                    mdm_status,
+                    assigned_by,
+                    True,
+                    root,
+                ),
                 )
 
         except Exception as err:
@@ -433,7 +591,10 @@ def assign_serial_logic(
     serial_number: str,
     specs: dict,
     test_results: dict,
-    root: tk.Tk
+    sku: str,
+    mdm_status: Optional[Dict[str, str]],
+    assigned_by: Optional[str],
+    root: tk.Tk,
 ) -> None:
     """
     Assign a serial number to an order and update test results.
@@ -444,6 +605,31 @@ def assign_serial_logic(
             messagebox.showerror("Input Error", "Order number and serial number must be provided.")
             return
 
+        test_keys = ["keyboard", "speaker", "microphone", "display", "webcam", "usb"]
+        incomplete = [
+            key.replace("_", " ").title()
+            for key in test_keys
+            if normalise_test_result(test_results.get(key)) == "n/a"
+        ]
+        mdm_locked = mdm_status and mdm_status.get("state") == "locked"
+
+        warning_lines = []
+        if incomplete:
+            warning_lines.append(f"The following tests are incomplete: {', '.join(incomplete)}.")
+        if mdm_locked:
+            mdm_details = mdm_status.get("details") if mdm_status else ""
+            detail_text = f" {mdm_details}" if mdm_details else ""
+            warning_lines.append(f"Microsoft MDM lock detected.{detail_text}")
+
+        if warning_lines:
+            warn_message = (
+                "There are outstanding issues before assigning this serial:\n"
+                + "\n".join(warning_lines)
+                + "\n\nPress OK to continue or Cancel to abort."
+            )
+            if not messagebox.askokcancel("Confirm Assignment", warn_message):
+                return
+
         conn = get_db_connection()
         if not conn:
             messagebox.showerror("Database Error", "Could not connect to the database.")
@@ -451,20 +637,16 @@ def assign_serial_logic(
 
         cursor = conn.cursor()
 
-        # Check if order exists in ebay_orders
-        cursor.execute("SELECT 1 FROM orders WHERE order_number = %s", (order_number,))
-        in_ebay_orders = cursor.fetchone() is not None
+        identity = resolve_order_identity(cursor, order_number)
+        if not identity:
+            messagebox.showerror(
+                "Order Not Found",
+                f"Order '{order_number}' could not be found in the consolidated order table.",
+            )
+            return
 
-        # If not in ebay_orders, add to website_orders if not already present
-        if not in_ebay_orders:
-            cursor.execute("SELECT 1 FROM website_orders WHERE order_number = %s", (order_number,))
-            in_website_orders = cursor.fetchone() is not None
-            if not in_website_orders:
-                # Insert minimal info; you can expand columns as needed
-                cursor.execute(
-                    "INSERT INTO website_orders (order_number, sku) VALUES (%s, %s)",
-                    (order_number, specs.get("SKU", ""))
-                )
+        order_db_id, canonical_order_number = identity
+        order_number = canonical_order_number
 
         cursor.execute("SELECT order_number FROM order_serials WHERE serial_number = %s", (serial_number,))
         existing = cursor.fetchall()
@@ -479,23 +661,52 @@ def assign_serial_logic(
                 return
             cursor.execute("DELETE FROM order_serials WHERE serial_number = %s", (serial_number,))
 
-        cursor.execute("""
-            INSERT INTO order_serials (
-                order_number, serial_number, cpu, ram, ssd, model, resolution, windows, battery,
-                test_keyboard, test_speaker, test_display, test_webcam, test_usb, activation
-            ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                %s, %s, %s, %s, %s, %s
-            )
-        """, (
-            order_number, serial_number,
-            specs.get("CPU", ""), specs.get("RAM", ""), specs.get("SSD", ""), specs.get("Model", ""),
-            specs.get("Resolution", ""), specs.get("Windows", ""), specs.get("Battery", ""),
-            test_results.get("keyboard", ""), test_results.get("speaker", ""), test_results.get("display", ""),
-            test_results.get("webcam", ""), test_results.get("usb", ""), test_results.get("activation", "")
-        ))
+        sku_value = sku or ""
+        mdm_state = mdm_status.get("state") if mdm_status else None
+        mdm_details = mdm_status.get("details") if mdm_status else None
+
+        cursor.execute(
+            """
+                INSERT INTO order_serials (
+                    order_id, order_number, serial_number, sku, cpu, ram, ssd, model, resolution, windows, battery, battery2,
+                    test_keyboard, test_speaker, test_microphone, test_display, test_webcam, test_usb, activation,
+                    mdm_state, mdm_details, assigned_by
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                )
+            """,
+            (
+                order_db_id,
+                order_number,
+                serial_number,
+                sku_value,
+                specs.get("CPU", ""),
+                specs.get("RAM", ""),
+                specs.get("SSD", ""),
+                specs.get("Model", ""),
+                specs.get("Resolution", ""),
+                specs.get("Windows", ""),
+                specs.get("Battery", ""),
+                specs.get("Battery 2", ""),
+                normalise_test_result(test_results.get("keyboard")),
+                normalise_test_result(test_results.get("speaker")),
+                normalise_test_result(test_results.get("microphone")),
+                normalise_test_result(test_results.get("display")),
+                normalise_test_result(test_results.get("webcam")),
+                normalise_test_result(test_results.get("usb")),
+                normalise_test_result(test_results.get("activation")),
+                mdm_state,
+                mdm_details,
+                assigned_by,
+            ),
+        )
         conn.commit()
-        messagebox.showinfo("Success", f"Serial '{serial_number}' assigned to order '{order_number}'.")
+        user_text = f" by '{assigned_by}'" if assigned_by else ""
+        messagebox.showinfo(
+            "Success",
+            f"Serial '{serial_number}' (SKU '{sku_value or 'Unknown'}') assigned to order '{order_number}'{user_text}.",
+        )
     except Exception as e:
         if conn:
             conn.rollback()

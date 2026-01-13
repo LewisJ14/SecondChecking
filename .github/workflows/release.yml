@@ -1,0 +1,86 @@
+name: Build Release Package
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    name: Package and publish release assets
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install Python dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Build executable bundle
+        shell: pwsh
+        run: ./compile.ps1 -SkipInstall
+
+      - name: Prepare release artifacts
+        id: prepare
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_BODY: ${{ github.event.release.body }}
+          RELEASE_NAME: ${{ github.event.release.name }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          $version = python -c "from version import __version__; print(__version__)"
+          $exeName = "SecondChecking-$version.exe"
+          $sourceExe = Join-Path $PWD "dist/main.exe"
+          $targetExe = Join-Path $PWD ("dist/$exeName")
+          if (-not (Test-Path $sourceExe)) {
+            throw "Expected build output at $sourceExe"
+          }
+          Copy-Item -Path $sourceExe -Destination $targetExe -Force
+
+          $notes = $env:RELEASE_BODY
+          if ($null -eq $notes) {
+            $notes = ""
+          }
+
+          $manifest = @{
+            version = $version
+            download_url = "https://github.com/$env:REPOSITORY/releases/download/$env:RELEASE_TAG/$exeName"
+            release_page = "https://github.com/$env:REPOSITORY/releases/tag/$env:RELEASE_TAG"
+            notes = $notes
+            metadata = @{
+              tag = $env:RELEASE_TAG
+              name = $env:RELEASE_NAME
+              generated_at = (Get-Date).ToUniversalTime().ToString("o")
+            }
+          }
+
+          $manifest | ConvertTo-Json -Depth 5 | Set-Content -Path update.json -Encoding utf8
+
+          Write-Host "Prepared $exeName and manifest for release $($env:RELEASE_TAG)."
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          echo "exe_name=$exeName" >> $env:GITHUB_OUTPUT
+          echo "manifest_path=update.json" >> $env:GITHUB_OUTPUT
+
+      - name: Upload executable asset
+        uses: actions/upload-release-asset@v2
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: dist/${{ steps.prepare.outputs.exe_name }}
+          asset_name: ${{ steps.prepare.outputs.exe_name }}
+          asset_content_type: application/octet-stream
+
+      - name: Upload update manifest
+        uses: actions/upload-release-asset@v2
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ steps.prepare.outputs.manifest_path }}
+          asset_name: update.json
+          asset_content_type: application/json
