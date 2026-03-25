@@ -21,8 +21,12 @@ CREATE TABLE IF NOT EXISTS `order` (
     KEY idx_order_platform (platform)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Display order numbers are produced in application logic using
--- LPAD(COALESCE(local_id, id), 5, '0').
+-- Display order numbers are produced in application logic using:
+-- CASE WHEN platform IN ('backmarket', 'remanufactured stock', 'remanufactured-stock')
+--      THEN CONCAT('PC-', LPAD(COALESCE(local_id, id), 4, '0'))
+--      ELSE LPAD(COALESCE(local_id, id), 5, '0')
+-- END
+-- Lookups remain backward compatible with legacy numeric references via local_id/id.
 
 CREATE TABLE IF NOT EXISTS `order_serials` (
     id BIGINT NOT NULL AUTO_INCREMENT,

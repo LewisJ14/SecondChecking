@@ -1,744 +1,1383 @@
-[2025-11-25 11:44:54] Starting application after authenticating via login panel.
-[2025-11-25 11:44:54] Attempting to establish database connection...
-[2025-11-25 11:44:54] Loading configuration file...
-[2025-11-25 11:44:54] Configuration file loaded successfully.
-[2025-11-25 11:44:54] Database connection attempt 1/3.
-[2025-11-25 11:44:54] Database connection established successfully.
-[2025-11-25 11:45:15] Login attempt for 'Lewis'.
-[2025-11-25 11:45:15] Attempting to establish database connection...
-[2025-11-25 11:45:15] Loading configuration file...
-[2025-11-25 11:45:15] Configuration file loaded successfully.
-[2025-11-25 11:45:15] Database connection attempt 1/3.
-[2025-11-25 11:45:15] Database connection established successfully.
-[2025-11-25 11:45:15] Fetched user row for 'Lewis'.
-[2025-11-25 11:45:16] User 'Lewis' logged in successfully.
-[2025-11-25 11:45:18] User initiated search for order ID: 3344
-[2025-11-25 11:45:18] User initiated search for order: 3344
-[2025-11-25 11:45:18] Starting search for order ID: 3344
-[2025-11-25 11:45:18] Attempting to establish database connection...
-[2025-11-25 11:45:18] Loading configuration file...
-[2025-11-25 11:45:18] Configuration file loaded successfully.
-[2025-11-25 11:45:18] Database connection attempt 1/3.
-[2025-11-25 11:45:18] Database connection established successfully.
-[2025-11-25 11:45:18] Fetched 1 SKU candidates for order 00341 (id=674).
-[2025-11-25 11:45:18] Fetching laptop specs...
-[2025-11-25 11:45:18] Initialized WMI interface.
-[2025-11-25 11:45:19] Detected CPU: AMD Ryzen
-[2025-11-25 11:45:19] Detected Serial Number: PF24NEM2
-[2025-11-25 11:45:19] Detected Resolution: 1920x1080
-[2025-11-25 11:45:19] Detected Windows Version: Windows 11
-[2025-11-25 11:45:19] Detected Model: ThinkPad T14 Gen 1
-[2025-11-25 11:45:19] Detected RAM: 46GB
-[2025-11-25 11:45:19] Detected SSD: 1024GB (HDD)
-[2025-11-25 11:45:19] Detected Battery Health: 89%
-[2025-11-25 11:45:19] Laptop specs fetched successfully.
-[2025-11-25 11:45:21] [DEBUG] test_results['activation'] set to: pass for order 00341
-[2025-11-25 11:45:21] Processing SKU: 800G4-I5-16RAM-512SSD-WIN11-ONEYEAR-AGRADE -- 1
-[2025-11-25 11:45:21] Loading configuration file...
-[2025-11-25 11:45:21] Configuration file loaded successfully.
-[2025-11-25 11:45:21] Microsoft MDM lock not detected.
-[2025-11-25 11:45:22] parse_percent error: expected string or bytes-like object for input: None
-[2025-11-25 11:45:22] Spec mismatches detected for order 00341:
-⚠ CPU: Expected i5, Found AMD Ryzen
-⚠ SSD: Expected 512GB, Found 1024GB
-⚠ RAM: Expected 16GB, Found 46GB
-[2025-11-25 11:45:26] Attempting to establish database connection...
-[2025-11-25 11:45:26] Loading configuration file...
-[2025-11-25 11:45:26] Configuration file loaded successfully.
-[2025-11-25 11:45:26] Database connection attempt 1/3.
-[2025-11-25 11:45:26] Database connection established successfully.
-[2025-11-25 11:45:30] Attempting to establish database connection...
-[2025-11-25 11:45:30] Loading configuration file...
-[2025-11-25 11:45:30] Configuration file loaded successfully.
-[2025-11-25 11:45:30] Database connection attempt 1/3.
-[2025-11-25 11:45:30] Database connection established successfully.
-[2025-11-25 11:45:32] Attempting to establish database connection...
-[2025-11-25 11:45:32] Loading configuration file...
-[2025-11-25 11:45:32] Configuration file loaded successfully.
-[2025-11-25 11:45:32] Database connection attempt 1/3.
-[2025-11-25 11:45:32] Database connection established successfully.
-[2025-11-25 12:00:49] Starting application after authenticating via login panel.
-[2025-11-25 12:00:49] Attempting to establish database connection...
-[2025-11-25 12:00:49] Loading configuration file...
-[2025-11-25 12:00:49] Configuration file loaded successfully.
-[2025-11-25 12:00:49] Database connection attempt 1/3.
-[2025-11-25 12:00:49] Database connection established successfully.
-[2025-11-25 12:00:57] Login attempt for 'Lewis'.
-[2025-11-25 12:00:57] Attempting to establish database connection...
-[2025-11-25 12:00:57] Loading configuration file...
-[2025-11-25 12:00:57] Configuration file loaded successfully.
-[2025-11-25 12:00:57] Database connection attempt 1/3.
-[2025-11-25 12:00:57] Database connection established successfully.
-[2025-11-25 12:00:57] Fetched user row for 'Lewis'.
-[2025-11-25 12:00:57] User 'Lewis' logged in successfully.
-[2025-11-25 12:01:06] User initiated search for order ID: 3344
-[2025-11-25 12:01:06] User initiated search for order: 3344
-[2025-11-25 12:01:06] Starting search for order ID: 3344
-[2025-11-25 12:01:06] Attempting to establish database connection...
-[2025-11-25 12:01:06] Loading configuration file...
-[2025-11-25 12:01:06] Configuration file loaded successfully.
-[2025-11-25 12:01:06] Database connection attempt 1/3.
-[2025-11-25 12:01:07] Database connection established successfully.
-[2025-11-25 12:01:07] Fetched 1 SKU candidates for order 00341 (id=674).
-[2025-11-25 12:01:07] Fetching laptop specs...
-[2025-11-25 12:01:07] Initialized WMI interface.
-[2025-11-25 12:01:08] Detected CPU: Ryzen 7 PRO
-[2025-11-25 12:01:08] Detected Serial Number: PF24NEM2
-[2025-11-25 12:01:08] Detected Resolution: 1920x1080
-[2025-11-25 12:01:08] Detected Windows Version: Windows 11
-[2025-11-25 12:01:08] Detected Model: ThinkPad T14 Gen 1
-[2025-11-25 12:01:08] Detected RAM: 46GB
-[2025-11-25 12:01:08] Detected SSD: 1024GB (HDD)
-[2025-11-25 12:01:08] Detected Battery Health: 89%
-[2025-11-25 12:01:08] Laptop specs fetched successfully.
-[2025-11-25 12:01:09] [DEBUG] test_results['activation'] set to: pass for order 00341
-[2025-11-25 12:01:09] Processing SKU: 800G4-I5-16RAM-512SSD-WIN11-ONEYEAR-AGRADE -- 1
-[2025-11-25 12:01:09] Loading configuration file...
-[2025-11-25 12:01:09] Configuration file loaded successfully.
-[2025-11-25 12:01:09] Microsoft MDM lock not detected.
-[2025-11-25 12:01:09] parse_percent error: expected string or bytes-like object for input: None
-[2025-11-25 12:01:09] Spec mismatches detected for order 00341:
-⚠ CPU: Expected i5, Found Ryzen 7 PRO
-⚠ SSD: Expected 512GB, Found 1024GB
-⚠ RAM: Expected 16GB, Found 46GB
-[2025-11-25 12:05:15] Starting application after authenticating via login panel.
-[2025-11-25 12:05:15] Attempting to establish database connection...
-[2025-11-25 12:05:15] Loading configuration file...
-[2025-11-25 12:05:15] Configuration file loaded successfully.
-[2025-11-25 12:05:15] Database connection attempt 1/3.
-[2025-11-25 12:05:15] Database connection established successfully.
-[2025-11-25 12:05:21] Login attempt for 'Lewis'.
-[2025-11-25 12:05:21] Attempting to establish database connection...
-[2025-11-25 12:05:21] Loading configuration file...
-[2025-11-25 12:05:21] Configuration file loaded successfully.
-[2025-11-25 12:05:21] Database connection attempt 1/3.
-[2025-11-25 12:05:21] Database connection established successfully.
-[2025-11-25 12:05:21] Fetched user row for 'Lewis'.
-[2025-11-25 12:05:21] User 'Lewis' logged in successfully.
-[2025-11-25 12:05:28] User initiated search for order ID: 3344
-[2025-11-25 12:05:28] User initiated search for order: 3344
-[2025-11-25 12:05:28] Starting search for order ID: 3344
-[2025-11-25 12:05:28] Attempting to establish database connection...
-[2025-11-25 12:05:28] Loading configuration file...
-[2025-11-25 12:05:28] Configuration file loaded successfully.
-[2025-11-25 12:05:28] Database connection attempt 1/3.
-[2025-11-25 12:05:28] Database connection established successfully.
-[2025-11-25 12:05:28] Fetched 1 SKU candidates for order 00341 (id=674).
-[2025-11-25 12:05:28] Fetching laptop specs...
-[2025-11-25 12:05:28] Initialized WMI interface.
-[2025-11-25 12:05:29] Detected CPU: Ryzen 7 PRO 4750U with Radeon Graphics
-[2025-11-25 12:05:29] Detected Serial Number: PF24NEM2
-[2025-11-25 12:05:29] Detected Resolution: 1920x1080
-[2025-11-25 12:05:29] Detected Windows Version: Windows 11
-[2025-11-25 12:05:29] Detected Model: ThinkPad T14 Gen 1
-[2025-11-25 12:05:29] Detected RAM: 46GB
-[2025-11-25 12:05:30] Detected SSD: 1024GB (HDD)
-[2025-11-25 12:05:30] Detected Battery Health: 89%
-[2025-11-25 12:05:30] Laptop specs fetched successfully.
-[2025-11-25 12:05:31] [DEBUG] test_results['activation'] set to: pass for order 00341
-[2025-11-25 12:05:31] Processing SKU: 800G4-I5-16RAM-512SSD-WIN11-ONEYEAR-AGRADE -- 1
-[2025-11-25 12:05:31] Loading configuration file...
-[2025-11-25 12:05:31] Configuration file loaded successfully.
-[2025-11-25 12:05:31] Microsoft MDM lock not detected.
-[2025-11-25 12:05:31] parse_percent error: expected string or bytes-like object for input: None
-[2025-11-25 12:05:31] Spec mismatches detected for order 00341:
-⚠ CPU: Expected i5, Found Ryzen 7 PRO 4750U with Radeon Graphics
-⚠ SSD: Expected 512GB, Found 1024GB
-⚠ RAM: Expected 16GB, Found 46GB
-[2025-11-25 12:16:11] Starting application after authenticating via login panel.
-[2025-11-25 12:16:12] Attempting to establish database connection...
-[2025-11-25 12:16:12] Loading configuration file...
-[2025-11-25 12:16:12] Configuration file loaded successfully.
-[2025-11-25 12:16:12] Database connection attempt 1/3.
-[2025-11-25 12:16:12] Database connection established successfully.
-[2025-11-25 12:19:04] Starting application after authenticating via login panel.
-[2025-11-25 12:19:04] Attempting to establish database connection...
-[2025-11-25 12:19:04] Loading configuration file...
-[2025-11-25 12:19:04] Configuration file loaded successfully.
-[2025-11-25 12:19:04] Database connection attempt 1/3.
-[2025-11-25 12:19:04] Database connection established successfully.
-[2025-11-25 13:30:17] Starting application after authenticating via login panel.
-[2025-11-25 13:30:17] Attempting to establish database connection...
-[2025-11-25 13:30:17] Loading configuration file...
-[2025-11-25 13:30:17] Configuration file loaded successfully.
-[2025-11-25 13:30:17] Database connection attempt 1/3.
-[2025-11-25 13:30:17] Database connection established successfully.
-[2025-11-25 13:30:29] Login attempt for 'Lewis'.
-[2025-11-25 13:30:29] Attempting to establish database connection...
-[2025-11-25 13:30:29] Loading configuration file...
-[2025-11-25 13:30:29] Configuration file loaded successfully.
-[2025-11-25 13:30:29] Database connection attempt 1/3.
-[2025-11-25 13:30:29] Database connection established successfully.
-[2025-11-25 13:30:29] Fetched user row for 'Lewis'.
-[2025-11-25 13:30:29] User 'Lewis' logged in successfully.
-[2025-11-25 13:30:36] User initiated search for order ID: 3344
-[2025-11-25 13:30:36] User initiated search for order: 3344
-[2025-11-25 13:30:36] Starting search for order ID: 3344
-[2025-11-25 13:30:36] Attempting to establish database connection...
-[2025-11-25 13:30:36] Loading configuration file...
-[2025-11-25 13:30:36] Configuration file loaded successfully.
-[2025-11-25 13:30:36] Database connection attempt 1/3.
-[2025-11-25 13:30:36] Database connection established successfully.
-[2025-11-25 13:30:36] Fetched 1 SKU candidates for order 00341 (id=674).
-[2025-11-25 13:30:36] Fetching laptop specs...
-[2025-11-25 13:30:36] Initialized WMI interface.
-[2025-11-25 13:30:37] Detected CPU: Ryzen 7 PRO 4750U
-[2025-11-25 13:30:37] Detected Serial Number: PF24NEM2
-[2025-11-25 13:30:37] Detected Resolution: 1920x1080
-[2025-11-25 13:30:37] Detected Windows Version: Windows 11
-[2025-11-25 13:30:38] Detected Model: ThinkPad T14 Gen 1
-[2025-11-25 13:30:38] Detected RAM: 46GB
-[2025-11-25 13:30:38] Detected SSD: 1024GB (HDD)
-[2025-11-25 13:30:38] Detected Battery Health: 89%
-[2025-11-25 13:30:38] Laptop specs fetched successfully.
-[2025-11-25 13:30:39] [DEBUG] test_results['activation'] set to: pass for order 00341
-[2025-11-25 13:30:39] Processing SKU: 800G4-I5-16RAM-512SSD-WIN11-ONEYEAR-AGRADE -- 1
-[2025-11-25 13:30:39] Loading configuration file...
-[2025-11-25 13:30:39] Configuration file loaded successfully.
-[2025-11-25 13:30:39] Microsoft MDM lock not detected.
-[2025-11-25 13:30:39] parse_percent error: expected string or bytes-like object for input: None
-[2025-11-25 13:30:39] Spec mismatches detected for order 00341:
-⚠ CPU: Expected i5, Found Ryzen 7 PRO 4750U
-⚠ SSD: Expected 512GB, Found 1024GB
-⚠ RAM: Expected 16GB, Found 46GB
-[2025-11-25 15:25:43] Starting application after authenticating via login panel.
-[2025-11-25 15:25:43] Attempting to establish database connection...
-[2025-11-25 15:25:43] Loading configuration file...
-[2025-11-25 15:25:43] Configuration file loaded successfully.
-[2025-11-25 15:25:43] Database connection attempt 1/3.
-[2025-11-25 15:25:43] Database connection established successfully.
-[2025-11-25 15:25:51] Login attempt for 'Lewis'.
-[2025-11-25 15:25:51] Attempting to establish database connection...
-[2025-11-25 15:25:51] Loading configuration file...
-[2025-11-25 15:25:51] Configuration file loaded successfully.
-[2025-11-25 15:25:51] Database connection attempt 1/3.
-[2025-11-25 15:25:51] Database connection established successfully.
-[2025-11-25 15:25:51] Fetched user row for 'Lewis'.
-[2025-11-25 15:25:52] User 'Lewis' logged in successfully.
-[2025-11-25 15:32:26] Starting application after authenticating via login panel.
-[2025-11-25 15:32:26] Attempting to establish database connection...
-[2025-11-25 15:32:26] Loading configuration file...
-[2025-11-25 15:32:26] Configuration file loaded successfully.
-[2025-11-25 15:32:26] Database connection attempt 1/3.
-[2025-11-25 15:32:26] Database connection established successfully.
-[2025-11-25 15:32:31] Login attempt for 'Lewis'.
-[2025-11-25 15:32:31] Attempting to establish database connection...
-[2025-11-25 15:32:31] Loading configuration file...
-[2025-11-25 15:32:31] Configuration file loaded successfully.
-[2025-11-25 15:32:31] Database connection attempt 1/3.
-[2025-11-25 15:32:31] Database connection established successfully.
-[2025-11-25 15:32:32] Fetched user row for 'Lewis'.
-[2025-11-25 15:32:32] User 'Lewis' logged in successfully.
-[2025-11-25 15:32:32] Fetching laptop specs...
-[2025-11-25 15:32:32] Initialized WMI interface.
-[2025-11-25 15:32:33] Detected CPU: Ryzen 7 PRO 4750U
-[2025-11-25 15:32:33] Detected Serial Number: PF24NEM2
-[2025-11-25 15:32:33] Detected Resolution: 1920x1080
-[2025-11-25 15:32:33] Detected Windows Version: Windows 11
-[2025-11-25 15:32:33] Detected Model: ThinkPad T14 Gen 1
-[2025-11-25 15:32:33] Detected RAM: 46GB
-[2025-11-25 15:32:33] Detected SSD: 1024GB (HDD)
-[2025-11-25 15:32:33] Detected Battery Health: 89%
-[2025-11-25 15:32:33] Laptop specs fetched successfully.
-[2025-11-25 15:32:34] parse_percent error: expected string or bytes-like object for input: None
-[2025-11-25 15:32:43] User initiated search for order ID: 3344
-[2025-11-25 15:32:43] User initiated search for order: 3344
-[2025-11-25 15:32:43] Starting search for order ID: 3344
-[2025-11-25 15:32:43] Attempting to establish database connection...
-[2025-11-25 15:32:43] Loading configuration file...
-[2025-11-25 15:32:43] Configuration file loaded successfully.
-[2025-11-25 15:32:43] Database connection attempt 1/3.
-[2025-11-25 15:32:43] Database connection established successfully.
-[2025-11-25 15:32:43] Fetched 1 SKU candidates for order 00341 (id=674).
-[2025-11-25 15:32:43] Returning cached laptop specs.
-[2025-11-25 15:32:44] [DEBUG] test_results['activation'] set to: pass for order 00341
-[2025-11-25 15:32:44] Processing SKU: 800G4-I5-16RAM-512SSD-WIN11-ONEYEAR-AGRADE -- 1
-[2025-11-25 15:32:44] Loading configuration file...
-[2025-11-25 15:32:44] Configuration file loaded successfully.
-[2025-11-25 15:32:44] Microsoft MDM lock not detected.
-[2025-11-25 15:32:44] parse_percent error: expected string or bytes-like object for input: None
-[2025-11-25 15:32:44] Spec mismatches detected for order 00341:
-⚠ CPU: Expected i5, Found Ryzen 7 PRO 4750U
-⚠ SSD: Expected 512GB, Found 1024GB
-⚠ RAM: Expected 16GB, Found 46GB
-[2025-11-25 15:32:51] Starting application after authenticating via login panel.
-[2025-11-25 15:32:51] Attempting to establish database connection...
-[2025-11-25 15:32:51] Loading configuration file...
-[2025-11-25 15:32:51] Configuration file loaded successfully.
-[2025-11-25 15:32:51] Database connection attempt 1/3.
-[2025-11-25 15:32:51] Database connection established successfully.
-[2025-11-25 15:32:58] Login attempt for 'Lewis'.
-[2025-11-25 15:32:58] Attempting to establish database connection...
-[2025-11-25 15:32:58] Loading configuration file...
-[2025-11-25 15:32:58] Configuration file loaded successfully.
-[2025-11-25 15:32:58] Database connection attempt 1/3.
-[2025-11-25 15:32:58] Database connection established successfully.
-[2025-11-25 15:32:58] Fetched user row for 'Lewis'.
-[2025-11-25 15:32:58] User 'Lewis' logged in successfully.
-[2025-11-25 15:32:58] Fetching laptop specs...
-[2025-11-25 15:32:58] Initialized WMI interface.
-[2025-11-25 15:32:59] Detected CPU: Ryzen 7 PRO 4750U
-[2025-11-25 15:32:59] Detected Serial Number: PF24NEM2
-[2025-11-25 15:32:59] Detected Resolution: 1920x1080
-[2025-11-25 15:33:00] Detected Windows Version: Windows 11
-[2025-11-25 15:33:00] Detected Model: ThinkPad T14 Gen 1
-[2025-11-25 15:33:00] Detected RAM: 46GB
-[2025-11-25 15:33:00] Detected SSD: 1024GB (HDD)
-[2025-11-25 15:33:00] Detected Battery Health: 89%
-[2025-11-25 15:33:00] Laptop specs fetched successfully.
-[2025-11-25 15:33:00] parse_percent error: expected string or bytes-like object for input: None
-[2025-11-25 15:35:50] Starting application after authenticating via login panel.
-[2025-11-25 15:35:50] Attempting to establish database connection...
-[2025-11-25 15:35:50] Loading configuration file...
-[2025-11-25 15:35:50] Configuration file loaded successfully.
-[2025-11-25 15:35:50] Database connection attempt 1/3.
-[2025-11-25 15:35:50] Database connection established successfully.
-[2025-11-25 15:35:54] Login attempt for 'Lewis'.
-[2025-11-25 15:35:54] Attempting to establish database connection...
-[2025-11-25 15:35:54] Loading configuration file...
-[2025-11-25 15:35:54] Configuration file loaded successfully.
-[2025-11-25 15:35:54] Database connection attempt 1/3.
-[2025-11-25 15:35:54] Database connection established successfully.
-[2025-11-25 15:35:54] Fetched user row for 'Lewis'.
-[2025-11-25 15:35:54] User 'Lewis' logged in successfully.
-[2025-11-25 15:35:54] Fetching laptop specs...
-[2025-11-25 15:35:54] Initialized WMI interface.
-[2025-11-25 15:35:55] Detected CPU: Ryzen 7 PRO 4750U
-[2025-11-25 15:35:55] Detected Serial Number: PF24NEM2
-[2025-11-25 15:35:55] Detected Resolution: 1920x1080
-[2025-11-25 15:35:56] Detected Windows Version: Windows 11
-[2025-11-25 15:35:56] Detected Model: ThinkPad T14 Gen 1
-[2025-11-25 15:35:56] Detected RAM: 46GB
-[2025-11-25 15:35:56] Detected SSD: 1024GB (HDD)
-[2025-11-25 15:35:56] Detected Battery Health: 89%
-[2025-11-25 15:35:56] Laptop specs fetched successfully.
-[2025-11-25 15:35:56] parse_percent error: expected string or bytes-like object for input: None
-[2025-11-25 15:36:18] User initiated search for order ID: 3344
-[2025-11-25 15:36:18] User initiated search for order: 3344
-[2025-11-25 15:36:18] Starting search for order ID: 3344
-[2025-11-25 15:36:18] Attempting to establish database connection...
-[2025-11-25 15:36:18] Loading configuration file...
-[2025-11-25 15:36:18] Configuration file loaded successfully.
-[2025-11-25 15:36:18] Database connection attempt 1/3.
-[2025-11-25 15:36:18] Database connection established successfully.
-[2025-11-25 15:36:18] Fetched 1 SKU candidates for order 00341 (id=674).
-[2025-11-25 15:36:18] Returning cached laptop specs.
-[2025-11-25 15:36:19] [DEBUG] test_results['activation'] set to: pass for order 00341
-[2025-11-25 15:36:19] Processing SKU: 800G4-I5-16RAM-512SSD-WIN11-ONEYEAR-AGRADE -- 1
-[2025-11-25 15:36:19] Loading configuration file...
-[2025-11-25 15:36:19] Configuration file loaded successfully.
-[2025-11-25 15:36:19] Microsoft MDM lock not detected.
-[2025-11-25 15:36:19] parse_percent error: expected string or bytes-like object for input: None
-[2025-11-25 15:36:19] Spec mismatches detected for order 00341:
-⚠ CPU: Expected i5, Found Ryzen 7 PRO 4750U
-⚠ SSD: Expected 512GB, Found 1024GB
-⚠ RAM: Expected 16GB, Found 46GB
-[2025-11-25 15:36:29] Starting application after authenticating via login panel.
-[2025-11-25 15:36:29] Attempting to establish database connection...
-[2025-11-25 15:36:29] Loading configuration file...
-[2025-11-25 15:36:29] Configuration file loaded successfully.
-[2025-11-25 15:36:29] Database connection attempt 1/3.
-[2025-11-25 15:36:29] Database connection established successfully.
-[2025-11-25 15:36:32] Login attempt for 'Lewis'.
-[2025-11-25 15:36:32] Attempting to establish database connection...
-[2025-11-25 15:36:32] Loading configuration file...
-[2025-11-25 15:36:32] Configuration file loaded successfully.
-[2025-11-25 15:36:32] Database connection attempt 1/3.
-[2025-11-25 15:36:32] Database connection established successfully.
-[2025-11-25 15:36:32] Fetched user row for 'Lewis'.
-[2025-11-25 15:36:32] User 'Lewis' logged in successfully.
-[2025-11-25 15:36:32] Fetching laptop specs...
-[2025-11-25 15:36:32] Initialized WMI interface.
-[2025-11-25 15:36:33] Detected CPU: Ryzen 7 PRO 4750U
-[2025-11-25 15:36:33] Detected Serial Number: PF24NEM2
-[2025-11-25 15:36:33] Detected Resolution: 1920x1080
-[2025-11-25 15:36:33] Detected Windows Version: Windows 11
-[2025-11-25 15:36:34] Detected Model: ThinkPad T14 Gen 1
-[2025-11-25 15:36:34] Detected RAM: 46GB
-[2025-11-25 15:36:34] Detected SSD: 1024GB (HDD)
-[2025-11-25 15:36:34] Detected Battery Health: 89%
-[2025-11-25 15:36:34] Laptop specs fetched successfully.
-[2025-11-25 15:36:34] parse_percent error: expected string or bytes-like object for input: None
-[2025-11-26 10:36:46] Starting application after authenticating via login panel.
-[2025-11-26 10:36:46] Attempting to establish database connection...
-[2025-11-26 10:36:46] Loading configuration file...
-[2025-11-26 10:36:46] Configuration file loaded successfully.
-[2025-11-26 10:36:46] Database connection attempt 1/3.
-[2025-11-26 10:36:46] Database connection established successfully.
-[2025-11-26 10:36:50] Login attempt for 'Lewis'.
-[2025-11-26 10:36:50] Attempting to establish database connection...
-[2025-11-26 10:36:50] Loading configuration file...
-[2025-11-26 10:36:50] Configuration file loaded successfully.
-[2025-11-26 10:36:50] Database connection attempt 1/3.
-[2025-11-26 10:36:50] Database connection established successfully.
-[2025-11-26 10:36:50] Fetched user row for 'Lewis'.
-[2025-11-26 10:36:50] User 'Lewis' logged in successfully.
-[2025-11-26 10:36:50] Fetching laptop specs...
-[2025-11-26 10:36:50] Initialized WMI interface.
-[2025-11-26 10:36:51] Detected CPU: Ryzen 7 PRO 4750U
-[2025-11-26 10:36:51] Detected Serial Number: PF24NEM2
-[2025-11-26 10:36:51] Detected Resolution: 1920x1080
-[2025-11-26 10:36:51] Detected Windows Version: Windows 11
-[2025-11-26 10:36:51] Detected Model: ThinkPad T14 Gen 1
-[2025-11-26 10:36:51] Detected RAM: 46GB
-[2025-11-26 10:36:51] Detected SSD: 1024GB (HDD)
-[2025-11-26 10:36:51] Detected Battery Health: 89%
-[2025-11-26 10:36:51] Laptop specs fetched successfully.
-[2025-11-26 10:36:52] parse_percent error: expected string or bytes-like object for input: None
-[2025-11-26 10:56:34] Starting application after authenticating via login panel.
-[2025-11-26 10:56:34] Attempting to establish database connection...
-[2025-11-26 10:56:34] Loading configuration file...
-[2025-11-26 10:56:34] Configuration file loaded successfully.
-[2025-11-26 10:56:34] Database connection attempt 1/3.
-[2025-11-26 10:56:34] Database connection established successfully.
-[2025-11-26 10:56:37] Login attempt for 'Lewis'.
-[2025-11-26 10:56:37] Attempting to establish database connection...
-[2025-11-26 10:56:37] Loading configuration file...
-[2025-11-26 10:56:37] Configuration file loaded successfully.
-[2025-11-26 10:56:37] Database connection attempt 1/3.
-[2025-11-26 10:56:37] Database connection established successfully.
-[2025-11-26 10:56:37] Fetched user row for 'Lewis'.
-[2025-11-26 10:56:38] User 'Lewis' logged in successfully.
-[2025-11-26 10:56:38] Fetching laptop specs...
-[2025-11-26 10:56:38] Initialized WMI interface.
-[2025-11-26 10:56:39] Detected CPU: Ryzen 7 PRO 4750U
-[2025-11-26 10:56:39] Detected Serial Number: PF24NEM2
-[2025-11-26 10:56:39] Detected Resolution: 1920x1080
-[2025-11-26 10:56:39] Detected Windows Version: Windows 11
-[2025-11-26 10:56:39] Detected Model: ThinkPad T14 Gen 1
-[2025-11-26 10:56:39] Detected RAM: 46GB
-[2025-11-26 10:56:40] Detected SSD: 1024GB (HDD)
-[2025-11-26 10:56:40] Detected Battery Health: 89%
-[2025-11-26 10:56:40] Laptop specs fetched successfully.
-[2025-11-26 10:56:40] parse_percent error: expected string or bytes-like object for input: None
-[2025-11-26 10:56:45] User initiated search for order ID: 3751
-[2025-11-26 10:56:45] User initiated search for order: 3751
-[2025-11-26 10:56:45] Starting search for order ID: 3751
-[2025-11-26 10:56:45] Attempting to establish database connection...
-[2025-11-26 10:56:45] Loading configuration file...
-[2025-11-26 10:56:45] Configuration file loaded successfully.
-[2025-11-26 10:56:45] Database connection attempt 1/3.
-[2025-11-26 10:56:45] Database connection established successfully.
-[2025-11-26 10:56:45] Fetched 1 SKU candidates for order 00740 (id=1090).
-[2025-11-26 10:56:45] Returning cached laptop specs.
-[2025-11-26 10:56:46] [DEBUG] test_results['activation'] set to: pass for order 00740
-[2025-11-26 10:56:46] Processing SKU: T480-i5-Multi-Win11-1 -- 1
-[2025-11-26 10:56:46] Loading configuration file...
-[2025-11-26 10:56:46] Configuration file loaded successfully.
-[2025-11-26 10:56:46] Microsoft MDM lock not detected.
-[2025-11-26 10:56:46] parse_percent error: expected string or bytes-like object for input: None
-[2025-11-26 10:56:46] Spec mismatches detected for order 00740:
-⚠ Model: Expected T480, Found ThinkPad T14 Gen 1
-⚠ CPU: Expected i5, Found Ryzen 7 PRO 4750U
-[2025-12-08 15:14:02] Starting application after authenticating via login panel.
-[2025-12-08 15:14:02] Attempting to establish database connection...
-[2025-12-08 15:14:02] Loading configuration file...
-[2025-12-08 15:14:02] Configuration file loaded successfully.
-[2025-12-08 15:14:02] Database connection attempt 1/3.
-[2025-12-08 15:14:04] Schema provisioning failed: (1060, "Duplicate column name 'battery2'")
+[2025-03-28 11:01:34] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-28 12:17:46] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ SSD: Expected 1TB, Found 512GB
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-28 12:19:58] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ SSD: Expected 1TB, Found 512GB
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-28 12:21:46] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ SSD: Expected 1TB, Found 512GB
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-28 12:23:10] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ SSD: Expected 1TB, Found 512GB
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-28 13:54:48] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ SSD: Expected 1TB, Found 512GB
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-28 13:55:04] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-28 13:56:54] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-28 15:24:12] Missing config.ini at: C:\Users\lewie\Documents\SQLDatabase\Craig Fuckup Script\Refactoring\SecondChecking\src\utils\config.ini
+[2025-03-28 15:25:03] Missing config.ini at: C:\Users\lewie\Documents\SQLDatabase\Craig Fuckup Script\Refactoring\SecondChecking\src\utils\config.ini
+[2025-03-28 15:49:22] Missing config.ini at: C:\Users\lewie\Documents\SQLDatabase\Craig Fuckup Script\Refactoring\SecondChecking\src\utils\config.ini
+[2025-03-28 15:49:46] Missing config.ini at: C:\Users\lewie\Documents\SQLDatabase\Craig Fuckup Script\Refactoring\SecondChecking\src\utils\config.ini
+[2025-03-28 15:50:27] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-28 15:50:34] MySQL error loading test results: invalid command name ".!toplevel.!frame3.!label"
+[2025-03-31 14:12:48] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 14:41:12] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 14:55:36] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 14:57:32] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 14:59:46] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 15:00:40] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 15:06:02] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 15:10:29] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 15:11:33] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 15:14:32] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 15:31:37] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 15:35:08] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 15:42:08] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 15:44:59] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 15:48:24] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 15:53:10] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 15:53:14] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 15:53:15] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 15:55:37] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 15:56:04] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 15:56:59] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 15:57:46] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 15:58:21] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 15:58:51] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-03-31 16:01:17] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-02 05:39:03] MySQL error: 2002: Can't connect to local MySQL server through socket '%-.100s' (%s) (Warning: not all arguments converted during string formatting)
+[2025-04-02 05:40:04] MySQL error: 2003: Can't connect to MySQL server on '192.168.1.42:3306' (Errno 10060: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond)
+[2025-04-02 05:40:45] MySQL error: 2003: Can't connect to MySQL server on '192.168.1.42:3306' (Errno 10060: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond)
+[2025-04-02 05:41:37] MySQL error: 2003: Can't connect to MySQL server on '192.168.1.188:3306' (Errno 10060: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond)
+[2025-04-02 05:44:31] Spec mismatches detected:
+⚠ Model: Expected T490, Found ThinkPad T495
+⚠ CPU: Expected i5, Found AMD Ryzen 5 PRO 3500U
+⚠ SSD: Expected 256GB, Found 512GB
+⚠ RAM: Expected 8GB, Found 38GB
+⚠ Windows: Expected Windows 10, Found Windows 11
+[2025-04-02 05:47:00] Spec mismatches detected:
+⚠ Model: Expected T490, Found ThinkPad T495
+⚠ CPU: Expected i5, Found AMD Ryzen 5 PRO 3500U
+⚠ SSD: Expected 256GB, Found 512GB
+⚠ RAM: Expected 8GB, Found 38GB
+⚠ Windows: Expected Windows 10, Found Windows 11
+[2025-04-02 05:49:20] Spec mismatches detected:
+⚠ Model: Expected T490, Found ThinkPad T495
+⚠ CPU: Expected i5, Found AMD Ryzen 5 PRO 3500U
+⚠ SSD: Expected 256GB, Found 512GB
+⚠ RAM: Expected 8GB, Found 38GB
+⚠ Windows: Expected Windows 10, Found Windows 11
+[2025-04-02 05:50:00] Spec mismatches detected:
+⚠ Model: Expected T490, Found ThinkPad T495
+⚠ CPU: Expected i5, Found AMD Ryzen 5 PRO 3500U
+⚠ SSD: Expected 256GB, Found 512GB
+⚠ RAM: Expected 8GB, Found 38GB
+⚠ Windows: Expected Windows 10, Found Windows 11
+[2025-04-02 05:50:29] Spec mismatches detected:
+⚠ Model: Expected T490, Found ThinkPad T495
+⚠ CPU: Expected i5, Found AMD Ryzen 5 PRO 3500U
+⚠ SSD: Expected 256GB, Found 512GB
+⚠ RAM: Expected 8GB, Found 38GB
+⚠ Windows: Expected Windows 10, Found Windows 11
+[2025-04-02 05:56:15] Spec mismatches detected:
+⚠ Model: Expected T490, Found ThinkPad T495
+⚠ CPU: Expected i5, Found AMD Ryzen 5 PRO 3500U
+⚠ SSD: Expected 256GB, Found 512GB
+⚠ RAM: Expected 8GB, Found 38GB
+⚠ Windows: Expected Windows 10, Found Windows 11
+[2025-04-02 05:59:37] Spec mismatches detected:
+⚠ Model: Expected T490, Found ThinkPad T495
+⚠ CPU: Expected i5, Found AMD Ryzen 5 PRO 3500U
+⚠ SSD: Expected 256GB, Found 512GB
+⚠ RAM: Expected 8GB, Found 38GB
+⚠ Windows: Expected Windows 10, Found Windows 11
+[2025-04-02 06:03:10] Spec mismatches detected:
+⚠ Model: Expected T490, Found ThinkPad T495
+⚠ CPU: Expected i5, Found AMD Ryzen 5 PRO 3500U
+⚠ SSD: Expected 256GB, Found 512GB
+⚠ RAM: Expected 8GB, Found 38GB
+⚠ Windows: Expected Windows 10, Found Windows 11
+[2025-04-02 06:04:00] Spec mismatches detected:
+⚠ Model: Expected T490, Found ThinkPad T495
+⚠ CPU: Expected i5, Found AMD Ryzen 5 PRO 3500U
+⚠ SSD: Expected 256GB, Found 512GB
+⚠ RAM: Expected 8GB, Found 38GB
+⚠ Windows: Expected Windows 10, Found Windows 11
+[2025-04-02 06:04:25] Spec mismatches detected:
+⚠ Model: Expected T490, Found ThinkPad T495
+⚠ CPU: Expected i5, Found AMD Ryzen 5 PRO 3500U
+⚠ SSD: Expected 256GB, Found 512GB
+⚠ RAM: Expected 8GB, Found 38GB
+⚠ Windows: Expected Windows 10, Found Windows 11
+[2025-04-02 06:06:34] Spec mismatches detected:
+⚠ Model: Expected T490, Found ThinkPad T495
+⚠ CPU: Expected i5, Found AMD Ryzen 5 PRO 3500U
+⚠ SSD: Expected 256GB, Found 512GB
+⚠ RAM: Expected 8GB, Found 38GB
+⚠ Windows: Expected Windows 10, Found Windows 11
+[2025-04-02 06:07:06] Spec mismatches detected:
+⚠ Model: Expected T490, Found ThinkPad T495
+⚠ CPU: Expected i5, Found AMD Ryzen 5 PRO 3500U
+⚠ SSD: Expected 256GB, Found 512GB
+⚠ RAM: Expected 8GB, Found 38GB
+⚠ Windows: Expected Windows 10, Found Windows 11
+[2025-04-02 06:07:30] Spec mismatches detected:
+⚠ Model: Expected T490, Found ThinkPad T495
+⚠ CPU: Expected i5, Found AMD Ryzen 5 PRO 3500U
+⚠ SSD: Expected 256GB, Found 512GB
+⚠ RAM: Expected 8GB, Found 38GB
+⚠ Windows: Expected Windows 10, Found Windows 11
+[2025-04-02 06:07:56] Spec mismatches detected:
+⚠ Model: Expected T490, Found ThinkPad T495
+⚠ CPU: Expected i5, Found AMD Ryzen 5 PRO 3500U
+⚠ SSD: Expected 256GB, Found 512GB
+⚠ RAM: Expected 8GB, Found 38GB
+⚠ Windows: Expected Windows 10, Found Windows 11
+[2025-04-02 06:09:50] Spec mismatches detected:
+⚠ Model: Expected T490, Found ThinkPad T495
+⚠ CPU: Expected i5, Found AMD Ryzen 5 PRO 3500U
+⚠ SSD: Expected 256GB, Found 512GB
+⚠ RAM: Expected 8GB, Found 38GB
+⚠ Windows: Expected Windows 10, Found Windows 11
+[2025-04-02 06:11:49] Spec mismatches detected:
+⚠ Model: Expected T490, Found ThinkPad T495
+⚠ CPU: Expected i5, Found AMD Ryzen 5 PRO 3500U
+⚠ SSD: Expected 256GB, Found 512GB
+⚠ RAM: Expected 8GB, Found 38GB
+⚠ Windows: Expected Windows 10, Found Windows 11
+[2025-04-02 06:17:49] Spec mismatches detected:
+⚠ Model: Expected T490, Found ThinkPad T495
+⚠ CPU: Expected i5, Found AMD Ryzen 5 PRO 3500U
+⚠ SSD: Expected 256GB, Found 512GB
+⚠ RAM: Expected 8GB, Found 38GB
+⚠ Windows: Expected Windows 10, Found Windows 11
+[2025-04-02 06:20:31] Spec mismatches detected:
+⚠ Model: Expected T490, Found ThinkPad T495
+⚠ CPU: Expected i5, Found AMD Ryzen 5 PRO 3500U
+⚠ SSD: Expected 256GB, Found 512GB
+⚠ RAM: Expected 8GB, Found 38GB
+⚠ Windows: Expected Windows 10, Found Windows 11
+[2025-04-02 13:25:33] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-02 14:30:49] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-02 14:33:21] Unhandled exception in search logic for order 06-12848-61293:
 Traceback (most recent call last):
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
+  File "C:\Users\lewie\Documents\SQLDatabase\Craig Fuckup Script\Refactoring\SecondChecking\src\main_logic.py", line 57, in run_search
+    """, (order_id, laptop_specs.get("Serial Number", "Unknown")))
+                    ^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'laptop_specs' where it is not associated with a value
 
-[2025-12-08 15:14:04] MySQL error on attempt 1: (1060, "Duplicate column name 'battery2'")
+[2025-04-02 14:33:38] Unhandled exception in search logic for order 06-12848-61293:
 Traceback (most recent call last):
-  File "db\database.py", line 35, in get_db_connection
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
+  File "C:\Users\lewie\Documents\SQLDatabase\Craig Fuckup Script\Refactoring\SecondChecking\src\main_logic.py", line 57, in run_search
+    """, (order_id, laptop_specs.get("Serial Number", "Unknown")))
+                    ^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'laptop_specs' where it is not associated with a value
 
-[2025-12-08 15:14:09] Database connection attempt 2/3.
-[2025-12-08 15:14:09] Schema provisioning failed: (1060, "Duplicate column name 'battery2'")
+[2025-04-02 14:41:37] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-02 14:44:41] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-02 14:49:56] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-02 15:23:46] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-02 15:32:27] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-02 15:32:41] Serial 'PF26ZAR2' assigned to Order '06-12848-61293' with specs.
+[2025-04-02 15:35:46] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-02 15:36:03] Serial 'PF26ZAR2' assigned to Order '06-12848-61293' with specs.
+[2025-04-02 15:38:19] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-02 15:58:12] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-02 15:58:27] Test results saved for serial PF26ZAR2
+[2025-04-02 15:58:27] MySQL error on assigning serial: 2055: Lost connection to MySQL server at '192.168.1.42:3306', system error: Errno 10038: An operation was attempted on something that is not a socket
+[2025-04-02 15:59:31] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-02 15:59:54] Test results saved for serial PF26ZAR2
+[2025-04-02 15:59:54] MySQL error on assigning serial: 2055: Lost connection to MySQL server at '192.168.1.42:3306', system error: Errno 10038: An operation was attempted on something that is not a socket
+[2025-04-02 16:01:12] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-02 16:01:42] Test results saved for serial PF26ZAR2
+[2025-04-02 16:01:42] Serial 'PF26ZAR2' assigned to Order '06-12848-61293' with specs.
+[2025-04-03 10:32:21] Test results saved for serial PF26ZAR2
+[2025-04-03 10:32:21] Serial 'PF26ZAR2' assigned to Order '06-12848-61293' with specs.
+[2025-04-03 10:36:47] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 10:48:27] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 10:48:38] Test results saved for serial PF26ZAR2
+[2025-04-03 10:48:38] Serial 'PF26ZAR2' assigned to Order '06-12848-61293' with specs.
+[2025-04-03 10:50:20] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 10:55:08] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 10:57:14] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 10:58:28] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 10:59:45] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 11:01:21] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 11:02:46] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 14:26:21] Unhandled exception in search logic for order 06-12848-61293:
 Traceback (most recent call last):
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
+  File "C:\Users\lewie\Documents\SQLDatabase\Craig Fuckup Script\Refactoring\SecondChecking\src\main_logic.py", line 47, in run_search
+    conn = get_db_connection()
+  File "C:\Users\lewie\Documents\SQLDatabase\Craig Fuckup Script\Refactoring\SecondChecking\src\db\database.py", line 7, in get_db_connection
+    config = load_config()
+  File "C:\Users\lewie\Documents\SQLDatabase\Craig Fuckup Script\Refactoring\SecondChecking\src\utils\helpers.py", line 25, in load_config
+    config.read(get_config_path())
+  File "C:\Users\lewie\Documents\SQLDatabase\Craig Fuckup Script\Refactoring\SecondChecking\src\utils\helpers.py", line 14, in get_config_path
+    if getattr(sys, 'frozen', False):
+NameError: name 'sys' is not defined
 
-[2025-12-08 15:14:09] MySQL error on attempt 2: (1060, "Duplicate column name 'battery2'")
+[2025-04-03 14:26:40] Unhandled exception in search logic for order 06-12848-61293:
 Traceback (most recent call last):
-  File "db\database.py", line 35, in get_db_connection
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
+  File "C:\Users\lewie\Documents\SQLDatabase\Craig Fuckup Script\Refactoring\SecondChecking\src\main_logic.py", line 47, in run_search
+    conn = get_db_connection()
+  File "C:\Users\lewie\Documents\SQLDatabase\Craig Fuckup Script\Refactoring\SecondChecking\src\db\database.py", line 7, in get_db_connection
+    config = load_config()
+  File "C:\Users\lewie\Documents\SQLDatabase\Craig Fuckup Script\Refactoring\SecondChecking\src\utils\helpers.py", line 25, in load_config
+    config.read(get_config_path())
+  File "C:\Users\lewie\Documents\SQLDatabase\Craig Fuckup Script\Refactoring\SecondChecking\src\utils\helpers.py", line 14, in get_config_path
+    if getattr(sys, 'frozen', False):
+NameError: name 'sys' is not defined
 
-[2025-12-08 15:14:19] Database connection attempt 3/3.
-[2025-12-08 15:14:19] Schema provisioning failed: (1060, "Duplicate column name 'battery2'")
+[2025-04-03 14:27:24] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 14:28:48] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 14:35:40] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 14:39:36] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 14:49:23] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 14:56:22] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 14:58:54] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 15:02:28] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 15:05:45] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 15:07:29] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 15:10:06] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 15:14:54] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 15:18:29] Unhandled exception in search logic for order 06-12848-61293:
 Traceback (most recent call last):
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
+  File "C:\Users\lewie\Documents\SQLDatabase\Craig Fuckup Script\Refactoring\SecondChecking\src\main_logic.py", line 47, in run_search
+    search_button.config(state="disabled")
+NameError: name 'search_button' is not defined
 
-[2025-12-08 15:14:19] MySQL error on attempt 3: (1060, "Duplicate column name 'battery2'")
+[2025-04-03 15:23:39] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 15:26:14] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 15:26:22] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 15:31:28] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 15:33:02] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 15:37:16] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-03 15:45:02] Spec mismatches detected:
+⚠ Model: Expected P50, Found ThinkPad T495
+⚠ RAM: Expected 32GB, Found 38GB
+[2025-04-22 10:07:57] Test results saved for serial PF26ZAR2
+[2025-04-22 10:07:57] Serial 'PF26ZAR2' assigned to Order '06-12848-61293' with specs.
+[2025-05-14 10:55:28] Spec mismatches detected:
+⚠ Model: Expected T450, Found HP EliteDesk 800 G4 DM 65W
+[2025-05-14 10:58:45] Spec mismatches detected:
+⚠ Model: Expected T450, Found HP EliteDesk 800 G4 DM 65W
+[2025-05-14 12:39:27] Spec mismatches detected:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 1TB
+[2025-05-14 12:44:41] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 12:44:41] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 1TB
+[2025-05-14 12:53:54] User initiated search for order: 06-12848-61293
+[2025-05-14 12:53:57] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 12:53:57] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 1TB
+[2025-05-14 12:54:21] User opened the Test Panel.
+[2025-05-14 12:55:34] User initiated search for order: 06-12848-61293
+[2025-05-14 12:55:36] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 12:55:36] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 1TB
+[2025-05-14 12:57:54] User initiated search for order: 06-12848-61293
+[2025-05-14 12:57:56] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-14 12:57:56] [DEBUG] DigitalProductId present: True
+[2025-05-14 12:57:56] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 12:57:56] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-14 12:57:56] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 1TB
+[2025-05-14 12:59:37] User initiated search for order: 06-12848-61293
+[2025-05-14 12:59:39] Battery health parsing failed: No matches found in HTML.
+[2025-05-14 12:59:39] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-14 12:59:39] [DEBUG] DigitalProductId present: True
+[2025-05-14 12:59:39] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 12:59:39] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-14 12:59:39] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 1TB
+[2025-05-14 13:02:25] User initiated search for order: 06-12848-61293
+[2025-05-14 13:02:27] Battery health parsing failed: No matches found in HTML.
+[2025-05-14 13:02:27] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-14 13:02:27] [DEBUG] DigitalProductId present: True
+[2025-05-14 13:02:27] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 13:02:27] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-14 13:02:27] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 1TB
+[2025-05-14 13:02:29] User opened the Test Panel.
+[2025-05-14 13:04:57] User opened the Test Panel.
+[2025-05-14 13:07:20] User opened the Test Panel.
+[2025-05-14 13:09:18] User initiated search for order: 06-12848-61293
+[2025-05-14 13:09:20] User opened the Test Panel.
+[2025-05-14 13:09:21] Battery health parsing failed: No matches found in HTML.
+[2025-05-14 13:09:21] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-14 13:09:21] [DEBUG] DigitalProductId present: True
+[2025-05-14 13:09:21] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 13:09:21] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-14 13:09:21] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 1TB
+[2025-05-14 13:12:23] User opened the Test Panel.
+[2025-05-14 13:12:46] User opened the Test Panel.
+[2025-05-14 13:15:26] User entered invalid order ID: 'Ensure keyboard hooks are always cleaned up, even if the window is closed unexpectedly.'
+[2025-05-14 13:15:33] User initiated search for order: 06-12848-61293
+[2025-05-14 13:15:36] Battery health parsing failed: No matches found in HTML.
+[2025-05-14 13:15:36] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-14 13:15:36] [DEBUG] DigitalProductId present: True
+[2025-05-14 13:15:36] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 13:15:36] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-14 13:15:36] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 1TB
+[2025-05-14 13:15:39] User opened the Test Panel.
+[2025-05-14 13:17:28] User initiated search for order: 06-12848-61293
+[2025-05-14 13:17:29] User opened the Test Panel.
+[2025-05-14 13:17:30] Battery health parsing failed: No matches found in HTML.
+[2025-05-14 13:17:30] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-14 13:17:30] [DEBUG] DigitalProductId present: True
+[2025-05-14 13:17:30] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 13:17:31] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-14 13:17:31] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 1TB
+[2025-05-14 13:18:47] User opened the Test Panel.
+[2025-05-14 13:21:04] User opened the Test Panel.
+[2025-05-14 13:24:42] User initiated search for order: 06-12848-61293
+[2025-05-14 13:24:45] Battery health parsing failed: No matches found in HTML.
+[2025-05-14 13:24:45] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-14 13:24:45] [DEBUG] DigitalProductId present: True
+[2025-05-14 13:24:45] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 13:24:45] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-14 13:24:45] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 1TB
+[2025-05-14 13:24:48] Error opening serial viewer: cannot access free variable 'page_label' where it is not associated with a value in enclosing scope
+[2025-05-14 13:24:53] Test results saved for serial 8CC92524Q9 (order 06-12848-61293)
+[2025-05-14 13:24:53] Serial '8CC92524Q9' assigned to Order '06-12848-61293' with specs.
+[2025-05-14 13:24:55] Error opening serial viewer: cannot access free variable 'page_label' where it is not associated with a value in enclosing scope
+[2025-05-14 13:26:14] User initiated search for order: 06-12848-61293
+[2025-05-14 13:26:16] Battery health parsing failed: No matches found in HTML.
+[2025-05-14 13:26:16] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-14 13:26:16] [DEBUG] DigitalProductId present: True
+[2025-05-14 13:26:16] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 13:26:16] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-14 13:26:16] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 1TB
+[2025-05-14 13:26:18] Error opening serial viewer: cannot access free variable 'page_label' where it is not associated with a value in enclosing scope
+[2025-05-14 13:26:23] Error opening serial viewer: cannot access free variable 'page_label' where it is not associated with a value in enclosing scope
+[2025-05-14 13:28:22] User initiated search for order: 06-12848-61293
+[2025-05-14 13:28:24] Battery health parsing failed: No matches found in HTML.
+[2025-05-14 13:28:24] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-14 13:28:24] [DEBUG] DigitalProductId present: True
+[2025-05-14 13:28:24] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 13:28:24] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-14 13:28:24] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 1TB
+[2025-05-14 13:28:28] Error opening serial viewer: cannot access local variable 'prev_page' where it is not associated with a value
+[2025-05-14 13:30:28] User initiated search for order: 06-12848-61293
+[2025-05-14 13:30:31] Battery health parsing failed: No matches found in HTML.
+[2025-05-14 13:30:31] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-14 13:30:31] [DEBUG] DigitalProductId present: True
+[2025-05-14 13:30:31] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 13:30:31] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-14 13:30:31] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 1TB
+[2025-05-14 14:00:17] User initiated search for order: 06-12848-61293
+[2025-05-14 14:00:20] Battery health parsing failed: No matches found in HTML.
+[2025-05-14 14:00:20] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-14 14:00:20] [DEBUG] DigitalProductId present: True
+[2025-05-14 14:00:20] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 14:00:20] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-14 14:00:20] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 1TB
+[2025-05-14 14:00:21] User opened the Test Panel.
+[2025-05-14 14:00:38] Test results saved for serial 8CC92524Q9 (order 06-12848-61293)
+[2025-05-14 14:00:38] Serial '8CC92524Q9' assigned to Order '06-12848-61293' with specs.
+[2025-05-14 14:04:52] User initiated search for order: 06-12848-61293
+[2025-05-14 14:04:55] Battery health parsing failed: No matches found in HTML.
+[2025-05-14 14:04:55] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-14 14:04:55] [DEBUG] DigitalProductId present: True
+[2025-05-14 14:04:55] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 14:04:55] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-14 14:04:55] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 1TB
+[2025-05-14 14:05:10] Error removing serial: 'tuple' object does not support item assignment
 Traceback (most recent call last):
-  File "db\database.py", line 35, in get_db_connection
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
+  File "C:\Users\PCR\Documents\GitHub\SecondChecking\src\logic\view_serials_logic.py", line 101, in remove_selected
+    all_rows[:] = [row for row in all_rows if row[0] != serial]
+    ~~~~~~~~^^^
+TypeError: 'tuple' object does not support item assignment
 
-[2025-12-08 15:14:19] Max retries reached. Database connection failed.
-[2025-12-08 15:14:22] Starting application after authenticating via login panel.
-[2025-12-08 15:14:22] Attempting to establish database connection...
-[2025-12-08 15:14:22] Loading configuration file...
-[2025-12-08 15:14:22] Configuration file loaded successfully.
-[2025-12-08 15:14:22] Database connection attempt 1/3.
-[2025-12-08 15:14:22] Schema provisioning failed: (1060, "Duplicate column name 'battery2'")
+[2025-05-14 14:06:26] User initiated search for order: 06-12848-61293
+[2025-05-14 14:06:28] Battery health parsing failed: No matches found in HTML.
+[2025-05-14 14:06:28] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-14 14:06:28] [DEBUG] DigitalProductId present: True
+[2025-05-14 14:06:28] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 14:06:28] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-14 14:06:28] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 1TB
+[2025-05-14 14:06:37] Test results saved for serial 8CC92524Q9 (order 06-12848-61293)
+[2025-05-14 14:06:37] Serial '8CC92524Q9' assigned to Order '06-12848-61293' with specs.
+[2025-05-14 14:06:43] Removed serial '8CC92524Q9' from order '06-12848-61293'
+[2025-05-14 14:08:40] User initiated search for order: 06-12848-61293
+[2025-05-14 14:08:42] Battery health parsing failed: No matches found in HTML.
+[2025-05-14 14:08:42] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-14 14:08:42] [DEBUG] DigitalProductId present: True
+[2025-05-14 14:08:42] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 14:08:42] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-14 14:08:42] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 1TB
+[2025-05-14 14:08:57] Test results saved for serial 8CC92524Q9 (order 06-12848-61293)
+[2025-05-14 14:08:57] Serial '8CC92524Q9' assigned to Order '06-12848-61293' with specs.
+[2025-05-14 14:09:02] Removed serial '8CC92524Q9' from order '06-12848-61293'
+[2025-05-14 14:09:05] User opened the Test Panel.
+[2025-05-14 14:09:30] User initiated search for order: 06-12848-61293
+[2025-05-14 14:09:32] Battery health parsing failed: No matches found in HTML.
+[2025-05-14 14:09:32] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-14 14:09:32] [DEBUG] DigitalProductId present: True
+[2025-05-14 14:09:32] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 14:09:32] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-14 14:09:32] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 1TB
+[2025-05-14 14:15:01] User initiated search for order: 06-12848-61293
+[2025-05-14 14:15:04] Battery health parsing failed: No matches found in HTML.
+[2025-05-14 14:15:04] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-14 14:15:04] [DEBUG] DigitalProductId present: True
+[2025-05-14 14:15:04] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 14:15:04] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-14 14:15:04] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 512GB + 512GB
+[2025-05-14 14:21:23] User initiated search for order: 06-12848-61293
+[2025-05-14 14:21:25] Battery health parsing failed: No matches found in HTML.
+[2025-05-14 14:21:25] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-14 14:21:25] [DEBUG] DigitalProductId present: True
+[2025-05-14 14:21:25] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 14:21:25] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-14 14:21:25] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 512GB + 512GB
+[2025-05-14 14:21:56] User opened the Test Panel.
+[2025-05-14 14:24:49] User initiated search for order: 06-12848-61293
+[2025-05-14 14:24:52] Battery health parsing failed: No matches found in HTML.
+[2025-05-14 14:24:52] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-14 14:24:52] [DEBUG] DigitalProductId present: True
+[2025-05-14 14:24:52] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 14:24:52] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-14 14:24:52] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 512GB + 512GB
+[2025-05-14 14:37:56] User initiated search for order: 06-12848-61293
+[2025-05-14 14:37:58] Battery health parsing failed: No matches found in HTML.
+[2025-05-14 14:37:58] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-14 14:37:58] [DEBUG] DigitalProductId present: True
+[2025-05-14 14:37:58] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 14:37:58] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-14 14:37:58] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 512GB + 512GB
+[2025-05-14 14:46:02] User initiated search for order: 06-12848-61293
+[2025-05-14 14:46:05] Battery health parsing failed: No matches found in HTML.
+[2025-05-14 14:46:05] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-14 14:46:05] [DEBUG] DigitalProductId present: True
+[2025-05-14 14:46:05] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 14:46:05] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-14 14:46:05] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 512GB + 512GB
+[2025-05-14 14:46:08] User opened the Test Panel.
+[2025-05-14 14:50:14] User initiated search for order: 06-12848-61293
+[2025-05-14 14:50:17] Battery health parsing failed: No matches found in HTML.
+[2025-05-14 14:50:17] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-14 14:50:17] [DEBUG] DigitalProductId present: True
+[2025-05-14 14:50:17] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-14 14:50:17] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-14 14:50:17] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 512GB + 512GB
+[2025-05-15 10:24:14] User initiated search for order: 06-12848-61293
+[2025-05-15 10:24:14] Error loading DB config: No section: 'database'
 Traceback (most recent call last):
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
+  File "C:\Users\PCR\Documents\GitHub\SecondChecking\src\db\database.py", line 10, in get_db_connection
+    DB_HOST = config.get("database", "host")
+  File "C:\Python313\Lib\configparser.py", line 810, in get
+    d = self._unify_values(section, vars)
+  File "C:\Python313\Lib\configparser.py", line 1184, in _unify_values
+    raise NoSectionError(section) from None
+configparser.NoSectionError: No section: 'database'
 
-[2025-12-08 15:14:22] MySQL error on attempt 1: (1060, "Duplicate column name 'battery2'")
+[2025-05-15 10:24:47] User opened the Test Panel.
+[2025-05-15 10:38:22] User initiated search for order: 06-12848-61293
+[2025-05-15 10:38:23] Error loading DB config: No section: 'database'
 Traceback (most recent call last):
-  File "db\database.py", line 35, in get_db_connection
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
+  File "C:\Users\PCR\Documents\GitHub\SecondChecking\src\db\database.py", line 10, in get_db_connection
+    DB_HOST = config.get("database", "host")
+  File "C:\Python313\Lib\configparser.py", line 810, in get
+    d = self._unify_values(section, vars)
+  File "C:\Python313\Lib\configparser.py", line 1184, in _unify_values
+    raise NoSectionError(section) from None
+configparser.NoSectionError: No section: 'database'
 
-[2025-12-08 15:14:27] Database connection attempt 2/3.
-[2025-12-08 15:14:27] Schema provisioning failed: (1060, "Duplicate column name 'battery2'")
+[2025-05-15 10:40:10] User initiated search for order: 06-12848-61293
+[2025-05-15 10:40:10] Error loading DB config: No section: 'database'
 Traceback (most recent call last):
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
+  File "C:\Users\PCR\Documents\GitHub\SecondChecking\src\db\database.py", line 10, in get_db_connection
+    DB_HOST = config.get("database", "host")
+  File "C:\Python313\Lib\configparser.py", line 810, in get
+    d = self._unify_values(section, vars)
+  File "C:\Python313\Lib\configparser.py", line 1184, in _unify_values
+    raise NoSectionError(section) from None
+configparser.NoSectionError: No section: 'database'
 
-[2025-12-08 15:14:27] MySQL error on attempt 2: (1060, "Duplicate column name 'battery2'")
+[2025-05-15 10:43:59] User initiated search for order: 06-12848-61293
+[2025-05-15 10:44:02] Battery health parsing failed: No matches found in HTML.
+[2025-05-15 10:44:02] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-15 10:44:02] [DEBUG] DigitalProductId present: True
+[2025-05-15 10:44:02] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-15 10:44:02] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-15 10:44:02] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 512GB + 512GB + 16GB
+[2025-05-15 10:44:06] User opened the Test Panel.
+[2025-05-15 10:46:25] User initiated search for order: 06-12848-61293
+[2025-05-15 10:46:27] Battery health parsing failed: No matches found in HTML.
+[2025-05-15 10:46:27] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-15 10:46:27] [DEBUG] DigitalProductId present: True
+[2025-05-15 10:46:27] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-15 10:46:27] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-15 10:46:27] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 476GB
+[2025-05-15 10:55:12] User initiated search for order: 06-12848-61293
+[2025-05-15 10:55:15] Battery health parsing failed: No matches found in HTML.
+[2025-05-15 10:55:15] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-15 10:55:15] [DEBUG] DigitalProductId present: True
+[2025-05-15 10:55:15] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-15 10:55:15] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-15 10:55:15] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 512GB+512GB
+[2025-05-15 10:55:27] User opened the Test Panel.
+[2025-05-15 10:56:22] Test results saved for serial 8CC92524Q9 (order 06-12848-61293)
+[2025-05-15 10:56:22] Serial '8CC92524Q9' assigned to Order '06-12848-61293' with specs.
+[2025-05-15 11:05:47] User opened the Test Panel.
+[2025-05-15 11:06:19] User opened the Test Panel.
+[2025-05-15 11:06:29] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-15 11:06:29] [DEBUG] DigitalProductId present: True
+[2025-05-15 11:06:40] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-15 11:06:40] [DEBUG] DigitalProductId present: True
+[2025-05-15 11:08:26] User initiated search for order: 06-12848-61293
+[2025-05-15 11:08:28] Battery health parsing failed: No matches found in HTML.
+[2025-05-15 11:08:28] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-15 11:08:28] [DEBUG] DigitalProductId present: True
+[2025-05-15 11:08:28] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-15 11:08:28] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-15 11:08:28] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 512GB+512GB
+[2025-05-15 11:08:29] User opened the Test Panel.
+[2025-05-15 11:08:34] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-15 11:08:34] [DEBUG] DigitalProductId present: True
+[2025-05-15 11:10:27] User initiated search for order: 06-12848-61293
+[2025-05-15 11:10:29] Battery health parsing failed: No matches found in HTML.
+[2025-05-15 11:10:29] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-15 11:10:29] [DEBUG] DigitalProductId present: True
+[2025-05-15 11:10:29] [DEBUG] test_results['activation'] set to: pass for order 06-12848-61293
+[2025-05-15 11:10:29] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-15 11:10:29] Spec mismatches detected for order 06-12848-61293:
+⚠ Model: Expected P50, Found HP EliteDesk 800 G4 DM 65W
+⚠ SSD: Expected 512GB, Found 512GB+512GB
+[2025-05-15 11:10:30] User opened the Test Panel.
+[2025-05-15 11:10:35] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-15 11:10:35] [DEBUG] DigitalProductId present: True
+[2025-05-16 11:22:34] User initiated search for order: test
+[2025-05-16 11:23:27] User initiated search for order: test
+[2025-05-16 11:25:06] User initiated search for order: test
+[2025-05-16 11:25:09] Battery health parsing failed: No matches found in HTML.
+[2025-05-16 11:25:09] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-16 11:25:09] [DEBUG] DigitalProductId present: True
+[2025-05-16 11:25:09] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-16 11:25:09] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-16 11:26:51] User initiated search for order: test
+[2025-05-16 11:26:53] Battery health parsing failed: No matches found in HTML.
+[2025-05-16 11:26:53] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-16 11:26:53] [DEBUG] DigitalProductId present: True
+[2025-05-16 11:26:53] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-16 11:26:53] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-16 11:26:59] User opened the Test Panel.
+[2025-05-16 11:38:50] User initiated search for order: test
+[2025-05-16 11:38:52] Battery health parsing failed: No matches found in HTML.
+[2025-05-16 11:38:52] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-16 11:38:52] [DEBUG] DigitalProductId present: True
+[2025-05-16 11:38:52] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-16 11:38:52] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-16 11:44:53] User opened the Test Panel.
+[2025-05-16 11:46:33] User entered invalid order ID: 'test.py'
+[2025-05-16 11:46:34] User initiated search for order: test
+[2025-05-16 11:46:37] Battery health parsing failed: No matches found in HTML.
+[2025-05-16 11:46:37] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-16 11:46:37] [DEBUG] DigitalProductId present: True
+[2025-05-16 11:46:37] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-16 11:46:37] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-16 11:46:37] User initiated search for order: test
+[2025-05-16 11:46:37] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-16 11:46:37] [DEBUG] DigitalProductId present: True
+[2025-05-16 11:46:37] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-16 11:46:37] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-16 11:46:39] User initiated search for order: test
+[2025-05-16 11:46:39] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-16 11:46:39] [DEBUG] DigitalProductId present: True
+[2025-05-16 11:46:39] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-16 11:46:39] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-16 11:47:00] User opened the Test Panel.
+[2025-05-16 11:47:03] User opened the Test Panel.
+[2025-05-16 11:48:03] User opened the Test Panel.
+[2025-05-16 11:49:10] User opened the Test Panel.
+[2025-05-16 11:50:19] User opened the Test Panel.
+[2025-05-16 11:50:25] get_live_battery_percent error: <x_wmi: Unexpected COM Error (-2147417843, 'An outgoing call cannot be made since the application is dispatching an input-synchronous call.', None, None)>
+[2025-05-16 11:50:25] Error checking battery charging status: <x_wmi: Unexpected COM Error (-2147417843, 'An outgoing call cannot be made since the application is dispatching an input-synchronous call.', None, None)>
+[2025-05-16 11:50:25] get_live_battery_percent error: <x_wmi: Unexpected COM Error (-2147417843, 'An outgoing call cannot be made since the application is dispatching an input-synchronous call.', None, None)>
+[2025-05-16 11:50:25] Error checking battery charging status: <x_wmi: Unexpected COM Error (-2147417843, 'An outgoing call cannot be made since the application is dispatching an input-synchronous call.', None, None)>
+[2025-05-16 11:50:25] get_live_battery_percent error: <x_wmi: Unexpected COM Error (-2147417843, 'An outgoing call cannot be made since the application is dispatching an input-synchronous call.', None, None)>
+[2025-05-16 11:50:25] Error checking battery charging status: <x_wmi: Unexpected COM Error (-2147417843, 'An outgoing call cannot be made since the application is dispatching an input-synchronous call.', None, None)>
+[2025-05-16 11:50:25] get_live_battery_percent error: <x_wmi: Unexpected COM Error (-2147417843, 'An outgoing call cannot be made since the application is dispatching an input-synchronous call.', None, None)>
+[2025-05-16 11:50:25] Error checking battery charging status: <x_wmi: Unexpected COM Error (-2147417843, 'An outgoing call cannot be made since the application is dispatching an input-synchronous call.', None, None)>
+[2025-05-16 11:51:12] User opened the Test Panel.
+[2025-05-16 12:02:02] User initiated search for order: TEST
+[2025-05-16 12:02:04] User opened the Test Panel.
+[2025-05-16 12:02:04] Battery health parsing failed: No matches found in HTML.
+[2025-05-16 12:02:04] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-16 12:02:04] [DEBUG] DigitalProductId present: True
+[2025-05-16 12:02:04] [DEBUG] test_results['activation'] set to: pass for order TEST
+[2025-05-16 12:02:04] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-16 12:06:04] User initiated search for order: test
+[2025-05-16 12:06:07] Battery health parsing failed: No matches found in HTML.
+[2025-05-16 12:06:07] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-16 12:06:07] [DEBUG] DigitalProductId present: True
+[2025-05-16 12:06:07] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-16 12:06:07] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-16 12:06:09] User opened the Test Panel.
+[2025-05-16 12:16:10] User opened the Test Panel.
+[2025-05-16 12:16:19] User opened the Test Panel.
+[2025-05-16 13:33:51] Error running speaker test: invalid command name ".!toplevel2.!frame.!label"
+[2025-05-16 13:34:33] User opened the Test Panel.
+[2025-05-16 13:34:43] User initiated search for order: test
+[2025-05-16 13:34:45] Battery health parsing failed: No matches found in HTML.
+[2025-05-16 13:34:45] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-16 13:34:45] [DEBUG] DigitalProductId present: True
+[2025-05-16 13:34:45] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-16 13:34:45] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-16 13:36:09] User initiated search for order: test
+[2025-05-16 13:36:11] User opened the Test Panel.
+[2025-05-16 13:36:12] Battery health parsing failed: No matches found in HTML.
+[2025-05-16 13:36:12] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-16 13:36:12] [DEBUG] DigitalProductId present: True
+[2025-05-16 13:36:12] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-16 13:36:12] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-16 13:36:20] Error running speaker test: invalid command name ".!toplevel.!frame.!label"
+[2025-05-16 13:36:34] User opened the Test Panel.
+[2025-05-16 13:36:52] User opened the Test Panel.
+[2025-05-16 13:37:05] User initiated search for order: test
+[2025-05-16 13:37:07] Battery health parsing failed: No matches found in HTML.
+[2025-05-16 13:37:07] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-16 13:37:07] [DEBUG] DigitalProductId present: True
+[2025-05-16 13:37:07] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-16 13:37:07] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-16 13:37:08] User opened the Test Panel.
+[2025-05-20 10:29:20] User initiated search for order: test
+[2025-05-20 10:29:24] Running BatteryInfoView: assets/BatteryInfoView\BatteryInfoView.exe /scomma C:\Users\PCR\AppData\Local\Temp\batteryinfoview.csv
+[2025-05-20 10:29:24] Error parsing Full Charged Capacity: 'NoneType' object has no attribute 'group' in line: Full Charged Capacity,,,,
+
+[2025-05-20 10:29:24] Error parsing Designed Capacity: 'NoneType' object has no attribute 'group' in line: Designed Capacity,,,,
+
+[2025-05-20 10:29:24] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-05-20 10:29:24] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-20 10:29:24] [DEBUG] DigitalProductId present: True
+[2025-05-20 10:29:24] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-20 10:29:24] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-20 10:30:26] User initiated search for order: test
+[2025-05-20 10:30:29] User opened the Test Panel.
+[2025-05-20 10:30:29] Running BatteryInfoView: assets/BatteryInfoView\BatteryInfoView.exe /scomma C:\Users\PCR\AppData\Local\Temp\batteryinfoview.csv
+[2025-05-20 10:30:29] Error parsing Full Charged Capacity: 'NoneType' object has no attribute 'group' in line: Full Charged Capacity,,,,
+
+[2025-05-20 10:30:29] Error parsing Designed Capacity: 'NoneType' object has no attribute 'group' in line: Designed Capacity,,,,
+
+[2025-05-20 10:30:29] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-05-20 10:30:29] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-20 10:30:29] [DEBUG] DigitalProductId present: True
+[2025-05-20 10:30:29] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-20 10:30:29] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-20 10:32:00] User initiated search for order: test
+[2025-05-20 10:32:03] Running BatteryInfoView: assets/BatteryInfoView\BatteryInfoView.exe /scomma C:\Users\PCR\AppData\Local\Temp\batteryinfoview.csv
+[2025-05-20 10:32:03] Error parsing Full Charged Capacity: 'NoneType' object has no attribute 'group' in line: Full Charged Capacity,,,,
+
+[2025-05-20 10:32:03] Error parsing Designed Capacity: 'NoneType' object has no attribute 'group' in line: Designed Capacity,,,,
+
+[2025-05-20 10:32:03] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-05-20 10:32:03] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-20 10:32:03] [DEBUG] DigitalProductId present: True
+[2025-05-20 10:32:03] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-20 10:32:03] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-20 10:34:00] User initiated search for order: test
+[2025-05-20 10:34:03] Running BatteryInfoView: assets/BatteryInfoView\BatteryInfoView.exe /scomma C:\Users\PCR\AppData\Local\Temp\batteryinfoview.csv
+[2025-05-20 10:34:03] Error parsing Full Charged Capacity: 'NoneType' object has no attribute 'group' in line: Full Charged Capacity,,,,
+
+[2025-05-20 10:34:03] Error parsing Designed Capacity: 'NoneType' object has no attribute 'group' in line: Designed Capacity,,,,
+
+[2025-05-20 10:34:03] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-05-20 10:34:03] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-20 10:34:03] [DEBUG] DigitalProductId present: True
+[2025-05-20 10:34:03] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-20 10:34:03] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-20 10:35:19] User opened the Test Panel.
+[2025-05-20 10:37:46] User opened the Test Panel.
+[2025-05-20 10:41:09] User opened the Test Panel.
+[2025-05-20 10:41:42] User opened the Test Panel.
+[2025-05-20 10:41:57] User opened the Test Panel.
+[2025-05-20 10:42:19] User opened the Test Panel.
+[2025-05-20 10:45:07] User initiated search for order: test
+[2025-05-20 10:45:09] Running BatteryInfoView: assets/BatteryInfoView\BatteryInfoView.exe /scomma C:\Users\PCR\AppData\Local\Temp\batteryinfoview.csv
+[2025-05-20 10:45:09] Error parsing Full Charged Capacity: 'NoneType' object has no attribute 'group' in line: Full Charged Capacity,,,,
+
+[2025-05-20 10:45:09] Error parsing Designed Capacity: 'NoneType' object has no attribute 'group' in line: Designed Capacity,,,,
+
+[2025-05-20 10:45:09] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-05-20 10:45:09] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-20 10:45:09] [DEBUG] DigitalProductId present: True
+[2025-05-20 10:45:09] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-20 10:45:10] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-20 10:47:25] User initiated search for order: test
+[2025-05-20 10:47:27] User opened the Test Panel.
+[2025-05-20 10:47:28] Running BatteryInfoView: assets/BatteryInfoView\BatteryInfoView.exe /scomma C:\Users\PCR\AppData\Local\Temp\batteryinfoview.csv
+[2025-05-20 10:47:28] Error parsing Full Charged Capacity: 'NoneType' object has no attribute 'group' in line: Full Charged Capacity,,,,
+
+[2025-05-20 10:47:28] Error parsing Designed Capacity: 'NoneType' object has no attribute 'group' in line: Designed Capacity,,,,
+
+[2025-05-20 10:47:28] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-05-20 10:47:28] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-20 10:47:28] [DEBUG] DigitalProductId present: True
+[2025-05-20 10:47:28] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-20 10:47:28] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-20 10:52:41] User initiated search for order: test
+[2025-05-20 10:52:44] Running BatteryInfoView: assets/BatteryInfoView\BatteryInfoView.exe /scomma C:\Users\PCR\AppData\Local\Temp\batteryinfoview.csv
+[2025-05-20 10:52:44] Error parsing Full Charged Capacity: 'NoneType' object has no attribute 'group' in line: Full Charged Capacity,,,,
+
+[2025-05-20 10:52:44] Error parsing Designed Capacity: 'NoneType' object has no attribute 'group' in line: Designed Capacity,,,,
+
+[2025-05-20 10:52:44] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-05-20 10:52:44] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-20 10:52:44] [DEBUG] DigitalProductId present: True
+[2025-05-20 10:52:44] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-20 10:52:44] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-20 10:52:58] User opened the Test Panel.
+[2025-05-20 10:55:42] User opened the Test Panel.
+[2025-05-20 10:56:02] ActivationStatus registry key error: [WinError 2] The system cannot find the file specified
+[2025-05-20 10:56:02] [DEBUG] DigitalProductId present: True
+[2025-05-20 10:57:37] User opened the Test Panel.
+[2025-05-20 10:57:41] User opened the Test Panel.
+[2025-05-20 11:01:01] User opened the Test Panel.
+[2025-05-20 11:01:52] User opened the Test Panel.
+[2025-05-20 11:02:45] User opened the Test Panel.
+[2025-05-20 11:02:46] User opened the Test Panel.
+[2025-05-20 11:02:47] User opened the Test Panel.
+[2025-05-20 11:23:43] User opened the Test Panel.
+[2025-05-20 11:23:56] User opened the Test Panel.
+[2025-05-20 11:27:03] User opened the Test Panel.
+[2025-05-20 11:31:08] User opened the Test Panel.
+[2025-05-20 11:34:46] User opened the Test Panel.
+[2025-05-20 11:35:39] User opened the Test Panel.
+[2025-05-20 11:38:34] User opened the Test Panel.
+[2025-05-20 11:44:09] User opened the Test Panel.
+[2025-05-20 11:45:15] User initiated search for order: test
+[2025-05-20 11:45:18] Running BatteryInfoView: assets/BatteryInfoView\BatteryInfoView.exe /scomma C:\Users\PCR\AppData\Local\Temp\batteryinfoview.csv
+[2025-05-20 11:45:18] Error parsing Full Charged Capacity: 'NoneType' object has no attribute 'group' in line: Full Charged Capacity,,,,
+
+[2025-05-20 11:45:18] Error parsing Designed Capacity: 'NoneType' object has no attribute 'group' in line: Designed Capacity,,,,
+
+[2025-05-20 11:45:18] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-05-20 11:45:19] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-20 11:45:19] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-20 11:45:19] User opened the Test Panel.
+[2025-05-20 11:49:26] User opened the Test Panel.
+[2025-05-20 11:49:29] Error running keyboard test: cannot use geometry manager pack inside .!toplevel2.!frame which already has slaves managed by grid
+[2025-05-20 11:49:33] User opened the Test Panel.
+[2025-05-20 11:51:28] User opened the Test Panel.
+[2025-05-20 11:55:57] User opened the Test Panel.
+[2025-05-20 11:57:10] User opened the Test Panel.
+[2025-05-20 11:58:39] User opened the Test Panel.
+[2025-05-20 11:59:47] User opened the Test Panel.
+[2025-05-20 12:03:21] User opened the Test Panel.
+[2025-05-20 12:06:04] User opened the Test Panel.
+[2025-05-20 12:08:29] User opened the Test Panel.
+[2025-05-20 12:11:50] User opened the Test Panel.
+[2025-05-20 14:27:59] User opened the Test Panel.
+[2025-05-20 14:32:06] User opened the Test Panel.
+[2025-05-20 14:34:37] User initiated search for order: test
+[2025-05-20 14:34:40] Running BatteryInfoView: assets/BatteryInfoView\BatteryInfoView.exe /scomma C:\Users\PCR\AppData\Local\Temp\batteryinfoview.csv
+[2025-05-20 14:34:40] Error parsing Full Charged Capacity: 'NoneType' object has no attribute 'group' in line: Full Charged Capacity,,,,
+
+[2025-05-20 14:34:40] Error parsing Designed Capacity: 'NoneType' object has no attribute 'group' in line: Designed Capacity,,,,
+
+[2025-05-20 14:34:40] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-05-20 14:34:41] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-20 14:34:41] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-20 14:34:42] User opened the Test Panel.
+[2025-05-20 14:42:19] User opened the Test Panel.
+[2025-05-20 14:42:58] User opened the Test Panel.
+[2025-05-20 14:57:02] User opened the Test Panel.
+[2025-05-20 15:00:18] User opened the Test Panel.
+[2025-05-20 15:04:28] User opened the Test Panel.
+[2025-05-20 15:04:31] Error running keyboard test: run_keyboard_test.<locals>.create_key_button_grid() got an unexpected keyword argument 'column'
+[2025-05-20 15:04:35] User opened the Test Panel.
+[2025-05-20 15:04:46] Error running keyboard test: run_keyboard_test.<locals>.create_key_button_grid() got an unexpected keyword argument 'column'
+[2025-05-20 15:07:36] Error running keyboard test: run_keyboard_test.<locals>.create_key_button_grid() got an unexpected keyword argument 'column'
+[2025-05-20 15:07:42] User opened the Test Panel.
+[2025-05-20 15:07:45] Error running keyboard test: run_keyboard_test.<locals>.create_key_button_grid() got an unexpected keyword argument 'column'
+[2025-05-20 15:10:56] User opened the Test Panel.
+[2025-05-20 15:29:47] User opened the Test Panel.
+[2025-05-20 15:29:49] Error running keyboard test: ui.keyboard_test.run_keyboard_test.<locals>.create_key_button_grid() got multiple values for keyword argument 'rowspan'
+[2025-05-20 15:41:05] User opened the Test Panel.
+[2025-05-21 10:09:57] User opened the Test Panel.
+[2025-05-21 10:10:54] User opened the Test Panel.
+[2025-05-21 10:13:18] User opened the Test Panel.
+[2025-05-21 10:13:21] Error running keyboard test: run_keyboard_test.<locals>.create_key_button_grid() got an unexpected keyword argument 'columnspan'. Did you mean 'colspan'?
+[2025-05-21 10:22:18] User opened the Test Panel.
+[2025-05-21 10:30:30] User opened the Test Panel.
+[2025-05-21 10:51:59] User opened the Test Panel.
+[2025-05-21 11:07:01] User opened the Test Panel.
+[2025-05-21 11:12:04] User opened the Test Panel.
+[2025-05-21 11:20:38] User opened the Test Panel.
+[2025-05-21 11:23:56] User opened the Test Panel.
+[2025-05-21 11:43:56] User opened the Test Panel.
+[2025-05-21 12:01:07] User opened the Test Panel.
+[2025-05-21 12:02:26] User opened the Test Panel.
+[2025-05-21 12:04:54] User opened the Test Panel.
+[2025-05-21 12:14:56] User opened the Test Panel.
+[2025-05-21 12:40:51] User initiated search for order: test
+[2025-05-21 12:40:54] Error parsing Full Charged Capacity: 'NoneType' object has no attribute 'group' in line: Full Charged Capacity,,,,
+
+[2025-05-21 12:40:54] Error parsing Designed Capacity: 'NoneType' object has no attribute 'group' in line: Designed Capacity,,,,
+
+[2025-05-21 12:40:54] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-05-21 12:40:55] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-21 12:40:55] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-21 12:40:57] User opened the Test Panel.
+[2025-05-21 13:07:23] User initiated search for order: test
+[2025-05-21 13:07:27] Full Charged Capacity not found in line: Full Charged Capacity,,,,
+
+[2025-05-21 13:07:27] Designed Capacity not found in line: Designed Capacity,,,,
+
+[2025-05-21 13:07:27] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-05-21 13:07:28] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-21 13:07:28] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-21 13:11:05] User initiated search for order: test
+[2025-05-21 13:11:08] Full Charged Capacity not found in line: Full Charged Capacity,,,,
+
+[2025-05-21 13:11:08] Designed Capacity not found in line: Designed Capacity,,,,
+
+[2025-05-21 13:11:08] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-05-21 13:11:09] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-21 13:11:09] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-21 13:13:41] User initiated search for order ID: test
+[2025-05-21 13:13:41] User initiated search for order: test
+[2025-05-21 13:13:41] Starting search for order ID: test
+[2025-05-21 13:13:41] Disabling search button.
+[2025-05-21 13:13:41] Attempting to establish database connection...
+[2025-05-21 13:13:41] Loading configuration file...
+[2025-05-21 13:13:41] Configuration file loaded successfully.
+[2025-05-21 13:13:41] Database connection attempt 1/3.
+[2025-05-21 13:13:41] Database connection established successfully.
+[2025-05-21 13:13:41] Fetching SKU from database.
+[2025-05-21 13:13:41] Fetched 1 rows for order ID: test
+[2025-05-21 13:13:41] Fetching laptop specs...
+[2025-05-21 13:13:41] Initialized WMI interface.
+[2025-05-21 13:13:43] Detected CPU: i5-8500
+[2025-05-21 13:13:43] Detected Serial Number: 8CC92524Q9
+[2025-05-21 13:13:43] Detected Resolution: 1920x1080
+[2025-05-21 13:13:43] Detected Windows Version: Windows 11
+[2025-05-21 13:13:43] Detected Model: HP EliteDesk 800 G4 DM 65W
+[2025-05-21 13:13:43] Detected RAM: 32GB
+[2025-05-21 13:13:44] Detected SSD: 512GB (SSD)
+[2025-05-21 13:13:44] Full Charged Capacity not found in line: Full Charged Capacity,,,,
+
+[2025-05-21 13:13:44] Designed Capacity not found in line: Designed Capacity,,,,
+
+[2025-05-21 13:13:44] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-05-21 13:13:44] Detected Battery Health: Unknown (batteryinfoview)
+[2025-05-21 13:13:44] Laptop specs fetched successfully.
+[2025-05-21 13:13:45] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-21 13:13:45] Processing SKU: TESTSKU
+[2025-05-21 13:13:45] Loading configuration file...
+[2025-05-21 13:13:45] Configuration file loaded successfully.
+[2025-05-21 13:13:45] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-21 13:17:18] User initiated search for order ID: test
+[2025-05-21 13:17:18] User initiated search for order: test
+[2025-05-21 13:17:18] Starting search for order ID: test
+[2025-05-21 13:17:18] Disabling search button.
+[2025-05-21 13:17:18] Attempting to establish database connection...
+[2025-05-21 13:17:18] Loading configuration file...
+[2025-05-21 13:17:18] Configuration file loaded successfully.
+[2025-05-21 13:17:18] Database connection attempt 1/3.
+[2025-05-21 13:17:18] Database connection established successfully.
+[2025-05-21 13:17:18] Fetching SKU from database.
+[2025-05-21 13:17:18] Fetched 1 rows for order ID: test
+[2025-05-21 13:17:18] Fetching laptop specs...
+[2025-05-21 13:17:18] Initialized WMI interface.
+[2025-05-21 13:17:19] Detected CPU: i5-8500
+[2025-05-21 13:17:20] Detected Serial Number: 8CC92524Q9
+[2025-05-21 13:17:20] Detected Resolution: 1920x1080
+[2025-05-21 13:17:20] Detected Windows Version: Windows 11
+[2025-05-21 13:17:20] Detected Model: HP EliteDesk 800 G4 DM 65W
+[2025-05-21 13:17:20] Detected RAM: 32GB
+[2025-05-21 13:17:21] Detected SSD: 512GB (SSD)
+[2025-05-21 13:17:21] Full Charged Capacity not found in line: Full Charged Capacity,,,,
+
+[2025-05-21 13:17:21] Designed Capacity not found in line: Designed Capacity,,,,
+
+[2025-05-21 13:17:21] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-05-21 13:17:21] Detected Battery Health: Unknown (batteryinfoview)
+[2025-05-21 13:17:21] Laptop specs fetched successfully.
+[2025-05-21 13:17:21] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-21 13:17:21] Processing SKU: TESTSKU
+[2025-05-21 13:17:21] Loading configuration file...
+[2025-05-21 13:17:21] Configuration file loaded successfully.
+[2025-05-21 13:17:21] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-21 13:17:23] Opening test panel.
+[2025-05-21 13:17:26] Attempting to establish database connection...
+[2025-05-21 13:17:26] Loading configuration file...
+[2025-05-21 13:17:26] Configuration file loaded successfully.
+[2025-05-21 13:17:26] Database connection attempt 1/3.
+[2025-05-21 13:17:26] Database connection established successfully.
+[2025-05-21 13:17:29] Opening test panel.
+[2025-05-21 13:21:35] Opening test panel.
+[2025-05-21 13:23:53] User initiated search for order ID: test
+[2025-05-21 13:23:53] User initiated search for order: test
+[2025-05-21 13:23:53] Starting search for order ID: test
+[2025-05-21 13:23:53] Disabling search button.
+[2025-05-21 13:23:53] Attempting to establish database connection...
+[2025-05-21 13:23:53] Loading configuration file...
+[2025-05-21 13:23:53] Configuration file loaded successfully.
+[2025-05-21 13:23:53] Database connection attempt 1/3.
+[2025-05-21 13:23:53] Database connection established successfully.
+[2025-05-21 13:23:53] Fetching SKU from database.
+[2025-05-21 13:23:53] Fetched 1 rows for order ID: test
+[2025-05-21 13:23:53] Fetching laptop specs...
+[2025-05-21 13:23:53] Initialized WMI interface.
+[2025-05-21 13:23:55] Detected CPU: i5-8500
+[2025-05-21 13:23:55] Detected Serial Number: 8CC92524Q9
+[2025-05-21 13:23:55] Detected Resolution: 1920x1080
+[2025-05-21 13:23:55] Detected Windows Version: Windows 11
+[2025-05-21 13:23:55] Detected Model: HP EliteDesk 800 G4 DM 65W
+[2025-05-21 13:23:55] Detected RAM: 32GB
+[2025-05-21 13:23:56] Detected SSD: 512GB (SSD)
+[2025-05-21 13:23:56] Full Charged Capacity not found in line: Full Charged Capacity,,,,
+
+[2025-05-21 13:23:56] Designed Capacity not found in line: Designed Capacity,,,,
+
+[2025-05-21 13:23:56] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-05-21 13:23:56] Detected Battery Health: Unknown (batteryinfoview)
+[2025-05-21 13:23:56] Laptop specs fetched successfully.
+[2025-05-21 13:23:57] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-21 13:23:57] Processing SKU: TESTSKU
+[2025-05-21 13:23:57] Loading configuration file...
+[2025-05-21 13:23:57] Configuration file loaded successfully.
+[2025-05-21 13:23:57] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-21 13:23:57] Opening test panel.
+[2025-05-21 13:43:45] User initiated search for order ID: test
+[2025-05-21 13:43:45] User initiated search for order: test
+[2025-05-21 13:43:45] Starting search for order ID: test
+[2025-05-21 13:43:45] Attempting to establish database connection...
+[2025-05-21 13:43:45] Loading configuration file...
+[2025-05-21 13:43:45] Configuration file loaded successfully.
+[2025-05-21 13:43:45] Database connection attempt 1/3.
+[2025-05-21 13:43:45] Database connection established successfully.
+[2025-05-21 13:43:45] Fetching SKU from database.
+[2025-05-21 13:43:45] Fetched 1 rows for order ID: test
+[2025-05-21 13:43:45] Fetching laptop specs...
+[2025-05-21 13:43:45] Initialized WMI interface.
+[2025-05-21 13:43:47] Detected CPU: i5-8500
+[2025-05-21 13:43:47] Detected Serial Number: 8CC92524Q9
+[2025-05-21 13:43:47] Detected Resolution: 1920x1080
+[2025-05-21 13:43:47] Detected Windows Version: Windows 11
+[2025-05-21 13:43:47] Detected Model: HP EliteDesk 800 G4 DM 65W
+[2025-05-21 13:43:47] Detected RAM: 32GB
+[2025-05-21 13:43:48] Opening test panel.
+[2025-05-21 13:43:48] Detected SSD: 512GB (SSD)
+[2025-05-21 13:43:48] Full Charged Capacity not found in line: Full Charged Capacity,,,,
+
+[2025-05-21 13:43:48] Designed Capacity not found in line: Designed Capacity,,,,
+
+[2025-05-21 13:43:48] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-05-21 13:43:48] Detected Battery Health: Unknown (batteryinfoview)
+[2025-05-21 13:43:48] Laptop specs fetched successfully.
+[2025-05-21 13:43:49] [DEBUG] test_results['activation'] set to: pass for order test
+[2025-05-21 13:43:49] Processing SKU: TESTSKU
+[2025-05-21 13:43:49] Loading configuration file...
+[2025-05-21 13:43:49] Configuration file loaded successfully.
+[2025-05-21 13:43:49] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-21 13:43:52] Opening test panel.
+[2025-05-22 11:30:59] Opening test panel.
+[2025-05-27 12:14:29] User initiated search for order ID: 2092
+[2025-05-27 12:14:29] User initiated search for order: 2092
+[2025-05-27 12:14:30] Starting search for order ID: 2092
+[2025-05-27 12:14:30] Attempting to establish database connection...
+[2025-05-27 12:14:30] Loading configuration file...
+[2025-05-27 12:14:30] Configuration file loaded successfully.
+[2025-05-27 12:14:30] Database connection attempt 1/3.
+[2025-05-27 12:14:30] Database connection established successfully.
+[2025-05-27 12:14:30] Fetching SKU from database.
+[2025-05-27 12:14:30] Fetched 0 rows for order ID: 2092
+[2025-05-27 12:14:30] No SKUs found for order ID: 2092, checking WooCommerce...
+[2025-05-27 12:14:30] Error searching WooCommerce: 403 Client Error: Forbidden for url: https://www.pcrenewed.co.uk/wp-json/wc/v3/orders?search=2092
+[2025-05-27 12:21:40] User initiated search for order ID: 2903
+[2025-05-27 12:21:40] User initiated search for order: 2903
+[2025-05-27 12:21:41] Starting search for order ID: 2903
+[2025-05-27 12:21:41] Getting database connection...
+[2025-05-27 12:21:41] Attempting to establish database connection...
+[2025-05-27 12:21:41] Loading configuration file...
+[2025-05-27 12:21:41] Configuration file loaded successfully.
+[2025-05-27 12:21:41] Database connection attempt 1/3.
+[2025-05-27 12:21:41] Database connection established successfully.
+[2025-05-27 12:21:41] Fetching SKU from database.
+[2025-05-27 12:21:41] Fetched 0 rows for order ID: 2903
+[2025-05-27 12:21:41] No SKUs found for order ID: 2903, checking WooCommerce...
+[2025-05-27 12:21:41] Loading configuration file...
+[2025-05-27 12:21:41] Configuration file loaded successfully.
+[2025-05-27 12:21:41] Loaded config.ini from: C:\Users\PCR\Documents\GitHub\SecondChecking\src\utils\..\config.ini
+[2025-05-27 12:21:41] WooCommerce config loaded: url=https://www.pcrenewed.co.uk/wp-json/wc/v3/orders, consumer_key=set, consumer_secret=set
+[2025-05-27 12:21:41] Sending WooCommerce API request to https://www.pcrenewed.co.uk/wp-json/wc/v3/orders with params {'search': '2903'}
+[2025-05-27 12:21:41] WooCommerce API response status: 403
+[2025-05-27 12:21:41] Error searching WooCommerce: 403 Client Error: Forbidden for url: https://www.pcrenewed.co.uk/wp-json/wc/v3/orders?search=2903
 Traceback (most recent call last):
-  File "db\database.py", line 35, in get_db_connection
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
+  File "C:\Users\PCR\Documents\GitHub\SecondChecking\src\main_logic.py", line 102, in run_search
+    response.raise_for_status()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\PCR\AppData\Roaming\Python\Python313\site-packages\requests\models.py", line 1024, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pcrenewed.co.uk/wp-json/wc/v3/orders?search=2903
 
-[2025-12-08 15:14:37] Database connection attempt 3/3.
-[2025-12-08 15:14:37] Schema provisioning failed: (1060, "Duplicate column name 'battery2'")
+[2025-05-27 12:23:24] User initiated search for order ID: 2092
+[2025-05-27 12:23:24] User initiated search for order: 2092
+[2025-05-27 12:23:24] Starting search for order ID: 2092
+[2025-05-27 12:23:24] Getting database connection...
+[2025-05-27 12:23:24] Attempting to establish database connection...
+[2025-05-27 12:23:24] Loading configuration file...
+[2025-05-27 12:23:24] Configuration file loaded successfully.
+[2025-05-27 12:23:24] Database connection attempt 1/3.
+[2025-05-27 12:23:24] Database connection established successfully.
+[2025-05-27 12:23:24] Fetching SKU from database.
+[2025-05-27 12:23:24] Fetched 0 rows for order ID: 2092
+[2025-05-27 12:23:24] No SKUs found for order ID: 2092, checking WooCommerce...
+[2025-05-27 12:23:24] Loading configuration file...
+[2025-05-27 12:23:24] Configuration file loaded successfully.
+[2025-05-27 12:23:24] Loaded config.ini from: C:\Users\PCR\Documents\GitHub\SecondChecking\src\utils\..\config.ini
+[2025-05-27 12:23:24] WooCommerce config loaded: url=https://www.pcrenewed.co.uk/wp-json/wc/v3/orders, consumer_key=set, consumer_secret=set
+[2025-05-27 12:23:24] Sending WooCommerce API request to https://www.pcrenewed.co.uk/wp-json/wc/v3/orders with params {'search': '2092'}
+[2025-05-27 12:23:25] WooCommerce API response status: 403
+[2025-05-27 12:23:25] Error searching WooCommerce: 403 Client Error: Forbidden for url: https://www.pcrenewed.co.uk/wp-json/wc/v3/orders?search=2092
 Traceback (most recent call last):
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
+  File "C:\Users\PCR\Documents\GitHub\SecondChecking\src\main_logic.py", line 102, in run_search
+    response.raise_for_status()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\PCR\AppData\Roaming\Python\Python313\site-packages\requests\models.py", line 1024, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pcrenewed.co.uk/wp-json/wc/v3/orders?search=2092
 
-[2025-12-08 15:14:37] MySQL error on attempt 3: (1060, "Duplicate column name 'battery2'")
-Traceback (most recent call last):
-  File "db\database.py", line 35, in get_db_connection
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
+[2025-05-27 12:26:33] User initiated search for order ID: 2092
+[2025-05-27 12:26:33] User initiated search for order: 2092
+[2025-05-27 12:26:34] Starting search for order ID: 2092
+[2025-05-27 12:26:34] Getting database connection...
+[2025-05-27 12:26:34] Attempting to establish database connection...
+[2025-05-27 12:26:34] Loading configuration file...
+[2025-05-27 12:26:34] Configuration file loaded successfully.
+[2025-05-27 12:26:34] Database connection attempt 1/3.
+[2025-05-27 12:26:34] Database connection established successfully.
+[2025-05-27 12:26:34] Fetching SKU from database.
+[2025-05-27 12:26:34] Fetched 0 rows for order ID: 2092
+[2025-05-27 12:26:34] No SKUs found for order ID: 2092, checking WooCommerce...
+[2025-05-27 12:26:34] Loading configuration file...
+[2025-05-27 12:26:34] Configuration file loaded successfully.
+[2025-05-27 12:26:34] Loaded config.ini from: C:\Users\PCR\Documents\GitHub\SecondChecking\src\utils\..\config.ini
+[2025-05-27 12:26:34] WooCommerce config loaded: url=https://www.pcrenewed.co.uk/wp-json/wc/v3/orders, consumer_key=set, consumer_secret=set
+[2025-05-27 12:26:34] Request headers: {'User-Agent': 'Mozilla/5.0'}
+[2025-05-27 12:26:34] Request URL: https://www.pcrenewed.co.uk/wp-json/wc/v3/orders | Params: {'search': '2092'}
+[2025-05-27 12:26:34] WooCommerce API response status: 200
+[2025-05-27 12:26:34] WooCommerce API final URL: https://www.pcrenewed.co.uk/wp-json/wc/v3/orders?search=2092
+[2025-05-27 12:26:34] WooCommerce API returned 1 orders
+[2025-05-27 12:26:34] WooCommerce API raw response: [{'id': 2092, 'parent_id': 0, 'status': 'on-hold', 'currency': 'GBP', 'version': '9.8.5', 'prices_include_tax': True, 'date_created': '2025-05-26T21:14:52', 'date_modified': '2025-05-27T09:08:55', 'discount_total': '0.00', 'discount_tax': '0.00', 'shipping_total': '0.00', 'shipping_tax': '0.00', 'cart_tax': '33.33', 'total': '199.99', 'total_tax': '33.33', 'customer_id': 0, 'order_key': 'wc_order_pHHHIYuvg6hGX', 'billing': {'first_name': 'Paschalis', 'last_name': 'Skouzos', 'company': '', 'address_1': '1208 6 Weaver Walk', 'address_2': '', 'city': 'London', 'state': '', 'postcode': 'HA9 0LG', 'country': 'GB', 'email': 'paschalis.skouzos@gmail.com', 'phone': ''}, 'shipping': {'first_name': 'Paschalis', 'last_name': 'Skouzos', 'company': '', 'address_1': '1208 6 Weaver Walk', 'address_2': '', 'city': 'London', 'state': '', 'postcode': 'HA9 0LG', 'country': 'GB', 'phone': ''}, 'payment_method': 'bacs', 'payment_method_title': 'Direct bank transfer', 'transaction_id': '', 'customer_ip_address': '178.238.10.129', 'customer_user_agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0', 'created_via': 'store-api', 'customer_note': '', 'date_completed': None, 'date_paid': '2025-05-27T09:06:11', 'cart_hash': '8d53d9cad1d087c15f5266dec1e8e611', 'number': '2092', 'meta_data': [{'id': 41540, 'key': '_shipping_hash', 'value': '9d4568c009d203ab10e33ea9953a0264'}, {'id': 41541, 'key': '_coupons_hash', 'value': 'd751713988987e9331980363e24189ce'}, {'id': 41542, 'key': '_fees_hash', 'value': 'd751713988987e9331980363e24189ce'}, {'id': 41543, 'key': '_taxes_hash', 'value': 'b7c1ca83121fce7d63e20be335397bc1'}, {'id': 41544, 'key': 'is_vat_exempt', 'value': 'no'}, {'id': 41557, 'key': '_wc_order_attribution_source_type', 'value': 'organic'}, {'id': 41558, 'key': '_wc_order_attribution_referrer', 'value': 'https://www.google.com/'}, {'id': 41559, 'key': '_wc_order_attribution_utm_source', 'value': 'google'}, {'id': 41560, 'key': '_wc_order_attribution_utm_medium', 'value': 'organic'}, {'id': 41561, 'key': '_wc_order_attribution_session_entry', 'value': 'https://www.pcrenewed.co.uk/product/lenovo-thinkpad-t480s-14-laptop-core-i5-8350u-8gb-ram-256gb-ssd-windows-11-pro/'}, {'id': 41562, 'key': '_wc_order_attribution_session_start_time', 'value': '2025-05-26 17:15:51'}, {'id': 41563, 'key': '_wc_order_attribution_session_pages', 'value': '2'}, {'id': 41564, 'key': '_wc_order_attribution_session_count', 'value': '6'}, {'id': 41565, 'key': '_wc_order_attribution_user_agent', 'value': 'Mozilla/5.0 (X11; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0'}, {'id': 41566, 'key': '_wc_order_attribution_device_type', 'value': 'Desktop'}, {'id': 41569, 'key': '_wcpdf_invoice_settings', 'value': {'display_email': '1', 'display_phone': '1', 'display_customer_notes': '1', 'display_shipping_address': 'when_different', 'display_number': 'invoice_number', 'display_date': 'invoice_date', 'header_logo': '54', 'header_logo_height': '1cm', 'vat_number': '', 'coc_number': '11825952', 'shop_name': {'default': 'PC Renewed Ltd'}, 'shop_phone_number': {'default': '02476 460 069'}, 'shop_address': {'default': 'Unit 1, 894 Charter Avenue\r\nCoventry\r\nWest Midlands\r\nCV4 8AT'}, 'footer': {'default': ''}, 'extra_1': {'default': ''}, 'extra_2': {'default': ''}, 'extra_3': {'default': ''}}}, {'id': 41570, 'key': '_wcpdf_invoice_display_date', 'value': 'document_date'}, {'id': 41571, 'key': '_wcpdf_invoice_creation_trigger', 'value': 'email_attachment'}, {'id': 41572, 'key': '_wcpdf_invoice_date', 'value': '1748290567'}, {'id': 41573, 'key': '_wcpdf_invoice_date_formatted', 'value': '2025-05-26 21:16:07'}, {'id': 41574, 'key': '_wcpdf_invoice_number', 'value': '24'}, {'id': 41575, 'key': '_wcpdf_invoice_number_data', 'value': {'number': 24, 'formatted_number': '24', 'prefix': '', 'suffix': '', 'document_type': 'invoice', 'order_id': 2092, 'padding': ''}}, {'id': 41576, 'key': '_ga_tracked', 'value': '1'}, {'id': 41673, 'key': '_xero_invoice_id', 'value': '35c00c97-4310-4a82-98b3-0a679c09905b'}, {'id': 41674, 'key': '_xero_currencyrate', 'value': '1.0000000000'}, {'id': 41675, 'key': '_xero_invoice_hash', 'value': '023471422240b1483ba5d815dbb1d682e7a7665c'}], 'line_items': [{'id': 616, 'name': 'Lenovo ThinkPad T480s 14" Laptop Core I5-8350U 8GB RAM 256GB SSD Windows 11 Pro - 256GB SSD, One Year Warranty', 'product_id': 987, 'variation_id': 989, 'quantity': 1, 'tax_class': '', 'subtotal': '166.66', 'subtotal_tax': '33.33', 'total': '166.66', 'total_tax': '33.33', 'taxes': [{'id': 1, 'total': '33.331667', 'subtotal': '33.331667'}], 'meta_data': [{'id': 5911, 'key': 'pa_ssd', 'value': '256gb-ssd', 'display_key': 'SSD', 'display_value': '256GB SSD'}, {'id': 5912, 'key': 'pa_warranty', 'value': 'one-year-warranty', 'display_key': 'Warranty', 'display_value': 'One Year Warranty'}, {'id': 6007, 'key': '_reduced_stock', 'value': '1', 'display_key': '_reduced_stock', 'display_value': '1'}], 'sku': 'T480S-I5-8RAM-256SSD-WIN11-1920X1080-AGRADE-BLACK-1YEAR', 'price': 166.658333, 'image': {'id': 988, 'src': 'https://www.pcrenewed.co.uk/wp-content/uploads/2024/10/T480s.jpg'}, 'parent_name': 'Lenovo ThinkPad T480s 14" Laptop Core I5-8350U 8GB RAM 256GB SSD Windows 11 Pro'}], 'tax_lines': [{'id': 625, 'rate_code': 'GB-VAT-1', 'rate_id': 1, 'label': 'VAT', 'compound': False, 'tax_total': '33.33', 'shipping_tax_total': '0.00', 'rate_percent': 20, 'meta_data': [{'id': 6003, 'key': '_wcpdf_rate_percentage', 'value': '20.0000', 'display_key': '_wcpdf_rate_percentage', 'display_value': '20.0000'}, {'id': 6004, 'key': '_wcpdf_ubl_tax_category', 'value': '', 'display_key': '_wcpdf_ubl_tax_category', 'display_value': ''}, {'id': 6005, 'key': '_wcpdf_ubl_tax_scheme', 'value': '', 'display_key': '_wcpdf_ubl_tax_scheme', 'display_value': ''}, {'id': 6006, 'key': '_wcpdf_ubl_tax_reason', 'value': '', 'display_key': '_wcpdf_ubl_tax_reason', 'display_value': ''}]}], 'shipping_lines': [], 'fee_lines': [], 'coupon_lines': [], 'refunds': [], 'payment_url': 'https://www.pcrenewed.co.uk/checkout/order-pay/2092/?pay_for_order=true&key=wc_order_pHHHIYuvg6hGX', 'is_editable': True, 'needs_payment': False, 'needs_processing': True, 'date_created_gmt': '2025-05-26T20:14:52', 'date_modified_gmt': '2025-05-27T08:08:55', 'date_completed_gmt': None, 'date_paid_gmt': '2025-05-27T08:06:11', 'currency_symbol': '£', '_links': {'self': [{'href': 'https://www.pcrenewed.co.uk/wp-json/wc/v3/orders/2092', 'targetHints': {'allow': ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']}}], 'collection': [{'href': 'https://www.pcrenewed.co.uk/wp-json/wc/v3/orders'}], 'email_templates': [{'embeddable': True, 'href': 'https://www.pcrenewed.co.uk/wp-json/wc/v3/orders/2092/actions/email_templates'}]}}]
+[2025-05-27 12:26:34] Order found in WooCommerce. SKU: T480S-I5-8RAM-256SSD-WIN11-1920X1080-AGRADE-BLACK-1YEAR
+[2025-05-27 12:26:34] Fetching laptop specs...
+[2025-05-27 12:26:34] Initialized WMI interface.
+[2025-05-27 12:26:36] Detected CPU: i5-8500
+[2025-05-27 12:26:36] Detected Serial Number: 8CC92524Q9
+[2025-05-27 12:26:36] Detected Resolution: 1920x1080
+[2025-05-27 12:26:36] Detected Windows Version: Windows 11
+[2025-05-27 12:26:36] Detected Model: HP EliteDesk 800 G4 DM 65W
+[2025-05-27 12:26:36] Detected RAM: 32GB
+[2025-05-27 12:26:37] Detected SSD: 512GB (SSD)
+[2025-05-27 12:26:37] Full Charged Capacity not found in line: Full Charged Capacity,,,,
 
-[2025-12-08 15:14:37] Max retries reached. Database connection failed.
-[2025-12-08 15:14:40] Unable to load username list; database connection failed.
-[2025-12-08 15:14:42] Unable to load username list; database connection failed.
-[2026-01-13 11:16:33] Starting application after authenticating via login panel.
-[2026-01-13 11:16:33] Attempting to establish database connection...
-[2026-01-13 11:16:33] Loading configuration file...
-[2026-01-13 11:16:33] Configuration file loaded successfully.
-[2026-01-13 11:16:33] Database connection attempt 1/3.
-[2026-01-13 11:16:33] Schema provisioning failed: (1060, "Duplicate column name 'battery2'")
-Traceback (most recent call last):
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
+[2025-05-27 12:26:37] Designed Capacity not found in line: Designed Capacity,,,,
 
-[2026-01-13 11:16:33] MySQL error on attempt 1: (1060, "Duplicate column name 'battery2'")
-Traceback (most recent call last):
-  File "db\database.py", line 35, in get_db_connection
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
+[2025-05-27 12:26:37] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-05-27 12:26:37] Detected Battery Health: Unknown (batteryinfoview)
+[2025-05-27 12:26:37] Laptop specs fetched successfully.
+[2025-05-27 12:26:38] [DEBUG] test_results['activation'] set to: pass for order 2092
+[2025-05-27 12:26:38] Processing SKU: T480S-I5-8RAM-256SSD-WIN11-1920X1080-AGRADE-BLACK-1YEAR
+[2025-05-27 12:26:38] Loading configuration file...
+[2025-05-27 12:26:38] Configuration file loaded successfully.
+[2025-05-27 12:26:38] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-27 12:26:38] Spec mismatches detected for order 2092:
+⚠ Model: Expected T480S, Found HP EliteDesk 800 G4 DM 65W
+⚠ CPU: Expected i5, Found i5-8500
+⚠ SSD: Expected 256GB, Found 512GB
+⚠ RAM: Expected 8GB, Found 32GB
+[2025-05-27 12:30:45] User initiated search for order ID: 2092
+[2025-05-27 12:30:45] User initiated search for order: 2092
+[2025-05-27 12:30:46] Starting search for order ID: 2092
+[2025-05-27 12:30:46] Getting database connection...
+[2025-05-27 12:30:46] Attempting to establish database connection...
+[2025-05-27 12:30:46] Loading configuration file...
+[2025-05-27 12:30:46] Configuration file loaded successfully.
+[2025-05-27 12:30:46] Database connection attempt 1/3.
+[2025-05-27 12:30:46] Database connection established successfully.
+[2025-05-27 12:30:46] Fetching SKU from database.
+[2025-05-27 12:30:46] Fetched 0 rows for order ID: 2092
+[2025-05-27 12:30:46] No SKUs found for order ID: 2092, checking WooCommerce...
+[2025-05-27 12:30:46] Loading configuration file...
+[2025-05-27 12:30:46] Configuration file loaded successfully.
+[2025-05-27 12:30:46] Loaded config.ini from: C:\Users\PCR\Documents\GitHub\SecondChecking\src\utils\..\config.ini
+[2025-05-27 12:30:46] WooCommerce config loaded: url=https://www.pcrenewed.co.uk/wp-json/wc/v3/orders, consumer_key=set, consumer_secret=set
+[2025-05-27 12:30:46] Request headers: {'User-Agent': 'Mozilla/5.0'}
+[2025-05-27 12:30:46] Request URL: https://www.pcrenewed.co.uk/wp-json/wc/v3/orders | Params: {'search': '2092'}
+[2025-05-27 12:30:46] WooCommerce API response status: 200
+[2025-05-27 12:30:46] WooCommerce API final URL: https://www.pcrenewed.co.uk/wp-json/wc/v3/orders?search=2092
+[2025-05-27 12:30:46] WooCommerce API returned 1 orders
+[2025-05-27 12:30:46] WooCommerce API raw response: [{'id': 2092, 'parent_id': 0, 'status': 'on-hold', 'currency': 'GBP', 'version': '9.8.5', 'prices_include_tax': True, 'date_created': '2025-05-26T21:14:52', 'date_modified': '2025-05-27T09:08:55', 'discount_total': '0.00', 'discount_tax': '0.00', 'shipping_total': '0.00', 'shipping_tax': '0.00', 'cart_tax': '33.33', 'total': '199.99', 'total_tax': '33.33', 'customer_id': 0, 'order_key': 'wc_order_pHHHIYuvg6hGX', 'billing': {'first_name': 'Paschalis', 'last_name': 'Skouzos', 'company': '', 'address_1': '1208 6 Weaver Walk', 'address_2': '', 'city': 'London', 'state': '', 'postcode': 'HA9 0LG', 'country': 'GB', 'email': 'paschalis.skouzos@gmail.com', 'phone': ''}, 'shipping': {'first_name': 'Paschalis', 'last_name': 'Skouzos', 'company': '', 'address_1': '1208 6 Weaver Walk', 'address_2': '', 'city': 'London', 'state': '', 'postcode': 'HA9 0LG', 'country': 'GB', 'phone': ''}, 'payment_method': 'bacs', 'payment_method_title': 'Direct bank transfer', 'transaction_id': '', 'customer_ip_address': '178.238.10.129', 'customer_user_agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0', 'created_via': 'store-api', 'customer_note': '', 'date_completed': None, 'date_paid': '2025-05-27T09:06:11', 'cart_hash': '8d53d9cad1d087c15f5266dec1e8e611', 'number': '2092', 'meta_data': [{'id': 41540, 'key': '_shipping_hash', 'value': '9d4568c009d203ab10e33ea9953a0264'}, {'id': 41541, 'key': '_coupons_hash', 'value': 'd751713988987e9331980363e24189ce'}, {'id': 41542, 'key': '_fees_hash', 'value': 'd751713988987e9331980363e24189ce'}, {'id': 41543, 'key': '_taxes_hash', 'value': 'b7c1ca83121fce7d63e20be335397bc1'}, {'id': 41544, 'key': 'is_vat_exempt', 'value': 'no'}, {'id': 41557, 'key': '_wc_order_attribution_source_type', 'value': 'organic'}, {'id': 41558, 'key': '_wc_order_attribution_referrer', 'value': 'https://www.google.com/'}, {'id': 41559, 'key': '_wc_order_attribution_utm_source', 'value': 'google'}, {'id': 41560, 'key': '_wc_order_attribution_utm_medium', 'value': 'organic'}, {'id': 41561, 'key': '_wc_order_attribution_session_entry', 'value': 'https://www.pcrenewed.co.uk/product/lenovo-thinkpad-t480s-14-laptop-core-i5-8350u-8gb-ram-256gb-ssd-windows-11-pro/'}, {'id': 41562, 'key': '_wc_order_attribution_session_start_time', 'value': '2025-05-26 17:15:51'}, {'id': 41563, 'key': '_wc_order_attribution_session_pages', 'value': '2'}, {'id': 41564, 'key': '_wc_order_attribution_session_count', 'value': '6'}, {'id': 41565, 'key': '_wc_order_attribution_user_agent', 'value': 'Mozilla/5.0 (X11; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0'}, {'id': 41566, 'key': '_wc_order_attribution_device_type', 'value': 'Desktop'}, {'id': 41569, 'key': '_wcpdf_invoice_settings', 'value': {'display_email': '1', 'display_phone': '1', 'display_customer_notes': '1', 'display_shipping_address': 'when_different', 'display_number': 'invoice_number', 'display_date': 'invoice_date', 'header_logo': '54', 'header_logo_height': '1cm', 'vat_number': '', 'coc_number': '11825952', 'shop_name': {'default': 'PC Renewed Ltd'}, 'shop_phone_number': {'default': '02476 460 069'}, 'shop_address': {'default': 'Unit 1, 894 Charter Avenue\r\nCoventry\r\nWest Midlands\r\nCV4 8AT'}, 'footer': {'default': ''}, 'extra_1': {'default': ''}, 'extra_2': {'default': ''}, 'extra_3': {'default': ''}}}, {'id': 41570, 'key': '_wcpdf_invoice_display_date', 'value': 'document_date'}, {'id': 41571, 'key': '_wcpdf_invoice_creation_trigger', 'value': 'email_attachment'}, {'id': 41572, 'key': '_wcpdf_invoice_date', 'value': '1748290567'}, {'id': 41573, 'key': '_wcpdf_invoice_date_formatted', 'value': '2025-05-26 21:16:07'}, {'id': 41574, 'key': '_wcpdf_invoice_number', 'value': '24'}, {'id': 41575, 'key': '_wcpdf_invoice_number_data', 'value': {'number': 24, 'formatted_number': '24', 'prefix': '', 'suffix': '', 'document_type': 'invoice', 'order_id': 2092, 'padding': ''}}, {'id': 41576, 'key': '_ga_tracked', 'value': '1'}, {'id': 41673, 'key': '_xero_invoice_id', 'value': '35c00c97-4310-4a82-98b3-0a679c09905b'}, {'id': 41674, 'key': '_xero_currencyrate', 'value': '1.0000000000'}, {'id': 41675, 'key': '_xero_invoice_hash', 'value': '023471422240b1483ba5d815dbb1d682e7a7665c'}], 'line_items': [{'id': 616, 'name': 'Lenovo ThinkPad T480s 14" Laptop Core I5-8350U 8GB RAM 256GB SSD Windows 11 Pro - 256GB SSD, One Year Warranty', 'product_id': 987, 'variation_id': 989, 'quantity': 1, 'tax_class': '', 'subtotal': '166.66', 'subtotal_tax': '33.33', 'total': '166.66', 'total_tax': '33.33', 'taxes': [{'id': 1, 'total': '33.331667', 'subtotal': '33.331667'}], 'meta_data': [{'id': 5911, 'key': 'pa_ssd', 'value': '256gb-ssd', 'display_key': 'SSD', 'display_value': '256GB SSD'}, {'id': 5912, 'key': 'pa_warranty', 'value': 'one-year-warranty', 'display_key': 'Warranty', 'display_value': 'One Year Warranty'}, {'id': 6007, 'key': '_reduced_stock', 'value': '1', 'display_key': '_reduced_stock', 'display_value': '1'}], 'sku': 'T480S-I5-8RAM-256SSD-WIN11-1920X1080-AGRADE-BLACK-1YEAR', 'price': 166.658333, 'image': {'id': 988, 'src': 'https://www.pcrenewed.co.uk/wp-content/uploads/2024/10/T480s.jpg'}, 'parent_name': 'Lenovo ThinkPad T480s 14" Laptop Core I5-8350U 8GB RAM 256GB SSD Windows 11 Pro'}], 'tax_lines': [{'id': 625, 'rate_code': 'GB-VAT-1', 'rate_id': 1, 'label': 'VAT', 'compound': False, 'tax_total': '33.33', 'shipping_tax_total': '0.00', 'rate_percent': 20, 'meta_data': [{'id': 6003, 'key': '_wcpdf_rate_percentage', 'value': '20.0000', 'display_key': '_wcpdf_rate_percentage', 'display_value': '20.0000'}, {'id': 6004, 'key': '_wcpdf_ubl_tax_category', 'value': '', 'display_key': '_wcpdf_ubl_tax_category', 'display_value': ''}, {'id': 6005, 'key': '_wcpdf_ubl_tax_scheme', 'value': '', 'display_key': '_wcpdf_ubl_tax_scheme', 'display_value': ''}, {'id': 6006, 'key': '_wcpdf_ubl_tax_reason', 'value': '', 'display_key': '_wcpdf_ubl_tax_reason', 'display_value': ''}]}], 'shipping_lines': [], 'fee_lines': [], 'coupon_lines': [], 'refunds': [], 'payment_url': 'https://www.pcrenewed.co.uk/checkout/order-pay/2092/?pay_for_order=true&key=wc_order_pHHHIYuvg6hGX', 'is_editable': True, 'needs_payment': False, 'needs_processing': True, 'date_created_gmt': '2025-05-26T20:14:52', 'date_modified_gmt': '2025-05-27T08:08:55', 'date_completed_gmt': None, 'date_paid_gmt': '2025-05-27T08:06:11', 'currency_symbol': '£', '_links': {'self': [{'href': 'https://www.pcrenewed.co.uk/wp-json/wc/v3/orders/2092', 'targetHints': {'allow': ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']}}], 'collection': [{'href': 'https://www.pcrenewed.co.uk/wp-json/wc/v3/orders'}], 'email_templates': [{'embeddable': True, 'href': 'https://www.pcrenewed.co.uk/wp-json/wc/v3/orders/2092/actions/email_templates'}]}}]
+[2025-05-27 12:30:46] Order found in WooCommerce. SKU: T480S-I5-8RAM-256SSD-WIN11-1920X1080-AGRADE-BLACK-1YEAR
+[2025-05-27 12:30:46] Fetching laptop specs...
+[2025-05-27 12:30:46] Initialized WMI interface.
+[2025-05-27 12:30:47] Detected CPU: i5-8500
+[2025-05-27 12:30:47] Detected Serial Number: 8CC92524Q9
+[2025-05-27 12:30:47] Detected Resolution: 1920x1080
+[2025-05-27 12:30:47] Detected Windows Version: Windows 11
+[2025-05-27 12:30:47] Detected Model: HP EliteDesk 800 G4 DM 65W
+[2025-05-27 12:30:47] Detected RAM: 32GB
+[2025-05-27 12:30:48] Detected SSD: 512GB (SSD)
+[2025-05-27 12:30:48] Full Charged Capacity not found in line: Full Charged Capacity,,,,
 
-[2026-01-13 11:16:38] Database connection attempt 2/3.
-[2026-01-13 11:16:39] Schema provisioning failed: (1060, "Duplicate column name 'battery2'")
-Traceback (most recent call last):
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
+[2025-05-27 12:30:48] Designed Capacity not found in line: Designed Capacity,,,,
 
-[2026-01-13 11:16:39] MySQL error on attempt 2: (1060, "Duplicate column name 'battery2'")
-Traceback (most recent call last):
-  File "db\database.py", line 35, in get_db_connection
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
+[2025-05-27 12:30:48] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-05-27 12:30:48] Detected Battery Health: Unknown (batteryinfoview)
+[2025-05-27 12:30:48] Laptop specs fetched successfully.
+[2025-05-27 12:30:49] [DEBUG] test_results['activation'] set to: pass for order 2092
+[2025-05-27 12:30:49] Processing SKU: T480S-I5-8RAM-256SSD-WIN11-1920X1080-AGRADE-BLACK-1YEAR
+[2025-05-27 12:30:49] Loading configuration file...
+[2025-05-27 12:30:49] Configuration file loaded successfully.
+[2025-05-27 12:30:49] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-05-27 12:30:49] Spec mismatches detected for order 2092:
+⚠ Model: Expected T480S, Found HP EliteDesk 800 G4 DM 65W
+⚠ CPU: Expected i5, Found i5-8500
+⚠ SSD: Expected 256GB, Found 512GB
+⚠ RAM: Expected 8GB, Found 32GB
+[2025-11-24 10:14:15] User initiated search for order ID: 3221
+[2025-11-24 10:14:15] User initiated search for order: 3221
+[2025-11-24 10:14:15] Starting search for order ID: 3221
+[2025-11-24 10:14:15] Getting database connection...
+[2025-11-24 10:14:15] Attempting to establish database connection...
+[2025-11-24 10:14:15] Loading configuration file...
+[2025-11-24 10:14:15] Configuration file loaded successfully.
+[2025-11-24 10:14:15] Database connection attempt 1/3.
+[2025-11-24 10:14:15] Database connection established successfully.
+[2025-11-24 10:14:15] Fetching SKU from database.
+[2025-11-24 10:14:15] Fetched 0 rows for order ID: 3221
+[2025-11-24 10:14:15] No SKUs found for order ID: 3221, checking WooCommerce...
+[2025-11-24 10:14:15] Loading configuration file...
+[2025-11-24 10:14:15] Configuration file loaded successfully.
+[2025-11-24 10:14:15] Loaded config.ini from: C:\Users\PCR\Documents\GitHub\SecondChecking\src\utils\..\config.ini
+[2025-11-24 10:14:15] WooCommerce config loaded: url=https://www.pcrenewed.co.uk/wp-json/wc/v3/orders, consumer_key=set, consumer_secret=set
+[2025-11-24 10:14:15] Request headers: {'User-Agent': 'Mozilla/5.0'}
+[2025-11-24 10:14:15] Request URL: https://www.pcrenewed.co.uk/wp-json/wc/v3/orders | Params: {'search': '3221'}
+[2025-11-24 10:14:16] WooCommerce API response status: 200
+[2025-11-24 10:14:16] WooCommerce API final URL: https://www.pcrenewed.co.uk/wp-json/wc/v3/orders?search=3221
+[2025-11-24 10:14:16] WooCommerce API returned 1 orders
+[2025-11-24 10:14:16] WooCommerce API raw response: [{'id': 2309, 'parent_id': 0, 'status': 'completed', 'currency': 'GBP', 'version': '9.9.3', 'prices_include_tax': True, 'date_created': '2025-06-15T22:26:45', 'date_modified': '2025-06-17T14:34:19', 'discount_total': '0.00', 'discount_tax': '0.00', 'shipping_total': '0.00', 'shipping_tax': '0.00', 'cart_tax': '38.33', 'total': '229.99', 'total_tax': '38.33', 'customer_id': 48, 'order_key': 'wc_order_HXKp5tcYQ9Aau', 'billing': {'first_name': 'Nikita', 'last_name': 'Danvill', 'company': '', 'address_1': '41 Penge Road', 'address_2': 'Flat 2', 'city': 'London', 'state': '', 'postcode': 'SE25 4EJ', 'country': 'GB', 'email': 'nikidanvill@gmail.com', 'phone': '+447919732213'}, 'shipping': {'first_name': 'Nikita', 'last_name': 'Danvill', 'company': '', 'address_1': '41 Penge Road', 'address_2': 'Flat 2', 'city': 'London', 'state': '', 'postcode': 'SE25 4EJ', 'country': 'GB', 'phone': '+447919732213'}, 'payment_method': 'bacs', 'payment_method_title': 'Direct bank transfer', 'transaction_id': '', 'customer_ip_address': '185.69.144.181', 'customer_user_agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/28.0 Chrome/130.0.0.0 Mobile Safari/537.36', 'created_via': 'store-api', 'customer_note': 'Hi, as recommended, I would like to:\r\n\r\nRequest both the external and internal batteries to be included with this laptop\r\n\r\nUpgrade the external battery to a brand-new one (for the additional £15)\r\n\r\nPlease ensure both batteries are installed and tested before dispatch.\r\n\r\nDelivery instructions:\r\nKindly ring the doorbell on arrival. The parcel is for Nikita. If I am unavailable, it may be collected by Melody on my behalf.', 'date_completed': '2025-06-17T14:34:19', 'date_paid': '2025-06-16T09:12:20', 'cart_hash': '8f69e8385aa17e46f6cb087483c5cf45', 'number': '2309', 'meta_data': [{'id': 54059, 'key': '_shipping_hash', 'value': '20af30c18070394b918b665c6c73eb68'}, {'id': 54060, 'key': '_coupons_hash', 'value': 'd751713988987e9331980363e24189ce'}, {'id': 54061, 'key': '_fees_hash', 'value': 'd751713988987e9331980363e24189ce'}, {'id': 54062, 'key': '_taxes_hash', 'value': 'd40aec18af9d7a9bba242ed2b4243255'}, {'id': 54063, 'key': 'is_vat_exempt', 'value': 'no'}, {'id': 54081, 'key': '_wc_order_attribution_source_type', 'value': 'typein'}, {'id': 54082, 'key': '_wc_order_attribution_utm_source', 'value': '(direct)'}, {'id': 54083, 'key': '_wc_order_attribution_session_entry', 'value': 'https://www.pcrenewed.co.uk/my-account/'}, {'id': 54084, 'key': '_wc_order_attribution_session_start_time', 'value': '2025-06-15 21:26:33'}, {'id': 54085, 'key': '_wc_order_attribution_session_pages', 'value': '3'}, {'id': 54086, 'key': '_wc_order_attribution_session_count', 'value': '1'}, {'id': 54087, 'key': '_wc_order_attribution_user_agent', 'value': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/28.0 Chrome/130.0.0.0 Mobile Safari/537.36'}, {'id': 54088, 'key': '_wc_order_attribution_device_type', 'value': 'Mobile'}, {'id': 54089, 'key': '_wcpdf_invoice_settings', 'value': {'display_email': '1', 'display_phone': '1', 'display_customer_notes': '1', 'display_shipping_address': 'when_different', 'display_number': 'invoice_number', 'display_date': 'invoice_date', 'header_logo': '54', 'header_logo_height': '1cm', 'vat_number': '', 'coc_number': '11825952', 'shop_name': {'default': 'PC Renewed Ltd'}, 'shop_phone_number': {'default': '02476 460 069'}, 'shop_address_line_1': '', 'shop_address_line_2': '', 'shop_address_country': '', 'shop_address_state': '', 'shop_address_city': '', 'shop_address_postcode': '', 'shop_address_additional': {'default': 'Unit 1, 894 Charter Avenue\r\nCoventry\r\nWest Midlands\r\nCV4 8AT'}, 'footer': {'default': ''}, 'extra_1': {'default': ''}, 'extra_2': {'default': ''}, 'extra_3': {'default': ''}}}, {'id': 54090, 'key': '_wcpdf_invoice_display_date', 'value': 'document_date'}, {'id': 54091, 'key': '_wcpdf_invoice_creation_trigger', 'value': 'email_attachment'}, {'id': 54092, 'key': '_wcpdf_invoice_date', 'value': '1750023037'}, {'id': 54093, 'key': '_wcpdf_invoice_date_formatted', 'value': '2025-06-15 22:30:37'}, {'id': 54094, 'key': '_wcpdf_invoice_number', 'value': '117'}, {'id': 54095, 'key': '_wcpdf_invoice_number_data', 'value': {'number': 117, 'formatted_number': '117', 'prefix': '', 'suffix': '', 'document_type': 'invoice', 'order_id': 2309, 'padding': ''}}, {'id': 54096, 'key': '_ga_tracked', 'value': '1'}, {'id': 54103, 'key': '_xero_invoice_id', 'value': 'b8a53644-84fa-48e3-9ffd-e5a291ffbec0'}, {'id': 54104, 'key': '_xero_currencyrate', 'value': '1.0000000000'}, {'id': 54105, 'key': '_xero_invoice_hash', 'value': 'd1f839b521a5cb854e28545556072f938ef96356'}], 'line_items': [{'id': 3458, 'name': 'Blue Lenovo ThinkPad T480 Core I5 8th Gen 16GB RAM 256GB SSD 14" Windows 11 Pro Laptop', 'product_id': 1502, 'variation_id': 1520, 'quantity': 1, 'tax_class': '', 'subtotal': '191.66', 'subtotal_tax': '38.33', 'total': '191.66', 'total_tax': '38.33', 'taxes': [{'id': 1, 'total': '38.33', 'subtotal': '38.33'}], 'meta_data': [{'id': 29103, 'key': 'pa_memory', 'value': '16gb-ram-25-00', 'display_key': 'Memory', 'display_value': '16gb-ram-25-00'}, {'id': 29104, 'key': 'pa_ssd', 'value': '512gb-ssd-25-00', 'display_key': 'SSD', 'display_value': '512gb-ssd-25-00'}, {'id': 29105, 'key': 'pa_colour', 'value': 'pink', 'display_key': 'Colour', 'display_value': 'Pink'}, {'id': 29116, 'key': '_reduced_stock', 'value': '1', 'display_key': '_reduced_stock', 'display_value': '1'}], 'sku': 'COLOURED-LID-T480-i5-Multi-Win11-AGRADE', 'global_unique_id': '', 'price': 191.658333, 'image': {'id': 1796, 'src': 'https://www.pcrenewed.co.uk/wp-content/uploads/2025/02/T470-Blue.jpg'}, 'parent_name': 'Blue Lenovo ThinkPad T480 Core I5 8th Gen 16GB RAM 256GB SSD 14" Windows 11 Pro Laptop'}], 'tax_lines': [{'id': 3457, 'rate_code': 'GB-VAT-1', 'rate_id': 1, 'label': 'VAT', 'compound': False, 'tax_total': '38.33', 'shipping_tax_total': '0.00', 'rate_percent': 20, 'meta_data': [{'id': 29112, 'key': '_wcpdf_rate_percentage', 'value': '20.0000', 'display_key': '_wcpdf_rate_percentage', 'display_value': '20.0000'}, {'id': 29113, 'key': '_wcpdf_ubl_tax_category', 'value': '', 'display_key': '_wcpdf_ubl_tax_category', 'display_value': ''}, {'id': 29114, 'key': '_wcpdf_ubl_tax_scheme', 'value': '', 'display_key': '_wcpdf_ubl_tax_scheme', 'display_value': ''}, {'id': 29115, 'key': '_wcpdf_ubl_tax_reason', 'value': '', 'display_key': '_wcpdf_ubl_tax_reason', 'display_value': ''}]}], 'shipping_lines': [{'id': 3459, 'method_title': 'Free shipping', 'method_id': 'free_shipping', 'instance_id': '1', 'total': '0.00', 'total_tax': '0.00', 'taxes': [{'id': 1, 'total': '0.00', 'subtotal': ''}], 'tax_status': 'taxable', 'meta_data': [{'id': 29111, 'key': 'Items', 'value': 'Blue Lenovo ThinkPad T480 Core I5 8th Gen 16GB RAM 256GB SSD 14" Windows 11 Pro Laptop &times; 1', 'display_key': 'Items', 'display_value': 'Blue Lenovo ThinkPad T480 Core I5 8th Gen 16GB RAM 256GB SSD 14" Windows 11 Pro Laptop &times; 1'}]}], 'fee_lines': [], 'coupon_lines': [], 'refunds': [], 'payment_url': 'https://www.pcrenewed.co.uk/checkout/order-pay/2309/?pay_for_order=true&key=wc_order_HXKp5tcYQ9Aau', 'is_editable': False, 'needs_payment': False, 'needs_processing': True, 'date_created_gmt': '2025-06-15T21:26:45', 'date_modified_gmt': '2025-06-17T13:34:19', 'date_completed_gmt': '2025-06-17T13:34:19', 'date_paid_gmt': '2025-06-16T08:12:20', 'currency_symbol': '£', 'wpo_wcpdf_invoice_number': '117', '_links': {'self': [{'href': 'https://www.pcrenewed.co.uk/wp-json/wc/v3/orders/2309', 'targetHints': {'allow': ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']}}], 'collection': [{'href': 'https://www.pcrenewed.co.uk/wp-json/wc/v3/orders'}], 'email_templates': [{'embeddable': True, 'href': 'https://www.pcrenewed.co.uk/wp-json/wc/v3/orders/2309/actions/email_templates'}], 'customer': [{'href': 'https://www.pcrenewed.co.uk/wp-json/wc/v3/customers/48'}]}}]
+[2025-11-24 10:14:16] Order found in WooCommerce. SKU: COLOURED-LID-T480-i5-Multi-Win11-AGRADE
+[2025-11-24 10:14:16] Fetching laptop specs...
+[2025-11-24 10:14:16] Initialized WMI interface.
+[2025-11-24 10:14:18] Detected CPU: i5-8500
+[2025-11-24 10:14:18] Detected Serial Number: 8CC92524Q9
+[2025-11-24 10:14:18] Detected Resolution: 1920x1080
+[2025-11-24 10:14:18] Detected Windows Version: Windows 11
+[2025-11-24 10:14:18] Detected Model: HP EliteDesk 800 G4 DM 65W
+[2025-11-24 10:14:18] Detected RAM: 32GB
+[2025-11-24 10:14:19] Detected SSD: 512GB (SSD)
+[2025-11-24 10:14:19] Full Charged Capacity not found in line: Full Charged Capacity,,,,
 
-[2026-01-13 11:16:49] Database connection attempt 3/3.
-[2026-01-13 11:16:49] Schema provisioning failed: (1060, "Duplicate column name 'battery2'")
-Traceback (most recent call last):
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
+[2025-11-24 10:14:19] Designed Capacity not found in line: Designed Capacity,,,,
 
-[2026-01-13 11:16:49] MySQL error on attempt 3: (1060, "Duplicate column name 'battery2'")
-Traceback (most recent call last):
-  File "db\database.py", line 35, in get_db_connection
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
-
-[2026-01-13 11:16:49] Max retries reached. Database connection failed.
-[2026-01-13 11:16:57] Unable to load username list; database connection failed.
-[2026-01-13 11:17:27] Starting application after authenticating via login panel.
-[2026-01-13 11:17:27] Attempting to establish database connection...
-[2026-01-13 11:17:27] Loading configuration file...
-[2026-01-13 11:17:27] Configuration file loaded successfully.
-[2026-01-13 11:17:27] Database connection attempt 1/3.
-[2026-01-13 11:17:27] Schema provisioning failed: (1060, "Duplicate column name 'battery2'")
-Traceback (most recent call last):
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
-
-[2026-01-13 11:17:27] MySQL error on attempt 1: (1060, "Duplicate column name 'battery2'")
-Traceback (most recent call last):
-  File "db\database.py", line 35, in get_db_connection
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
-
-[2026-01-13 11:17:32] Database connection attempt 2/3.
-[2026-01-13 11:17:32] Schema provisioning failed: (1060, "Duplicate column name 'battery2'")
-Traceback (most recent call last):
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
-
-[2026-01-13 11:17:32] MySQL error on attempt 2: (1060, "Duplicate column name 'battery2'")
-Traceback (most recent call last):
-  File "db\database.py", line 35, in get_db_connection
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
-
-[2026-01-13 11:17:42] Database connection attempt 3/3.
-[2026-01-13 11:17:42] Schema provisioning failed: (1060, "Duplicate column name 'battery2'")
-Traceback (most recent call last):
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
-
-[2026-01-13 11:17:42] MySQL error on attempt 3: (1060, "Duplicate column name 'battery2'")
-Traceback (most recent call last):
-  File "db\database.py", line 35, in get_db_connection
-  File "db\database.py", line 156, in ensure_schema
-  File "MySQLdb\cursors.py", line 179, in execute
-  File "MySQLdb\cursors.py", line 330, in _query
-  File "MySQLdb\connections.py", line 261, in query
-MySQLdb.OperationalError: (1060, "Duplicate column name 'battery2'")
-
-[2026-01-13 11:17:42] Max retries reached. Database connection failed.
-[2026-01-13 11:17:48] Unable to load username list; database connection failed.
-[2026-01-13 11:17:50] Login cancelled by user.
-[2026-01-13 11:17:50] Login cancelled without authentication.
-[2026-01-13 11:39:11] Starting application after authenticating via login panel.
-[2026-01-13 11:39:11] Attempting to establish database connection...
-[2026-01-13 11:39:11] Loading configuration file...
-[2026-01-13 11:39:11] Configuration file loaded successfully.
-[2026-01-13 11:39:11] Database connection attempt 1/3.
-[2026-01-13 11:39:11] Database connection established successfully.
-[2026-01-13 11:39:15] Login attempt for 'Lewis'.
-[2026-01-13 11:39:15] Attempting to establish database connection...
-[2026-01-13 11:39:15] Loading configuration file...
-[2026-01-13 11:39:15] Configuration file loaded successfully.
-[2026-01-13 11:39:15] Database connection attempt 1/3.
-[2026-01-13 11:39:15] Database connection established successfully.
-[2026-01-13 11:39:15] Fetched user row for 'Lewis'.
-[2026-01-13 11:39:15] Login failed for 'Lewis': invalid password.
-[2026-01-13 11:39:19] Login attempt for 'Lewis'.
-[2026-01-13 11:39:19] Attempting to establish database connection...
-[2026-01-13 11:39:19] Loading configuration file...
-[2026-01-13 11:39:19] Configuration file loaded successfully.
-[2026-01-13 11:39:19] Database connection attempt 1/3.
-[2026-01-13 11:39:19] Database connection established successfully.
-[2026-01-13 11:39:19] Fetched user row for 'Lewis'.
-[2026-01-13 11:39:19] User 'Lewis' logged in successfully.
-[2026-01-13 11:39:19] Fetching laptop specs...
-[2026-01-13 11:39:19] Initialized WMI interface.
-[2026-01-13 11:39:21] Detected CPU: Ryzen 7 PRO 4750U
-[2026-01-13 11:39:21] Detected Serial Number: PF24NEM2
-[2026-01-13 11:39:21] Detected Resolution: 1920x1080
-[2026-01-13 11:39:21] Detected Windows Version: Windows 11
-[2026-01-13 11:39:21] Detected Model: ThinkPad T14 Gen 1
-[2026-01-13 11:39:21] Detected RAM: 46GB
-[2026-01-13 11:39:21] Detected SSD: 1024GB (HDD)
-[2026-01-13 11:39:21] Gathering battery health via BatteryInfoView.
-[2026-01-13 11:39:22] BATTERYINFOVIEW_SHA256 not set; skipping checksum verification
-[2026-01-13 11:39:22] BatteryInfoView: Designed=50, Full=42, Health=84%
-[2026-01-13 11:39:22] Detected Battery Health: 84% (batteryinfoview)
-[2026-01-13 11:39:22] Laptop specs fetched successfully.
-[2026-01-13 11:39:22] Microsoft MDM lock not detected.
-[2026-01-13 11:39:22] parse_percent error: expected string or bytes-like object for input: None
-[2026-01-13 11:39:29] Opening test panel.
-[2026-01-13 15:06:17] Starting application after authenticating via login panel.
-[2026-01-13 15:06:17] Attempting to establish database connection...
-[2026-01-13 15:06:17] Loading configuration file...
-[2026-01-13 15:06:17] Configuration file loaded successfully.
-[2026-01-13 15:06:17] Database connection attempt 1/3.
-[2026-01-13 15:06:17] Database connection established successfully.
-[2026-01-13 15:06:24] Login attempt for 'Lewis'.
-[2026-01-13 15:06:24] Attempting to establish database connection...
-[2026-01-13 15:06:24] Loading configuration file...
-[2026-01-13 15:06:24] Configuration file loaded successfully.
-[2026-01-13 15:06:24] Database connection attempt 1/3.
-[2026-01-13 15:06:24] Database connection established successfully.
-[2026-01-13 15:06:24] Fetched user row for 'Lewis'.
-[2026-01-13 15:06:24] User 'Lewis' logged in successfully.
-[2026-01-13 15:06:24] Fetching laptop specs...
-[2026-01-13 15:06:24] Initialized WMI interface.
-[2026-01-13 15:06:25] Detected CPU: Ryzen 7 PRO 4750U
-[2026-01-13 15:06:25] Detected Serial Number: PF24NEM2
-[2026-01-13 15:06:25] Detected Resolution: 1920x1080
-[2026-01-13 15:06:25] Detected Windows Version: Windows 11
-[2026-01-13 15:06:25] Detected Model: ThinkPad T14 Gen 1
-[2026-01-13 15:06:25] Detected RAM: 46GB
-[2026-01-13 15:06:25] Detected SSD: 1024GB (HDD)
-[2026-01-13 15:06:25] Gathering battery health via BatteryInfoView.
-[2026-01-13 15:06:25] BatteryInfoView: Designed=50, Full=42, Health=84%
-[2026-01-13 15:06:25] Detected Battery Health: 84% (batteryinfoview)
-[2026-01-13 15:06:25] Laptop specs fetched successfully.
-[2026-01-13 15:06:25] Microsoft MDM lock not detected.
-[2026-01-13 15:06:26] parse_percent error: expected string or bytes-like object for input: None
-[2026-01-13 15:06:29] Update manifest download failed: HTTP Error 404: Not Found
-[2026-01-13 15:06:29] App update check failed: HTTP Error 404: Not Found
+[2025-11-24 10:14:19] BatteryInfoView parsing failed: Designed=None, Full=None
+[2025-11-24 10:14:19] Detected Battery Health: Unknown (batteryinfoview)
+[2025-11-24 10:14:19] Laptop specs fetched successfully.
+[2025-11-24 10:14:20] [DEBUG] test_results['activation'] set to: pass for order 3221
+[2025-11-24 10:14:20] Processing SKU: COLOURED-LID-T480-i5-Multi-Win11-AGRADE
+[2025-11-24 10:14:20] Loading configuration file...
+[2025-11-24 10:14:20] Configuration file loaded successfully.
+[2025-11-24 10:14:20] parse_percent error: expected string or bytes-like object, got 'NoneType' for input: None
+[2025-11-24 10:14:20] Spec mismatches detected for order 3221:
+⚠ Model: Expected T480, Found HP EliteDesk 800 G4 DM 65W
+⚠ CPU: Expected i5, Found i5-8500
+[2025-11-24 10:14:25] Opening test panel.

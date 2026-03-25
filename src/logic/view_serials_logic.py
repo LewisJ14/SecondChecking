@@ -52,7 +52,9 @@ def open_serial_viewer(order_number):
             def fetch_data():
                 conn = None
                 try:
-                    conn = get_db_connection()
+                    conn = get_db_connection(show_errors=False)
+                    if not conn:
+                        raise RuntimeError("Database unavailable.")
                     cursor = conn.cursor()
                     cursor.execute(
                         "SELECT serial_number, sku, assigned_at FROM order_serials WHERE order_number = %s",

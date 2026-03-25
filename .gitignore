@@ -12,3 +12,34 @@ src/output/config.ini
 /src/output
 src/utils/logs.txt
 py2exe.json
+
+# Python cache/bytecode
+__pycache__/
+*.pyo
+*.pyd
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+venv*/
+
+# Build artifacts
+build/
+dist/
+*.spec.bak
+
+# Local runtime/config artifacts
+logs.txt
+compile.log
+publish-release.log
+startup_error.log
+specs_cache.json
+config.ini
+
+# Tool/editor cruft
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.idea/
+.vscode/

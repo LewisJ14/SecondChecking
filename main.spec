@@ -1,11 +1,16 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import os
+import sys
+
+here = os.path.abspath(os.path.dirname(sys.argv[0]))
+manifest_file = os.path.join(here, "app.manifest")
 
 a = Analysis(
     ['src\\main.py'],
     pathex=['src'],
     binaries=[],
-    datas=[('src/Script.ps1', '.'), ('src/assets', 'assets')],
+    datas=[('src/assets', 'assets')],
     hiddenimports=['requests'],
     hookspath=[],
     hooksconfig={},
@@ -35,4 +40,6 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    manifest=manifest_file,
+    uac_admin=True,
 )

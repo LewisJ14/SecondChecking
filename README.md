@@ -38,6 +38,15 @@ from a shell:
 MYSQL_PWD="${DB_PASSWORD}" mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" < sql/001_create_order.sql
 ```
 
+### Order number lookup format
+
+Order references support both legacy and current formats:
+
+- For `backmarket`, `remanufactured stock`, and `remanufactured-stock` platform rows, display numbers are `PC-####`.
+- For all other platforms, display numbers are 5-digit values (`#####`).
+- `external_id` lookups are still supported, including case-insensitive matching for `PC-####` references.
+- Numeric fallback matching against `local_id` and `id` remains enabled for backward compatibility with older references.
+
 ## Update service
 
 The GUI exposes **Tools > Check for App Updates**, which uses `src/update_service.py`. It compares the local `src/version.py` `__version__` against an HTTPS-hosted manifest (`APP_UPDATE_MANIFEST_URL`), and when a newer release appears it opens the provided download page for the user.

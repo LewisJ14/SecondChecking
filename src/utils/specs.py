@@ -50,6 +50,17 @@ def _save_specs_cache(specs: dict) -> None:
     except Exception as exc:
         log_event(f"Failed to save specs cache: {exc}")
 
+
+def _strip_thinkpad_prefix(value: Optional[str]) -> str:
+    """Remove a leading ThinkPad/Thinkpad token if it appears at the start."""
+    if not value:
+        return ""
+    sanitized = value.strip()
+    match = re.match(r"(?i)^thinkpad(?:[\s\-]+)?", sanitized)
+    if match:
+        sanitized = sanitized[match.end():].strip()
+    return sanitized
+
 def get_ssd_thresholds():
     # Retrieve SSD thresholds from the configuration file or use hardcoded defaults
     try:
@@ -96,6 +107,17 @@ def parse_cpu_family_and_model(cpu_name):
     return cpu_name
 
 _laptop_specs_cache = None
+
+def reset_specs_cache() -> None:
+    """Clear the in-memory cache and remove the persisted specs cache file."""
+    global _laptop_specs_cache
+    _laptop_specs_cache = None
+    cache_path = _specs_cache_path()
+    if cache_path.exists():
+        try:
+            cache_path.unlink()
+        except Exception as exc:
+            log_event(f"Failed to delete specs cache file: {exc}")
 
 def get_laptop_specs(force_refresh=False):
     global _laptop_specs_cache
@@ -149,11 +171,14 @@ def get_laptop_specs(force_refresh=False):
         log_event(f"Detected Windows Version: {specs['Windows']}")
 
         system_info = c.Win32_ComputerSystem()[0]
-        if "lenovo" in system_info.Manufacturer.lower():
-            family = system_info.SystemFamily.strip()
-            specs["Model"] = re.sub(r"(?i)ThinkPad\\s*", "", family).strip() or system_info.Model.strip()
+        manufacturer = (system_info.Manufacturer or "").lower()
+        family_model = _strip_thinkpad_prefix(getattr(system_info, "SystemFamily", ""))
+        detected_model = _strip_thinkpad_prefix(getattr(system_info, "Model", ""))
+        fallback_model = (system_info.Model or "").strip()
+        if "lenovo" in manufacturer:
+            specs["Model"] = family_model or detected_model or fallback_model
         else:
-            specs["Model"] = system_info.Model.strip()
+            specs["Model"] = detected_model or fallback_model
         log_event(f"Detected Model: {specs['Model']}")
 
         specs["RAM"] = f"{round(psutil.virtual_memory().total / (1024**3))}GB"
@@ -195,10 +220,16 @@ def get_laptop_specs(force_refresh=False):
             log_event(f"Detected SSD: {specs['SSD']} ({specs['Drive Type']})")
 
         healths = get_battery_health()
-        specs["Battery"] = f"{healths[0]}" if isinstance(healths[0], str) else "Unknown"
-        if len(healths) > 1:
-            specs["Battery 2"] = f"{healths[1]}" if isinstance(healths[1], str) else "Unknown"
-        log_event(f"Detected Battery Health: {specs['Battery']}")
+        if not healths:
+            specs["Battery"] = "Unknown"
+            log_event("Detected Battery Health: Unknown")
+        else:
+            specs["Battery"] = healths[0] if isinstance(healths[0], str) else "Unknown"
+            log_event(f"Detected Battery Health: {specs['Battery']}")
+            for index, entry in enumerate(healths[1:], start=2):
+                stats = entry if isinstance(entry, str) else "Unknown"
+                specs[f"Battery {index}"] = stats
+                log_event(f"Detected Battery {index} Health: {stats}")
 
     except Exception as e:
         log_event(f"Exception in get_laptop_specs: {e}")
@@ -235,35 +266,42 @@ def get_battery_health_batteryinfoview():
             return ["Unknown (batteryinfoview)"]
         with open(csv_path, encoding="utf-8", errors="ignore") as f:
             lines = f.readlines()
-        # Find the line with "Designed Capacity" and "Full Charged Capacity"
-        designed = None
-        full = None
+
+        designed_matches = []
+        full_matches = []
         for line in lines:
-            if "Designed Capacity" in line:
-                try:
-                    match = re.search(r"(\d+)", line)
-                    if match:
-                        designed = int(match.group(1))
-                    else:
-                        log_event(f"Designed Capacity not found in line: {line}")
-                except Exception as e:
-                    log_event(f"Error parsing Designed Capacity: {e} in line: {line}")
-            if "Full Charged Capacity" in line:
-                try:
-                    match = re.search(r"(\d+)", line)
-                    if match:
-                        full = int(match.group(1))
-                    else:
-                        log_event(f"Full Charged Capacity not found in line: {line}")
-                except Exception as e:
-                    log_event(f"Error parsing Full Charged Capacity: {e} in line: {line}")
-        if designed and full:
+            label = line.split("\t", 1)[0]
+            if "Designed Capacity" not in label and "Full Charged Capacity" not in label:
+                continue
+            nums = [int(n.replace(",", "")) for n in re.findall(r"(\d[\d,]*)", line)]
+            if not nums:
+                continue
+            if "Designed Capacity" in label:
+                designed_matches.extend(nums)
+            else:
+                full_matches.extend(nums)
+
+        results = []
+        for index, (designed, full) in enumerate(
+            zip(designed_matches, full_matches), start=1
+        ):
+            if not designed or not full:
+                log_event(
+                    f"BatteryInfoView parsing incomplete for battery {index}: Designed={designed}, Full={full}"
+                )
+                continue
             percent = int((full / designed) * 100)
-            log_event(f"BatteryInfoView: Designed={designed}, Full={full}, Health={percent}%")
-            return [f"{percent}% (batteryinfoview)"]
-        else:
-            log_event(f"BatteryInfoView parsing failed: Designed={designed}, Full={full}")
-            return ["Unknown (batteryinfoview)"]
+            log_event(
+                f"BatteryInfoView: Battery {index} Designed={designed}, Full={full}, Health={percent}%"
+            )
+            suffix = "" if index == 1 else f" battery {index}"
+            results.append(f"{percent}% (batteryinfoview{suffix})")
+
+        if results:
+            return results
+
+        log_event("BatteryInfoView parsing failed: no complete battery results.")
+        return ["Unknown (batteryinfoview)"]
     except Exception as e:
         log_event(f"BatteryInfoView failed: {e}")
         return ["Unknown (batteryinfoview)"]

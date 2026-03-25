@@ -25,6 +25,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_REPO_SLUG = "lewisj14/SecondChecking"
 
 
 def run_command(*cmd: str, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -49,11 +50,40 @@ def load_version() -> str:
 
 
 def find_repo_slug() -> str:
-    output = run_command("git", "remote", "get-url", "origin").stdout.strip()
-    match = re.search(r"[:/](.+?)(?:\.git)?$", output)
+    slug = (
+        _find_repo_slug_via_git()
+        or _find_repo_slug_via_config()
+        or DEFAULT_REPO_SLUG
+    )
+    return slug
+
+def _find_repo_slug_via_git() -> str | None:
+    result = run_command("git", "remote", "get-url", "origin", check=False)
+    if result.returncode != 0:
+        return None
+    return normalize_repo_slug(result.stdout.strip())
+
+def _find_repo_slug_via_config() -> str | None:
+    config_path = ROOT / ".git" / "config"
+    if not config_path.exists():
+        return None
+    content = config_path.read_text(encoding="utf-8")
+    match = re.search(r"(?m)^\s*url\s*=\s*(.+)$", content)
     if not match:
-        raise RuntimeError("Unable to determine GitHub repository slug.")
-    return match.group(1)
+        return None
+    return normalize_repo_slug(match.group(1).strip())
+
+def normalize_repo_slug(url: str) -> str | None:
+    if not url:
+        return None
+    clean = url.strip()
+    if clean.endswith(".git"):
+        clean = clean[: -4]
+    clean = clean.replace(":", "/")
+    parts = [part for part in clean.split("/") if part]
+    if len(parts) < 2:
+        return None
+    return "/".join(parts[-2:])
 
 
 def ensure_gh_cli():

@@ -22,9 +22,26 @@ def run_webcam_test(root, test_results, test_labels, tests_window=None, completi
     loading_popup.geometry("220x80")
     loading_popup.resizable(False, False)
     loading_popup.attributes("-topmost", True)
+    loading_popup.configure(bg="#f4f6fa")
 
-    loading_label = tk.Label(loading_popup, text="Loading camera", font=("Arial", 11))
-    loading_label.pack(expand=True, pady=15)
+    loading_card = tk.Frame(
+        loading_popup,
+        bg="#ffffff",
+        padx=14,
+        pady=12,
+        highlightbackground="#d7dde8",
+        highlightthickness=1,
+    )
+    loading_card.pack(fill="both", expand=True, padx=8, pady=8)
+
+    loading_label = tk.Label(
+        loading_card,
+        text="Loading camera",
+        font=("Segoe UI", 11, "bold"),
+        bg="#ffffff",
+        fg="#101828",
+    )
+    loading_label.pack(expand=True)
 
     ellipsis_states = ["", ".", "..", "..."]
     ellipsis_index = [0]
@@ -51,9 +68,14 @@ def run_webcam_test(root, test_results, test_labels, tests_window=None, completi
         def initialize_camera():
             available_cams = detect_cameras()
             if not available_cams:
-                loading_popup.destroy()
-                tk.messagebox.showerror("Webcam Error", "No camera found.")
-                finalize("fail")
+                root.after(
+                    0,
+                    lambda: [
+                        loading_popup.destroy(),
+                        tk.messagebox.showerror("Webcam Error", "No camera found."),
+                        finalize("fail"),
+                    ],
+                )
                 return
 
             cap = cv2.VideoCapture(available_cams[0], cv2.CAP_DSHOW)
@@ -97,12 +119,36 @@ def run_webcam_test(root, test_results, test_labels, tests_window=None, completi
         def prompt_result():
             result_window = tk.Toplevel(root)
             result_window.title("Webcam Test Result")
-            result_window.geometry("300x130")
+            result_window.geometry("340x170")
             result_window.resizable(False, False)
+            result_window.configure(bg="#f4f6fa")
 
-            tk.Label(result_window, text="Did the webcam test pass?", font=("Arial", 11)).pack(pady=10)
-            frame = tk.Frame(result_window)
-            frame.pack()
+            card = tk.Frame(
+                result_window,
+                bg="#ffffff",
+                padx=16,
+                pady=16,
+                highlightbackground="#d7dde8",
+                highlightthickness=1,
+            )
+            card.pack(fill="both", expand=True, padx=12, pady=12)
+
+            tk.Label(
+                card,
+                text="Webcam Test Complete",
+                font=("Segoe UI", 12, "bold"),
+                bg="#ffffff",
+                fg="#101828",
+            ).pack(pady=(0, 8))
+            tk.Label(
+                card,
+                text="Did the webcam test pass?",
+                font=("Segoe UI", 10),
+                bg="#ffffff",
+                fg="#475467",
+            ).pack()
+            frame = tk.Frame(card, bg="#ffffff")
+            frame.pack(pady=(14, 0))
 
             def handle_response(result):
                 finalize(result)

@@ -10,3 +10,4 @@ numpy==1.26.4
 sounddevice==0.4.6
 werkzeug==3.0.3
 ttkbootstrap==1.14.2
+requests==2.32.3

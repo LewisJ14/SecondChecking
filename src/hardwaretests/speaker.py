@@ -126,6 +126,7 @@ def run_speaker_test(root, test_results, test_labels, tests_window=None, complet
         except AudioPlaybackError as exc:
             log_event(f"Error playing audio during automatic speaker test: {exc}")
             tk.messagebox.showerror("Audio Error", f"Failed to play audio:\n{exc}")
+            finalize("fail")
             return
         except MicrophoneTestError as exc:
             auto_message = str(exc)

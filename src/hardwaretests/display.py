@@ -34,12 +34,36 @@ def run_display_test(root, test_results, test_labels, tests_window=None, complet
         def prompt_result():
             result_window = tk.Toplevel(root)
             result_window.title("Display Test Result")
-            result_window.geometry("300x130")
+            result_window.geometry("340x170")
             result_window.resizable(False, False)
+            result_window.configure(bg="#f4f6fa")
 
-            tk.Label(result_window, text="Did the display test pass?", font=("Arial", 11)).pack(pady=10)
-            frame = tk.Frame(result_window)
-            frame.pack()
+            card = tk.Frame(
+                result_window,
+                bg="#ffffff",
+                padx=16,
+                pady=16,
+                highlightbackground="#d7dde8",
+                highlightthickness=1,
+            )
+            card.pack(fill="both", expand=True, padx=12, pady=12)
+
+            tk.Label(
+                card,
+                text="Display Test Complete",
+                font=("Segoe UI", 12, "bold"),
+                bg="#ffffff",
+                fg="#101828",
+            ).pack(pady=(0, 8))
+            tk.Label(
+                card,
+                text="Did the display test pass?",
+                font=("Segoe UI", 10),
+                bg="#ffffff",
+                fg="#475467",
+            ).pack()
+            frame = tk.Frame(card, bg="#ffffff")
+            frame.pack(pady=(14, 0))
 
             def handle_response(result):
                 finalize(result)

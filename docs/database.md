@@ -23,7 +23,7 @@ application can look up an SKU regardless of the marketplace that produced it.
 | `order_date` | `DATETIME` | Timestamp from the marketplace payload. |
 | `raw_data` | `JSON` | Full raw connector payload for auditing and reprocessing. |
 | `created_at`, `updated_at` | `DATETIME` | Automatic timestamps tracking inserts and updates. |
-| `order_number` (virtual) | derived property | Within the application layer `LPAD(COALESCE(local_id, id), 5, '0')` is exposed as `order_number` so the UI can render five-digit identifiers (for example `00001`). |
+| `order_number` (virtual) | derived property | Within the application layer, display order numbers are generated as `PC-####` for `backmarket`, `remanufactured stock`, and `remanufactured-stock`; all other platforms use `LPAD(COALESCE(local_id, id), 5, '0')` (for example `00001`). |
 
 Additional integrity rules:
 
@@ -32,6 +32,8 @@ Additional integrity rules:
 - `local_id` is unique so the UI can safely display `00001`, `00002`, etc.
   using the derived `order_number` property without gaps.
 - An index on `platform` keeps marketplace specific lookups fast.
+- Backward compatibility is maintained by allowing numeric reference lookups
+  against `local_id` and `id` in addition to current display/external formats.
 
 ## `order_serials`
 

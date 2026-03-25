@@ -270,7 +270,7 @@ def run_keyboard_test(root, test_results, test_labels, tests_window=None, comple
                 logical_key = "num " + logical_key
             widget = key_widgets.get(logical_key)
             if widget:
-                widget.config(bg=PRESSED_COLOR)
+                root.after(0, lambda widget=widget: widget.config(bg=PRESSED_COLOR))
         except Exception as e:
             print(f"Error on press: {e}")
             traceback.print_exc()
@@ -285,7 +285,7 @@ def run_keyboard_test(root, test_results, test_labels, tests_window=None, comple
                 logical_key = "num " + logical_key
             widget = key_widgets.get(logical_key)
             if widget:
-                widget.config(bg=HIGHLIGHT_COLORS["hit"])  # Stay green after release
+                root.after(0, lambda widget=widget: widget.config(bg=HIGHLIGHT_COLORS["hit"]))  # Stay green after release
         except Exception as e:
             print(f"Error on release: {e}")
             traceback.print_exc()
@@ -311,7 +311,7 @@ def run_keyboard_test(root, test_results, test_labels, tests_window=None, comple
             pass
 
     def show_result_prompt():
-        prompt = tk.Toplevel()
+        prompt = tk.Toplevel(root)
         prompt.title("Keyboard Test Result")
         prompt.geometry("300x130")
         prompt.resizable(False, False)

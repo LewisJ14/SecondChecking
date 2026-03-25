@@ -1,0 +1,14 @@
+[
+  {
+    "source": "src\\config.ini",
+    "target": "config.ini",
+    "overwrite": false,
+    "userManaged": true
+  },
+  {
+    "source": "src\\logs.txt",
+    "target": "logs.txt",
+    "overwrite": true,
+    "userManaged": false
+  }
+]

@@ -33,3 +33,268 @@
 2026-01-13T15:38:52 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking-codex-provide-suggestions-for-improvements\update.json
 2026-01-13T15:38:52 Created release v0.1.0
 2026-01-13T15:38:52 Release v0.1.0 uploaded
+2026-01-13T15:44:05 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-13T15:44:05 GitHub CLI available
+2026-01-13T15:44:05 Invoking compile.ps1
+2026-01-13T15:44:54 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.0.exe
+2026-01-13T15:44:54 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-13T15:45:13 Created release v0.1.0
+2026-01-13T15:45:13 Release v0.1.0 uploaded
+2026-01-13T15:49:29 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-13T15:49:29 GitHub CLI available
+2026-01-13T15:49:29 Skipped compile.ps1
+2026-01-13T15:49:29 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.0.exe
+2026-01-13T15:49:29 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-13T15:49:31 Created release v0.1.0
+2026-01-13T15:49:31 Release v0.1.0 uploaded
+2026-01-13T15:49:37 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-13T15:49:37 GitHub CLI available
+2026-01-13T15:49:37 Invoking compile.ps1
+2026-01-13T15:50:22 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.0.exe
+2026-01-13T15:50:22 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-13T15:50:23 Created release v0.1.0
+2026-01-13T15:50:23 Release v0.1.0 uploaded
+2026-01-13T15:52:14 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-13T15:52:14 GitHub CLI available
+2026-01-13T15:52:14 Skipped compile.ps1
+2026-01-13T15:52:15 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.0.exe
+2026-01-13T15:52:15 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-13T15:52:16 Created release v0.1.0
+2026-01-13T15:52:16 Release v0.1.0 uploaded
+2026-01-13T15:53:39 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-13T15:53:39 GitHub CLI available
+2026-01-13T15:53:40 Skipped compile.ps1
+2026-01-13T15:53:40 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.0.exe
+2026-01-13T15:53:40 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-13T15:53:41 Created release v0.1.0
+2026-01-13T15:53:41 Release v0.1.0 uploaded
+2026-01-13T15:53:51 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-13T15:53:51 Preparing release (notes = 'Release build')...
+2026-01-13T15:54:28 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-13T15:54:28 Preparing release (notes = 'Release build')...
+2026-01-13T15:54:39 Auto-incremented version to 0.1.1
+2026-01-13T15:54:39 GitHub CLI available
+2026-01-13T15:54:39 Skipped compile.ps1
+2026-01-13T15:54:39 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.1.exe
+2026-01-13T15:54:39 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-13T15:54:55 Created release v0.1.1
+2026-01-13T15:54:55 Release v0.1.1 uploaded
+2026-01-13T15:55:52 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-13T15:55:52 Preparing release (notes = 'Release build')...
+2026-01-13T15:55:55 Auto-incremented version to 0.1.2
+2026-01-13T15:55:55 GitHub CLI available
+2026-01-13T15:55:55 Invoking compile.ps1
+2026-01-13T15:56:41 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.2.exe
+2026-01-13T15:56:41 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-13T15:56:57 Created release v0.1.2
+2026-01-13T15:56:57 Release v0.1.2 uploaded
+2026-01-14T13:57:21 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-14T13:57:21 Preparing release (notes = 'Release build')...
+2026-01-14T13:57:28 Manually set version to 0.1.3
+2026-01-14T13:57:28 GitHub CLI available
+2026-01-14T13:57:28 Invoking compile.ps1
+2026-01-14T13:58:07 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.3.exe
+2026-01-14T13:58:07 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-14T13:58:23 Created release v0.1.3
+2026-01-14T13:58:23 Release v0.1.3 uploaded
+2026-01-14T14:08:10 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-14T14:08:10 Preparing release (notes = 'Release build')...
+2026-01-14T14:09:19 Manually set version to 0.1.4
+2026-01-14T14:09:19 GitHub CLI available
+2026-01-14T14:09:19 Invoking compile.ps1
+2026-01-14T14:09:59 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.4.exe
+2026-01-14T14:09:59 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-14T14:10:21 Created release v0.1.4
+2026-01-14T14:10:21 Release v0.1.4 uploaded
+2026-01-14T14:15:18 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-14T14:15:18 Preparing release (notes = 'Release build')...
+2026-01-14T14:15:21 Auto-incremented version to 0.1.5
+2026-01-14T14:15:21 GitHub CLI available
+2026-01-14T14:15:21 Invoking compile.ps1
+2026-01-14T14:16:01 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.5.exe
+2026-01-14T14:16:01 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-14T14:16:16 Created release v0.1.5
+2026-01-14T14:16:16 Release v0.1.5 uploaded
+2026-01-14T14:20:59 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-14T14:20:59 Preparing release (notes = 'Release build')...
+2026-01-14T14:21:03 Auto-incremented version to 0.1.6
+2026-01-14T14:21:03 GitHub CLI available
+2026-01-14T14:21:03 Invoking compile.ps1
+2026-01-14T14:21:43 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.6.exe
+2026-01-14T14:21:43 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-14T14:22:01 Created release v0.1.6
+2026-01-14T14:22:01 Release v0.1.6 uploaded
+2026-01-14T14:26:57 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-14T14:26:57 Preparing release (notes = 'Release build')...
+2026-01-14T14:26:58 Auto-incremented version to 0.1.7
+2026-01-14T14:26:58 GitHub CLI available
+2026-01-14T14:26:58 Invoking compile.ps1
+2026-01-14T14:27:41 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.7.exe
+2026-01-14T14:27:41 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-14T14:27:56 Created release v0.1.7
+2026-01-14T14:27:56 Release v0.1.7 uploaded
+2026-01-14T14:29:39 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-14T14:29:39 Preparing release (notes = 'Release build')...
+2026-01-14T14:29:41 Auto-incremented version to 0.1.8
+2026-01-14T14:29:41 GitHub CLI available
+2026-01-14T14:29:41 Invoking compile.ps1
+2026-01-14T14:30:20 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.8.exe
+2026-01-14T14:30:20 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-14T14:30:36 Created release v0.1.8
+2026-01-14T14:30:36 Release v0.1.8 uploaded
+2026-01-14T14:43:23 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-14T14:43:23 Preparing release (notes = 'Release build')...
+2026-01-14T14:43:25 Auto-incremented version to 0.1.9
+2026-01-14T14:43:25 GitHub CLI available
+2026-01-14T14:43:25 Invoking compile.ps1
+2026-01-14T14:44:05 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.9.exe
+2026-01-14T14:44:05 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-14T14:44:21 Created release v0.1.9
+2026-01-14T14:44:21 Release v0.1.9 uploaded
+2026-01-14T14:48:33 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-14T14:48:33 Preparing release (notes = 'Release build')...
+2026-01-14T14:48:36 Auto-incremented version to 0.1.10
+2026-01-14T14:48:36 GitHub CLI available
+2026-01-14T14:48:36 Invoking compile.ps1
+2026-01-14T14:49:15 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.10.exe
+2026-01-14T14:49:15 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-14T14:49:31 Created release v0.1.10
+2026-01-14T14:49:31 Release v0.1.10 uploaded
+2026-01-14T15:04:53 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-14T15:04:53 Preparing release (notes = 'Release build')...
+2026-01-14T15:04:54 Auto-incremented version to 0.1.11
+2026-01-14T15:04:54 GitHub CLI available
+2026-01-14T15:04:54 Invoking compile.ps1
+2026-01-14T15:05:34 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.11.exe
+2026-01-14T15:05:34 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-14T15:05:54 Created release v0.1.11
+2026-01-14T15:05:54 Release v0.1.11 uploaded
+2026-01-14T16:01:20 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-14T16:01:20 Preparing release (notes = 'Release build')...
+2026-01-14T16:01:23 Auto-incremented version to 0.1.12
+2026-01-14T16:01:23 GitHub CLI available
+2026-01-14T16:01:23 Invoking compile.ps1
+2026-01-14T16:02:03 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.12.exe
+2026-01-14T16:02:03 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-14T16:03:24 Created release v0.1.12
+2026-01-14T16:03:24 Release v0.1.12 uploaded
+2026-01-14T16:05:10 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-14T16:05:10 Preparing release (notes = 'Release build')...
+2026-01-14T16:05:12 Auto-incremented version to 0.1.13
+2026-01-14T16:05:12 GitHub CLI available
+2026-01-14T16:05:12 Invoking compile.ps1
+2026-01-14T16:05:51 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.13.exe
+2026-01-14T16:05:51 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-14T16:06:08 Created release v0.1.13
+2026-01-14T16:06:08 Release v0.1.13 uploaded
+2026-01-14T16:07:35 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-14T16:07:35 Preparing release (notes = 'Release build')...
+2026-01-14T16:07:50 Auto-incremented version to 0.1.14
+2026-01-14T16:07:50 GitHub CLI available
+2026-01-14T16:07:50 Invoking compile.ps1
+2026-01-14T16:08:30 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.14.exe
+2026-01-14T16:08:30 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-14T16:08:47 Created release v0.1.14
+2026-01-14T16:08:47 Release v0.1.14 uploaded
+2026-01-15T12:16:10 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-15T12:16:10 Preparing release (notes = 'Release build')...
+2026-01-15T12:16:12 Auto-incremented version to 0.1.15
+2026-01-15T12:16:12 GitHub CLI available
+2026-01-15T12:16:12 Invoking compile.ps1
+2026-01-15T12:16:52 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.15.exe
+2026-01-15T12:16:52 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-15T12:17:11 Created release v0.1.15
+2026-01-15T12:17:11 Release v0.1.15 uploaded
+2026-01-16T10:29:00 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-16T10:29:00 Preparing release (notes = 'Release build')...
+2026-01-16T10:29:08 Auto-incremented version to 0.1.16
+2026-01-16T10:29:08 GitHub CLI available
+2026-01-16T10:29:08 Invoking compile.ps1
+2026-01-16T10:30:06 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.16.exe
+2026-01-16T10:30:06 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-16T10:30:26 Created release v0.1.16
+2026-01-16T10:30:26 Release v0.1.16 uploaded
+2026-01-16T10:41:32 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-16T10:41:32 Preparing release (notes = 'Release build')...
+2026-01-16T10:41:48 Auto-incremented version to 0.1.17
+2026-01-16T10:41:48 GitHub CLI available
+2026-01-16T10:41:48 Invoking compile.ps1
+2026-01-16T10:42:28 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.17.exe
+2026-01-16T10:42:28 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-16T10:42:46 Created release v0.1.17
+2026-01-16T10:42:46 Release v0.1.17 uploaded
+2026-01-16T10:49:09 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-16T10:49:09 Preparing release (notes = 'Release build')...
+2026-01-16T10:49:17 Auto-incremented version to 0.1.18
+2026-01-16T10:49:17 GitHub CLI available
+2026-01-16T10:49:17 Invoking compile.ps1
+2026-01-16T10:49:57 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.18.exe
+2026-01-16T10:49:57 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-16T10:50:15 Created release v0.1.18
+2026-01-16T10:50:15 Release v0.1.18 uploaded
+2026-01-16T11:00:59 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-16T11:00:59 Preparing release (notes = 'Release build')...
+2026-01-16T11:01:06 Auto-incremented version to 0.1.19
+2026-01-16T11:01:06 GitHub CLI available
+2026-01-16T11:01:06 Invoking compile.ps1
+2026-01-16T11:01:45 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.19.exe
+2026-01-16T11:01:46 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-16T11:02:08 Created release v0.1.19
+2026-01-16T11:02:08 Release v0.1.19 uploaded
+2026-01-16T11:25:36 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-01-16T11:25:36 Preparing release (notes = 'Release build')...
+2026-01-16T11:25:45 Auto-incremented version to 0.1.20
+2026-01-16T11:25:45 GitHub CLI available
+2026-01-16T11:25:45 Invoking compile.ps1
+2026-01-16T11:26:25 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.20.exe
+2026-01-16T11:26:25 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-01-16T11:26:42 Created release v0.1.20
+2026-01-16T11:26:42 Release v0.1.20 uploaded
+2026-02-13T13:48:10 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-02-13T13:48:10 Preparing release (notes = 'Release build')...
+2026-02-13T13:48:13 Auto-incremented version to 0.1.21
+2026-02-13T13:48:13 GitHub CLI available
+2026-02-13T13:48:13 Invoking compile.ps1
+2026-02-13T13:52:15 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-02-13T13:52:15 Preparing release (notes = 'Release build')...
+2026-02-13T13:52:15 Auto-incremented version to 0.1.22
+2026-02-13T13:52:15 GitHub CLI available
+2026-02-13T13:52:15 Skipped compile.ps1
+2026-02-13T13:52:15 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.22.exe
+2026-02-13T13:52:15 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-02-13T13:52:30 Created release v0.1.22
+2026-02-13T13:52:30 Release v0.1.22 uploaded
+2026-02-13T13:53:07 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-02-13T13:53:07 Preparing release (notes = 'Release build')...
+2026-02-13T13:53:17 Auto-incremented version to 0.1.23
+2026-02-13T13:53:17 GitHub CLI available
+2026-02-13T13:53:17 Invoking compile.ps1
+2026-03-09T11:19:11 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-03-09T11:19:11 Preparing release (notes = 'Release build')...
+2026-03-09T11:19:11 Auto-incremented version to 0.1.25
+2026-03-09T11:19:11 GitHub CLI available
+2026-03-09T11:19:11 Skipped compile.ps1
+2026-03-09T11:19:11 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.25.exe
+2026-03-09T11:19:11 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-03-09T11:19:27 Created release v0.1.25
+2026-03-09T11:19:27 Release v0.1.25 uploaded
+2026-03-09T11:25:42 No compile choice provided; defaulted to compile.
+2026-03-09T11:25:42 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-03-09T11:25:42 Preparing release (notes = 'Release build')...
+2026-03-09T11:25:42 Auto-incremented version to 0.1.26
+2026-03-09T11:25:42 GitHub CLI available
+2026-03-09T11:25:42 Invoking compile.ps1
+2026-03-09T11:26:24 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.26.exe
+2026-03-09T11:26:24 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-03-09T11:26:43 Created release v0.1.26
+2026-03-09T11:26:43 Release v0.1.26 uploaded
+2026-03-18T13:30:52 No compile choice provided; defaulted to compile.
+2026-03-18T13:30:52 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-03-18T13:30:52 Preparing release (notes = 'Release build')...
+2026-03-18T13:30:52 Auto-incremented version to 0.1.30
+2026-03-18T13:30:52 GitHub CLI available
+2026-03-18T13:30:52 Invoking compile.ps1
+2026-03-18T13:31:34 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.30.exe
+2026-03-18T13:31:34 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-03-18T13:31:52 Created release v0.1.30
+2026-03-18T13:31:52 Release v0.1.30 uploaded
