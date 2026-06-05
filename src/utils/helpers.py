@@ -506,6 +506,7 @@ def upload_stock_unit_check_report(
     assigned_by=None,
     hash_csv_path=None,
     checked_at=None,
+    create_stock_unit=False,
 ):
     """Upload the full SecondChecking result to the Web-Tools stock-unit API."""
 
@@ -550,6 +551,7 @@ def upload_stock_unit_check_report(
         "hash_uploaded_at": utc_stamp,
         "hash_filename": hash_filename,
         "hash_file_data": hash_text,
+        "create_stock_unit": bool(create_stock_unit),
     }
 
     url = f"{base_url}/api/stock_units/check-report"

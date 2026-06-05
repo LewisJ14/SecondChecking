@@ -1217,6 +1217,33 @@ def assign_serial_logic(
             hash_csv_path=hash_csv_path,
             checked_at=checked_at,
         )
+        if (
+            not stock_report_ok
+            and isinstance(stock_report_response, dict)
+            and stock_report_response.get("error") == "Stock unit not found"
+        ):
+            create_stock = messagebox.askyesno(
+                "Stock Entry Not Found",
+                (
+                    f"Serial '{serial_number}' was not found in the Stock List.\n\n"
+                    "Would you like to create a new Web-Tools stock entry for this laptop "
+                    "and continue assigning it to the order?"
+                ),
+            )
+            if create_stock:
+                stock_report_ok, stock_report_response = upload_stock_unit_check_report(
+                    order_id=order_db_id,
+                    order_number=order_number,
+                    serial_number=serial_number,
+                    sku=sku_value,
+                    specs=specs,
+                    test_results=normalized_tests,
+                    mdm_status=mdm_status,
+                    assigned_by=assigned_by,
+                    hash_csv_path=hash_csv_path,
+                    checked_at=checked_at,
+                    create_stock_unit=True,
+                )
         if stock_report_ok:
             user_text = f" by '{assigned_by}'" if assigned_by else ""
             hash_status_text = "OK" if hash_csv_path else "Not collected"
