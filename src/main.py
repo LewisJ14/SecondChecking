@@ -12,6 +12,7 @@ else:
 import ttkbootstrap as tb
 from app_controller import AppController
 from utils.helpers import get_app_dir, log_event
+from utils.ui_scaling import enable_windows_dpi_awareness
 
 
 def run_headless_update_check() -> None:
@@ -46,6 +47,8 @@ def run_headless_mdm_refresh() -> None:
 
 
 def main() -> None:
+    enable_windows_dpi_awareness()
+
     parser = argparse.ArgumentParser(description="Second Checking Tool")
     parser.add_argument("--check-updates", action="store_true", help="run the update checker and exit")
     parser.add_argument(

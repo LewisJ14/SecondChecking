@@ -6,6 +6,7 @@ import sys
 import threading
 from utils.helpers import log_event
 from utils.audio_controls import force_max_system_volume
+from utils.ui_scaling import center_window, center_window_to_content
 
 try:
     import numpy as np
@@ -195,8 +196,8 @@ def run_speaker_test(root, test_results, test_labels, tests_window=None, complet
 
     result_window = tk.Toplevel(root)
     result_window.title("Speaker Test Result")
-    result_window.geometry("420x360")
-    result_window.resizable(False, False)
+    result_window.resizable(True, True)
+    center_window(result_window, 460, 460, min_width=420, min_height=360)
 
     manual_controls_available = sd is not None and np is not None
     from ttkbootstrap import ttk
@@ -414,20 +415,24 @@ def run_speaker_test(root, test_results, test_labels, tests_window=None, complet
 
     tk.Label(result_window, text="Did the speaker test pass?", font=("Arial", 11)).pack(pady=(8, 5))
     frame = tk.Frame(result_window)
-    frame.pack(pady=(0, 10))
+    frame.pack(fill="x", padx=12, pady=(0, 10))
+    frame.grid_columnconfigure((0, 1, 2), weight=1, uniform="speaker_result")
 
-    ttk.Button(frame, text="Yes", width=10, style="success.TButton", command=lambda: handle_response("pass")).pack(
-        side="left", padx=5
+    yes_button = ttk.Button(frame, text="Yes", style="success.TButton", command=lambda: handle_response("pass"))
+    yes_button.grid(
+        row=0, column=0, sticky="ew", padx=(0, 5)
     )
     ttk.Button(
         frame,
         text="Retry",
-        width=10,
         style="info.TButton",
         command=retry_test,
-    ).pack(side="left", padx=5)
-    ttk.Button(frame, text="No", width=10, style="danger.TButton", command=lambda: handle_response("fail")).pack(
-        side="left", padx=5
+    ).grid(row=0, column=1, sticky="ew", padx=5)
+    ttk.Button(frame, text="No", style="danger.TButton", command=lambda: handle_response("fail")).grid(
+        row=0, column=2, sticky="ew", padx=(5, 0)
     )
 
     result_window.protocol("WM_DELETE_WINDOW", lambda: handle_response("fail"))
+    result_window.bind("<Return>", lambda event: handle_response("pass"))
+    center_window_to_content(result_window, min_width=420, min_height=360)
+    yes_button.focus_set()

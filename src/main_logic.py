@@ -4,6 +4,8 @@ import tkinter as tk
 import wmi
 import re
 import datetime
+import os
+import subprocess
 from tkinter import messagebox
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -26,6 +28,118 @@ from logic.view_serials_logic import open_serial_viewer
 import traceback
 import ttkbootstrap as tb
 from ttkbootstrap import ttk
+
+
+def _close_existing_sysprep_processes() -> bool:
+    if os.name != "nt":
+        return True
+
+    creationflags = subprocess.CREATE_NO_WINDOW
+    try:
+        tasklist = subprocess.run(
+            ["tasklist", "/FI", "IMAGENAME eq Sysprep.exe", "/NH"],
+            capture_output=True,
+            text=True,
+            creationflags=creationflags,
+            timeout=10,
+        )
+        if "sysprep.exe" not in tasklist.stdout.lower():
+            log_event("No existing Sysprep process found before launch.")
+            return True
+
+        taskkill = subprocess.run(
+            ["taskkill", "/IM", "Sysprep.exe", "/F", "/T"],
+            capture_output=True,
+            text=True,
+            creationflags=creationflags,
+            timeout=15,
+        )
+        if taskkill.returncode != 0:
+            details = (taskkill.stderr or taskkill.stdout or "").strip()
+            messagebox.showerror("Sysprep Error", f"Failed to close existing Sysprep window:\n{details}")
+            log_event(f"Sysprep preflight failed: could not close existing process. {details}")
+            return False
+
+        log_event("Closed existing Sysprep process before launching /oobe /shutdown.")
+        return True
+    except Exception as exc:
+        messagebox.showerror("Sysprep Error", f"Failed to check for existing Sysprep process:\n{exc}")
+        log_event(f"Sysprep preflight failed while checking existing process: {exc}")
+        return False
+
+
+def _run_sysprep_shutdown() -> bool:
+    sysprep_dir = os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "System32", "Sysprep")
+    sysprep_exe = os.path.join(sysprep_dir, "Sysprep.exe")
+    if not os.path.exists(sysprep_exe):
+        messagebox.showerror("Sysprep Error", f"Sysprep.exe was not found:\n{sysprep_exe}")
+        log_event(f"Sysprep launch failed: executable not found at {sysprep_exe}")
+        return False
+
+    if not _close_existing_sysprep_processes():
+        return False
+
+    try:
+        creationflags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
+        subprocess.Popen(
+            [sysprep_exe, "/oobe", "/shutdown"],
+            cwd=sysprep_dir,
+            creationflags=creationflags,
+        )
+        log_event("Sysprep launched with /oobe /shutdown after serial assignment.")
+        return True
+    except Exception as exc:
+        messagebox.showerror("Sysprep Error", f"Failed to launch Sysprep:\n{exc}")
+        log_event(f"Sysprep launch failed: {exc}")
+        return False
+
+
+def show_assign_success_dialog(root: tk.Tk, message: str) -> None:
+    dialog = tk.Toplevel(root)
+    dialog.title("Success")
+    dialog.transient(root)
+    dialog.grab_set()
+    dialog.resizable(False, False)
+    dialog.configure(bg="#f4f6fa")
+
+    body = tk.Frame(dialog, bg="#ffffff", padx=18, pady=16)
+    body.pack(fill="both", expand=True, padx=12, pady=12)
+
+    tk.Label(
+        body,
+        text=message,
+        font=("Segoe UI", 10),
+        fg="#101828",
+        bg="#ffffff",
+        justify="left",
+        anchor="w",
+    ).pack(fill="x", pady=(0, 14))
+
+    button_row = tk.Frame(body, bg="#ffffff")
+    button_row.pack(anchor="e")
+
+    def close_dialog() -> None:
+        dialog.destroy()
+
+    def sysprep_and_close() -> None:
+        if _run_sysprep_shutdown():
+            dialog.destroy()
+
+    ok_button = ttk.Button(button_row, text="OK", command=close_dialog, style="secondary.TButton")
+    ok_button.pack(side="left", padx=(0, 8))
+    ttk.Button(button_row, text="OK & Sysprep", command=sysprep_and_close, style="success.TButton").pack(side="left")
+
+    dialog.protocol("WM_DELETE_WINDOW", close_dialog)
+    dialog.bind("<Return>", lambda event: close_dialog())
+    dialog.update_idletasks()
+
+    width = max(420, dialog.winfo_reqwidth())
+    height = dialog.winfo_reqheight()
+    x = root.winfo_rootx() + max(0, (root.winfo_width() - width) // 2)
+    y = root.winfo_rooty() + max(0, (root.winfo_height() - height) // 2)
+    dialog.geometry(f"{width}x{height}+{x}+{y}")
+    ok_button.focus_set()
+    dialog.wait_window()
 
 
 def _row_to_identity(row) -> Optional[Tuple[int, str]]:
@@ -408,7 +522,7 @@ def load_laptop_specs():
 def load_test_results(cursor, order_id, serial_number):
     cursor.execute(
         """
-            SELECT test_keyboard, test_speaker, test_microphone, test_display, test_webcam, test_usb
+            SELECT test_keyboard, test_speaker, test_microphone, test_display, test_webcam, test_usb, test_wifi
             FROM order_serials
             WHERE order_number = %s AND serial_number = %s
         """,
@@ -435,6 +549,7 @@ def load_test_results(cursor, order_id, serial_number):
             "display": to_ui_value(row[3]),
             "webcam": to_ui_value(row[4]),
             "usb": to_ui_value(row[5]),
+            "wifi": to_ui_value(row[6]),
         }
     return {
         "keyboard": "Not Run",
@@ -443,6 +558,7 @@ def load_test_results(cursor, order_id, serial_number):
         "display": "Not Run",
         "webcam": "Not Run",
         "usb": "Not Run",
+        "wifi": "Not Run",
     }
 
 
@@ -474,6 +590,31 @@ def load_order_note_for_order_id(cursor, order_db_id: int) -> str:
     if isinstance(value, (bytes, bytearray)):
         return value.decode("utf-8", errors="ignore").strip()
     return str(value).strip()
+
+
+def save_order_note_for_order_id(order_db_id: int, notes: str) -> None:
+    """Create or update the single notes row attached to an order."""
+
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+                INSERT INTO order_note (order_id, notes, created_at, updated_at)
+                VALUES (%s, %s, NOW(), NOW())
+                ON DUPLICATE KEY UPDATE
+                    notes = VALUES(notes),
+                    updated_at = NOW()
+            """,
+            (order_db_id, notes or ""),
+        )
+        conn.commit()
+        log_event(f"Saved order notes for order id {order_db_id}.")
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 def build_results_footer(laptop_specs, details, mdm_status):
@@ -747,32 +888,6 @@ def render_results(
     elif mdm_state not in {"not_locked", "unsupported"}:
         log_event(f"Microsoft MDM lock status indeterminate ({mdm_state}): {mdm_details}")
 
-    notes_top = table_bottom + 18
-    notes_bottom = canvas_height - 20
-    notes_left = inner_left + int(content_width * 0.52)
-    notes_right = inner_right
-    if notes_bottom > notes_top + 40:
-        canvas.create_rectangle(notes_left, notes_top, notes_right, notes_bottom, fill=panel_bg, outline=border, width=1)
-        canvas.create_rectangle(notes_left, notes_top, notes_right, notes_top + 34, fill=header_fill, outline=divider, width=1)
-        canvas.create_text(
-            notes_left + 12,
-            notes_top + 17,
-            text="Order Notes",
-            font=("Segoe UI", 11, "bold"),
-            fill=heading,
-            anchor="w",
-        )
-        notes_value = (order_note_text or "").strip() or "No notes attached to this order."
-        canvas.create_text(
-            notes_left + 12,
-            notes_top + 44,
-            text=notes_value,
-            font=("Segoe UI", 10),
-            fill=muted,
-            anchor="nw",
-            width=max(120, notes_right - notes_left - 24),
-        )
-
     existing_animation = getattr(canvas, "_battery_animation_id", None)
     if existing_animation:
         try:
@@ -780,6 +895,8 @@ def render_results(
         except Exception:
             pass
     canvas._battery_animation_id = None
+    canvas.configure(scrollregion=canvas.bbox("all"))
+    canvas.yview_moveto(0)
 
     # The dedicated footer is updated before render_results() is called.
     # Do not sample battery state again here; intermittent reads can replace
@@ -935,7 +1052,10 @@ def search_order_logic(
             if footer_payload and callable(footer_callback):
                 root.after(0, lambda payload=footer_payload: footer_callback(*payload))
             if callable(order_notes_callback):
-                root.after(0, lambda t=order_note_text: order_notes_callback(t))
+                root.after(
+                    0,
+                    lambda t=order_note_text, oid=db_order_id, on=order_number: order_notes_callback(t, oid, on),
+                )
             if callable(hash_status_callback):
                 root.after(
                     0,
@@ -976,7 +1096,7 @@ def assign_serial_logic(
             messagebox.showerror("Input Error", "Order number and serial number must be provided.")
             return
 
-        test_keys = ["keyboard", "speaker", "microphone", "display", "webcam", "usb"]
+        test_keys = ["keyboard", "speaker", "microphone", "display", "webcam", "usb", "wifi"]
         incomplete = [
             key.replace("_", " ").title()
             for key in test_keys
@@ -1077,11 +1197,11 @@ def assign_serial_logic(
             """
                 INSERT INTO order_serials (
                     order_id, order_number, serial_number, sku, cpu, ram, ssd, model, resolution, windows, battery, battery2,
-                    laptop_status, test_keyboard, test_speaker, test_microphone, test_display, test_webcam, test_usb, activation,
+                    laptop_status, test_keyboard, test_speaker, test_microphone, test_display, test_webcam, test_usb, test_wifi, activation,
                     mdm_state, mdm_details, assigned_by
                 ) VALUES (
                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                 )
             """,
             (
@@ -1104,6 +1224,7 @@ def assign_serial_logic(
                 normalise_test_result(test_results.get("display")),
                 normalise_test_result(test_results.get("webcam")),
                 normalise_test_result(test_results.get("usb")),
+                normalise_test_result(test_results.get("wifi")),
                 normalise_test_result(test_results.get("activation")),
                 mdm_state,
                 mdm_details,
@@ -1129,12 +1250,10 @@ def assign_serial_logic(
 
         user_text = f" by '{assigned_by}'" if assigned_by else ""
         hash_status_text = "OK" if hash_upload_ok else "Failed"
-        messagebox.showinfo(
-            "Success",
-            (
-                f"Serial '{serial_number}' (SKU '{sku_value or 'Unknown'}') assigned to order '{order_number}'{user_text}."
-                f"\nHash Upload: {hash_status_text}"
-            ),
+        show_assign_success_dialog(
+            root,
+            f"Serial '{serial_number}' (SKU '{sku_value or 'Unknown'}') assigned to order '{order_number}'{user_text}."
+            f"\nHash Upload: {hash_status_text}",
         )
     except Exception as e:
         if conn:
@@ -1143,4 +1262,3 @@ def assign_serial_logic(
     finally:
         if conn:
             conn.close()
-

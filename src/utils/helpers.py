@@ -17,6 +17,7 @@ import requests
 SYSROOT = Path(os.environ.get("WINDIR", r"C:\Windows"))
 DSREGCMD_PATH = SYSROOT / "System32" / "dsregcmd.exe"
 GPUPDATE_PATH = SYSROOT / "System32" / "gpupdate.exe"
+HARDCODED_SECOND_CHECK_KEY = "n_wHG3XvhznRp-bXm6tpN4OO_E4mnwu11XxkbVEStMv7W5fpjl1saGb8Ks7NWA-i"
 
 _SKU_TAG_METADATA: Optional[List[Dict[str, Any]]] = None
 _DROPDOWN_OPTION_CACHE: Optional[Dict[int, Dict[str, str]]] = None
@@ -385,7 +386,11 @@ def upload_hash_csv(
         or config_base_url
         or "http://192.168.1.188:5001"
     )
-    api_key = os.getenv("SECOND_CHECK_KEY", "").strip() or config_api_key
+    api_key = (
+        os.getenv("SECOND_CHECK_KEY", "").strip()
+        or HARDCODED_SECOND_CHECK_KEY
+        or config_api_key
+    )
     if not api_key or api_key == "<SECRET>":
         log_event("Hash upload skipped: X-Second-Check-Key is not configured.")
         return False
@@ -1003,7 +1008,7 @@ def preload_previous_results():
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT test_keyboard, test_speaker, test_microphone, test_display, test_webcam, test_usb
+            SELECT test_keyboard, test_speaker, test_microphone, test_display, test_webcam, test_usb, test_wifi
             FROM order_serials
             WHERE serial_number = %s
         """, (serial_number,))
@@ -1013,7 +1018,7 @@ def preload_previous_results():
         print(f"Row from DB: {row}")  # 🧪 Debug output
 
         if row:
-            keys = ["keyboard", "speaker", "microphone", "display", "webcam", "usb"]
+            keys = ["keyboard", "speaker", "microphone", "display", "webcam", "usb", "wifi"]
             for i, result in enumerate(row):
                 cleaned = result.strip().lower() if result else ""
                 if cleaned in ["pass", "fail"]:

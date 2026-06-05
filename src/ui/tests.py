@@ -10,8 +10,10 @@ from hardwaretests.display import run_display_test
 from hardwaretests.speaker import run_speaker_test
 from hardwaretests.usb import run_usb_test
 from hardwaretests.webcam import run_webcam_test
+from hardwaretests.wifi import run_wifi_test
 from ui.keyboard_test import run_keyboard_test
 from utils.helpers import check_activation_status, log_event
+from utils.ui_scaling import center_window, center_window_to_content, get_work_area
 
 
 class TestsWindow:
@@ -27,14 +29,11 @@ class TestsWindow:
         self.tests_window.title("Hardware Tests")
         self.tests_window.configure(bg="#f4f6fa")
 
-        width = 560
-        height = 700
-        screen_width = self.tests_window.winfo_screenwidth()
-        screen_height = self.tests_window.winfo_screenheight()
-        x = (screen_width - width) // 2
-        y = (screen_height - height) // 2
-        self.tests_window.geometry(f"{width}x{height}+{x}+{y}")
-        self.tests_window.minsize(520, 640)
+        _, _, screen_width, screen_height = get_work_area(self.tests_window)
+        width = min(620, max(520, int(screen_width * 0.36)))
+        height = min(760, max(560, int(screen_height * 0.78)))
+        center_window(self.tests_window, width, height, min_width=520, min_height=520)
+        self.tests_window.minsize(min(520, width), min(520, height))
         self.tests_window.resizable(True, True)
         self.tests_window.protocol("WM_DELETE_WINDOW", self.on_close)
 
@@ -43,8 +42,22 @@ class TestsWindow:
 
         self._build_header()
 
-        self.tests_container = tk.Frame(self.main_frame, bg="#f4f6fa")
-        self.tests_container.pack(fill="both", expand=True)
+        list_shell = tk.Frame(self.main_frame, bg="#f4f6fa")
+        list_shell.pack(fill="both", expand=True)
+        list_shell.grid_columnconfigure(0, weight=1)
+        list_shell.grid_rowconfigure(0, weight=1)
+
+        self.tests_canvas = tk.Canvas(list_shell, bg="#f4f6fa", highlightthickness=0, bd=0)
+        self.tests_canvas.grid(row=0, column=0, sticky="nsew")
+
+        self.tests_scrollbar = ttk.Scrollbar(list_shell, orient="vertical", command=self.tests_canvas.yview)
+        self.tests_scrollbar.grid(row=0, column=1, sticky="ns")
+        self.tests_canvas.configure(yscrollcommand=self.tests_scrollbar.set)
+
+        self.tests_container = tk.Frame(self.tests_canvas, bg="#f4f6fa")
+        self.tests_window_id = self.tests_canvas.create_window((0, 0), window=self.tests_container, anchor="nw")
+        self.tests_container.bind("<Configure>", self._sync_scroll_region)
+        self.tests_canvas.bind("<Configure>", self._sync_canvas_width)
 
         self.add_test_row("Speaker Test", run_speaker_test, "speaker")
         self.add_status_row("Microphone (auto)", "microphone")
@@ -53,8 +66,17 @@ class TestsWindow:
         self.add_test_row("Webcam Test", run_webcam_test, "webcam")
         self.add_test_row("USB Test", run_usb_test, "usb")
         self.add_activation_row()
+        self.add_section_header("Automatic Hardware Tests")
+        self.add_auto_test_row("Wi-Fi Test", run_wifi_test, "wifi", "Checks Windows can see an available Wi-Fi adapter.")
 
         self._build_footer()
+        self.tests_window.after(250, lambda: self.run_test_threaded(run_wifi_test, "wifi"))
+
+    def _sync_scroll_region(self, event=None):
+        self.tests_canvas.configure(scrollregion=self.tests_canvas.bbox("all"))
+
+    def _sync_canvas_width(self, event):
+        self.tests_canvas.itemconfigure(self.tests_window_id, width=event.width)
 
     def _build_header(self):
         header_card = tk.Frame(
@@ -144,7 +166,20 @@ class TestsWindow:
         row.grid_columnconfigure(0, minsize=160, weight=0)
         row.grid_columnconfigure(1, weight=1)
         row.grid_columnconfigure(2, minsize=88, weight=0)
+        row.grid_columnconfigure(3, minsize=88, weight=0)
         return row
+
+    def add_section_header(self, text):
+        section = tk.Frame(self.tests_container, bg="#f4f6fa", pady=4)
+        section.pack(fill="x", pady=(4, 8))
+        tk.Label(
+            section,
+            text=text,
+            font=("Segoe UI", 11, "bold"),
+            fg="#1f2a37",
+            bg="#f4f6fa",
+            anchor="w",
+        ).pack(fill="x")
 
     def run_test_threaded(self, test_func, key):
         threading.Thread(target=lambda: self._execute_test(test_func, key), daemon=True).start()
@@ -230,6 +265,64 @@ class TestsWindow:
         return text
 
     def view_product_key(self):
+        def show_product_key_dialog(key):
+            dialog = tk.Toplevel(self.tests_window)
+            dialog.title("Windows Product Key")
+            dialog.resizable(False, False)
+            dialog.transient(self.tests_window)
+            dialog.grab_set()
+
+            body = tk.Frame(dialog, bg="#ffffff", padx=16, pady=16)
+            body.pack(fill="both", expand=True)
+
+            tk.Label(
+                body,
+                text="OEM Key:",
+                font=("Segoe UI", 10, "bold"),
+                bg="#ffffff",
+                fg="#101828",
+                anchor="w",
+            ).pack(fill="x")
+
+            key_entry = ttk.Entry(body, font=("Segoe UI", 10), width=max(34, len(key) + 2))
+            key_entry.pack(fill="x", pady=(6, 14))
+            key_entry.insert(0, key)
+            key_entry.configure(state="readonly")
+
+            status_label = tk.Label(
+                body,
+                text="",
+                font=("Segoe UI", 9),
+                bg="#ffffff",
+                fg="#1f7a4d",
+                anchor="w",
+            )
+            status_label.pack(fill="x")
+
+            button_row = tk.Frame(body, bg="#ffffff")
+            button_row.pack(fill="x", pady=(8, 0))
+
+            def copy_key():
+                self.root.clipboard_clear()
+                self.root.clipboard_append(key)
+                self.root.update()
+                status_label.config(text="Copied to clipboard.")
+                log_event("Windows product key copied to clipboard.")
+
+            ttk.Button(button_row, text="OK", command=dialog.destroy, style="secondary.TButton").pack(
+                side="right", padx=(8, 0)
+            )
+            copy_button = ttk.Button(
+                button_row,
+                text="Copy to Clipboard",
+                command=copy_key,
+                style="info.TButton",
+            )
+            copy_button.pack(side="right")
+
+            center_window_to_content(dialog, min_width=430, min_height=170)
+            copy_button.focus_set()
+
         def run():
             try:
                 result = subprocess.run(
@@ -247,7 +340,7 @@ class TestsWindow:
                     raise Exception("No product key found.")
                 self.root.after(
                     0,
-                    lambda: messagebox.showinfo("Windows Product Key", f"OEM Key: {key}"),
+                    lambda: show_product_key_dialog(key),
                 )
             except Exception as err:
                 log_event(f"Product key retrieval error: {err}")
@@ -355,18 +448,88 @@ class TestsWindow:
         self.test_labels["activation_label"] = lbl
         self.test_buttons["activation"] = btn
 
+    def add_auto_test_row(self, label, test_func, key, description_text):
+        row = self._create_row_card()
+        result = self.test_results.get(key)
+
+        btn = ttk.Button(
+            row,
+            text=label,
+            command=lambda: self.run_test_threaded(test_func, key),
+            style=self._button_style_for_result(result),
+            width=16,
+        )
+        btn.grid(row=0, column=0, sticky="w")
+
+        description = tk.Label(
+            row,
+            text=description_text,
+            font=("Segoe UI", 10),
+            fg="#475467",
+            bg="#ffffff",
+            anchor="w",
+            justify="left",
+            wraplength=250,
+        )
+        description.grid(row=0, column=1, sticky="ew", padx=(12, 12))
+
+        override_btn = ttk.Button(
+            row,
+            text="Override",
+            command=lambda: self.show_override_dialog(key, label),
+            style="warning.TButton",
+            width=10,
+        )
+        override_btn.grid(row=0, column=2, sticky="e", padx=(0, 10))
+
+        lbl = tk.Label(
+            row,
+            font=("Segoe UI", 9, "bold"),
+            padx=10,
+            pady=4,
+            bd=0,
+        )
+        lbl.grid(row=0, column=3, sticky="e")
+        self._apply_result_badge(lbl, result)
+
+        self.test_labels[f"{key}_label"] = lbl
+        self.test_buttons[key] = btn
+        self.test_sequence.append((key, test_func))
+
+    def show_override_dialog(self, key, label):
+        dialog = tk.Toplevel(self.tests_window)
+        dialog.title(f"Override {label}")
+        dialog.resizable(False, False)
+        dialog.transient(self.tests_window)
+        dialog.grab_set()
+
+        body = tk.Frame(dialog, bg="#ffffff", padx=14, pady=14)
+        body.pack(fill="both", expand=True)
+
+        tk.Label(
+            body,
+            text=f"Manually set {label} result:",
+            font=("Segoe UI", 10, "bold"),
+            bg="#ffffff",
+        ).pack(anchor="w", pady=(0, 10))
+
+        def set_result(value):
+            self.test_results[key] = value
+            log_event(f"{label} manually overridden to {value}.")
+            self.update_icon(key)
+            dialog.destroy()
+
+        ttk.Button(body, text="Pass", command=lambda: set_result("pass"), style="success.TButton").pack(fill="x", pady=4)
+        ttk.Button(body, text="Fail", command=lambda: set_result("fail"), style="danger.TButton").pack(fill="x", pady=4)
+        ttk.Button(body, text="Not Run", command=lambda: set_result("Not Run"), style="secondary.TButton").pack(fill="x", pady=4)
+
+        center_window_to_content(dialog, min_width=320, min_height=180)
+
     def show_activation_dialog(self):
         dialog = tk.Toplevel(self.tests_window)
         dialog.title("Windows Activation")
 
-        screen_width = dialog.winfo_screenwidth()
-        screen_height = dialog.winfo_screenheight()
-        width = 320
-        height = 160
-        x = (screen_width - width) // 2
-        y = (screen_height - height) // 2
-        dialog.geometry(f"{width}x{height}+{x}+{y}")
-        dialog.minsize(280, 140)
+        dialog.resizable(True, True)
         dialog.transient(self.tests_window)
         dialog.grab_set()
 
@@ -393,6 +556,7 @@ class TestsWindow:
             command=lambda: [self.attempt_activation(), dialog.destroy()],
             style="success.TButton",
         ).pack(fill="x", pady=4)
+        center_window_to_content(dialog, min_width=340, min_height=180)
 
     def add_test_row(self, label, test_func, key):
         row = self._create_row_card()

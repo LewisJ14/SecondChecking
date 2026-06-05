@@ -2,6 +2,7 @@
 import tkinter as tk
 from tkinter import messagebox
 import traceback
+from utils.ui_scaling import center_window_to_content
 
 try:
     import keyboard
@@ -313,20 +314,20 @@ def run_keyboard_test(root, test_results, test_labels, tests_window=None, comple
     def show_result_prompt():
         prompt = tk.Toplevel(root)
         prompt.title("Keyboard Test Result")
-        prompt.geometry("300x130")
-        prompt.resizable(False, False)
+        prompt.resizable(True, True)
         tk.Label(prompt, text="Did the keyboard test pass?", font=("Arial", 11)).pack(pady=10)
         btn_frame = tk.Frame(prompt)
-        btn_frame.pack()
+        btn_frame.pack(fill="x", padx=12, pady=(0, 12))
+        btn_frame.grid_columnconfigure((0, 1, 2), weight=1, uniform="keyboard_result")
         def on_response(result):
             finalize(result)
             prompt.destroy()
         from ttkbootstrap import ttk
-        ttk.Button(btn_frame, text="Yes", width=10, style="success.TButton", command=lambda: on_response("pass")).pack(side="left", padx=5)
+        yes_button = ttk.Button(btn_frame, text="Yes", style="success.TButton", command=lambda: on_response("pass"))
+        yes_button.grid(row=0, column=0, sticky="ew", padx=(0, 5))
         ttk.Button(
             btn_frame,
             text="Retry",
-            width=10,
             style="info.TButton",
             command=lambda: [
                 prompt.destroy(),
@@ -338,9 +339,12 @@ def run_keyboard_test(root, test_results, test_labels, tests_window=None, comple
                     completion_event=completion_event,
                 ),
             ],
-        ).pack(side="left", padx=5)
-        ttk.Button(btn_frame, text="No", width=10, style="danger.TButton", command=lambda: on_response("fail")).pack(side="left", padx=5)
+        ).grid(row=0, column=1, sticky="ew", padx=5)
+        ttk.Button(btn_frame, text="No", style="danger.TButton", command=lambda: on_response("fail")).grid(row=0, column=2, sticky="ew", padx=(5, 0))
         prompt.protocol("WM_DELETE_WINDOW", lambda: on_response("fail"))
+        prompt.bind("<Return>", lambda event: on_response("pass"))
+        center_window_to_content(prompt, min_width=360, min_height=150)
+        yes_button.focus_set()
 
     def on_close():
         global keyboard_test_window

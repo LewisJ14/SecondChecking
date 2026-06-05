@@ -9,6 +9,7 @@ from werkzeug.security import check_password_hash
 
 from services.auth_service import fetch_user_record, fetch_usernames, update_password as update_user_password
 from utils.helpers import get_app_dir, log_event
+from utils.ui_scaling import center_window, center_window_to_content, get_work_area
 
 
 @dataclass
@@ -94,8 +95,7 @@ class PasswordResetDialog:
         self.top.title("Reset Password")
         self.top.transient(parent)
         self.top.grab_set()
-        self.top.resizable(False, False)
-        self.top.geometry("360x220")
+        self.top.resizable(True, True)
         self.top.configure(bg="#eef2f7")
 
         self.password_var = tk.StringVar()
@@ -136,6 +136,7 @@ class PasswordResetDialog:
         password_entry.focus_set()
         confirm_entry.bind("<Return>", lambda event: self._on_save())
         self.top.protocol("WM_DELETE_WINDOW", self._on_cancel)
+        center_window_to_content(self.top, min_width=380, min_height=260)
         self.top.focus_force()
         self.top.wait_window()
 
@@ -175,10 +176,16 @@ class LoginPanel:
         self.frame.place(relx=0, rely=0, relwidth=1, relheight=1)
 
         shadow = tk.Frame(self.frame, bg="#cfd8e3", bd=0)
-        shadow.place(relx=0.5, rely=0.5, anchor="center", width=548, height=448)
+        shadow.place(
+            relx=0.5,
+            rely=0.5,
+            anchor="center",
+            width=self._login_card_width + 20,
+            height=self._login_card_height + 20,
+        )
 
         container = tk.Frame(shadow, bg="white", bd=0, highlightthickness=1, highlightbackground="#d6dde8")
-        container.place(x=10, y=10, width=528, height=428)
+        container.place(x=10, y=10, width=self._login_card_width, height=self._login_card_height)
         container.pack_propagate(False)
 
         accent_bar = tk.Frame(container, bg="#0d6efd", height=8)
@@ -293,14 +300,17 @@ class LoginPanel:
         self._load_usernames_async()
 
     def _configure_login_window(self) -> None:
-        screen_width = self.parent.winfo_screenwidth()
-        screen_height = self.parent.winfo_screenheight()
+        left, top, screen_width, screen_height = get_work_area(self.parent)
         width = min(max(int(screen_width * 0.48), 760), 920)
         height = min(max(int(screen_height * 0.58), 560), 700)
-        x = (screen_width - width) // 2
-        y = (screen_height - height) // 2
+        width = min(width, max(520, screen_width - 24))
+        height = min(height, max(520, screen_height - 24))
+        self._login_card_width = min(528, max(460, width - 80))
+        self._login_card_height = min(428, max(390, height - 80))
+        x = left + (screen_width - width) // 2
+        y = top + (screen_height - height) // 2
         self.parent.geometry(f"{width}x{height}+{x}+{y}")
-        self.parent.minsize(760, 560)
+        self.parent.minsize(min(760, width), min(560, height))
 
     def _set_login_busy(self, is_busy: bool) -> None:
         self._login_in_progress = is_busy

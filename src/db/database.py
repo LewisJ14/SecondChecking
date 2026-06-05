@@ -6,6 +6,7 @@ from tkinter import messagebox
 REQUIRED_ORDER_SERIALS_COLUMNS = [
     "sku",
     "test_microphone",
+    "test_wifi",
     "mdm_state",
     "mdm_details",
     "assigned_by",
@@ -19,6 +20,7 @@ COLUMN_DEFINITIONS = {
     "battery": "VARCHAR(128) NULL",
     "battery2": "VARCHAR(128) NULL",
     "test_microphone": "VARCHAR(16) NULL",
+    "test_wifi": "VARCHAR(16) NULL",
     "mdm_state": "VARCHAR(32) NULL",
     "mdm_details": "TEXT NULL",
     "assigned_by": "VARCHAR(150) NULL",

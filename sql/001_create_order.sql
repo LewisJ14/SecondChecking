@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS `order_serials` (
     test_display VARCHAR(16) NULL,
     test_webcam VARCHAR(16) NULL,
     test_usb VARCHAR(16) NULL,
+    test_wifi VARCHAR(16) NULL,
     activation VARCHAR(16) NULL,
     mdm_state VARCHAR(32) NULL,
     mdm_details TEXT NULL,

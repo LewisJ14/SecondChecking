@@ -17,6 +17,7 @@ from main_logic import (
     build_results_footer,
     load_laptop_specs,
     render_results,
+    save_order_note_for_order_id,
     search_order_logic,
 )
 from utils.specs import reset_specs_cache
@@ -28,6 +29,7 @@ from utils.helpers import (
     is_battery_charging,
     log_event,
 )
+from utils.ui_scaling import get_work_area
 
 
 class AppController:
@@ -42,6 +44,8 @@ class AppController:
         self.mdm_status = None
         self._mdm_refresh_started = False
         self._showing_default_specs = True
+        self.current_order_note_order_id: Optional[int] = None
+        self.current_order_note_order_number: Optional[str] = None
 
         width, height, x, y = self._compute_geometry()
         self.root.geometry(f"{width}x{height}+{x}+{y}")
@@ -122,9 +126,25 @@ class AppController:
         header_frame.grid_columnconfigure(2, weight=0)
         header_frame.grid_columnconfigure(3, weight=0)
 
-        self.canvas = tk.Canvas(self.root, bg="#fff", highlightthickness=0)
-        self.canvas.pack(expand=True, fill="both", padx=10, pady=10)
+        self.canvas_frame = tk.Frame(self.root, bg=primary_bg)
+        self.canvas_frame.pack(expand=True, fill="both", padx=10, pady=10)
+        self.canvas_frame.grid_rowconfigure(0, weight=1)
+        self.canvas_frame.grid_columnconfigure(0, weight=1)
+
+        self.canvas = tk.Canvas(self.canvas_frame, bg="#fff", highlightthickness=0)
+        self.canvas.grid(row=0, column=0, sticky="nsew")
         self.canvas.configure(borderwidth=2, relief="groove")
+
+        self.canvas_scrollbar = ttk.Scrollbar(
+            self.canvas_frame,
+            orient="vertical",
+            command=self.canvas.yview,
+        )
+        self.canvas_scrollbar.grid(row=0, column=1, sticky="ns")
+        self.canvas.configure(yscrollcommand=self.canvas_scrollbar.set)
+        self.canvas.bind("<MouseWheel>", self._scroll_results_canvas)
+        self.canvas.bind("<Button-4>", self._scroll_results_canvas)
+        self.canvas.bind("<Button-5>", self._scroll_results_canvas)
 
         self.footer_frame = tk.Frame(
             self.root,
@@ -201,8 +221,11 @@ class AppController:
         )
         self.order_notes_card.grid(row=0, column=1, rowspan=4, sticky="ne", padx=(12, 0))
 
+        self.order_notes_header = tk.Frame(self.order_notes_card, bg="#f8fafc")
+        self.order_notes_header.pack(fill="x", anchor="w")
+
         self.order_notes_title = tk.Label(
-            self.order_notes_card,
+            self.order_notes_header,
             text="Order Notes",
             font=("Segoe UI", 10, "bold"),
             fg="#101828",
@@ -210,7 +233,16 @@ class AppController:
             anchor="w",
             justify="left",
         )
-        self.order_notes_title.pack(fill="x", anchor="w")
+        self.order_notes_title.pack(side="left", fill="x", expand=True, anchor="w")
+
+        self.order_notes_edit_button = ttk.Button(
+            self.order_notes_header,
+            text="Edit",
+            command=self._edit_order_notes,
+            style="secondary.TButton",
+            state="disabled",
+        )
+        self.order_notes_edit_button.pack(side="right")
 
         self.order_notes_body = tk.Frame(self.order_notes_card, bg="#f8fafc")
         self.order_notes_body.pack(fill="both", expand=False, pady=(4, 0))
@@ -257,23 +289,33 @@ class AppController:
     def on_resize(self, event):
         pass
 
+    def _scroll_results_canvas(self, event) -> str:
+        if event.num == 4:
+            delta = -1
+        elif event.num == 5:
+            delta = 1
+        else:
+            delta = -1 * int(event.delta / 120)
+        self.canvas.yview_scroll(delta, "units")
+        return "break"
+
     def _compute_geometry(self):
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-        width = min(int(screen_width * 0.85), 1400)
-        height = min(int(screen_height * 0.85), 900)
-        x = (screen_width - width) // 2
-        y = (screen_height - height) // 2
+        left, top, screen_width, screen_height = get_work_area(self.root)
+        width = min(int(screen_width * 0.88), 1400)
+        height = min(int(screen_height * 0.88), 900)
+        width = max(760, min(width, screen_width - 24))
+        height = max(520, min(height, screen_height - 24))
+        x = left + (screen_width - width) // 2
+        y = top + (screen_height - height) // 2
         return width, height, x, y
 
     def _center_current_window(self) -> None:
         self.root.update_idletasks()
         width = self.root.winfo_width()
         height = self.root.winfo_height()
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-        x = max(0, (screen_width - width) // 2)
-        y = max(0, (screen_height - height) // 2)
+        left, top, screen_width, screen_height = get_work_area(self.root)
+        x = left + max(0, (screen_width - width) // 2)
+        y = top + max(0, (screen_height - height) // 2)
         self.root.geometry(f"{width}x{height}+{x}+{y}")
 
     def _update_results_footer(
@@ -322,12 +364,104 @@ class AppController:
     def _update_hash_capture_status(self, text: str, color: str) -> None:
         self.autopilot_hash_footer.config(text=text or "", fg=color or "#475467")
 
-    def _update_order_notes_footer(self, text: str) -> None:
+    def _update_order_notes_footer(
+        self,
+        text: str,
+        order_id: Optional[int] = None,
+        order_number: Optional[str] = None,
+    ) -> None:
+        self.current_order_note_order_id = order_id
+        self.current_order_note_order_number = order_number
+        self.order_notes_edit_button.configure(state="normal" if order_id else "disabled")
         notes_value = (text or "").strip() or "No notes attached to this order."
         self.order_notes_footer.configure(state="normal")
         self.order_notes_footer.delete("1.0", "end")
         self.order_notes_footer.insert("1.0", notes_value)
         self.order_notes_footer.configure(state="disabled")
+
+    def _edit_order_notes(self) -> None:
+        order_id = self.current_order_note_order_id
+        if not order_id:
+            messagebox.showwarning("Order Notes", "Search for an order before editing notes.")
+            return
+
+        current_text = self.order_notes_footer.get("1.0", "end").strip()
+        if current_text == "No notes attached to this order.":
+            current_text = ""
+
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Edit Order Notes")
+        dialog.transient(self.root)
+        dialog.grab_set()
+        dialog.configure(bg="#f4f6fa")
+        dialog.minsize(460, 300)
+
+        body = tk.Frame(dialog, bg="#ffffff", padx=14, pady=14)
+        body.pack(fill="both", expand=True, padx=12, pady=12)
+
+        title = "Order Notes"
+        if self.current_order_note_order_number:
+            title = f"Order Notes - {self.current_order_note_order_number}"
+        tk.Label(
+            body,
+            text=title,
+            font=("Segoe UI", 11, "bold"),
+            fg="#101828",
+            bg="#ffffff",
+            anchor="w",
+        ).pack(fill="x", pady=(0, 8))
+
+        editor_frame = tk.Frame(body, bg="#ffffff")
+        editor_frame.pack(fill="both", expand=True)
+        editor = tk.Text(
+            editor_frame,
+            height=10,
+            width=64,
+            font=("Segoe UI", 10),
+            wrap="word",
+            undo=True,
+        )
+        editor.pack(side="left", fill="both", expand=True)
+        scrollbar = ttk.Scrollbar(editor_frame, orient="vertical", command=editor.yview)
+        scrollbar.pack(side="right", fill="y")
+        editor.configure(yscrollcommand=scrollbar.set)
+        editor.insert("1.0", current_text)
+
+        button_row = tk.Frame(body, bg="#ffffff")
+        button_row.pack(fill="x", pady=(12, 0))
+
+        def close_dialog() -> None:
+            dialog.destroy()
+
+        def save_notes() -> None:
+            new_text = editor.get("1.0", "end").strip()
+            try:
+                save_order_note_for_order_id(order_id, new_text)
+            except Exception as exc:
+                log_event(f"Failed to save order notes for order id {order_id}: {exc}")
+                messagebox.showerror("Order Notes", f"Failed to save order notes:\n{exc}")
+                return
+
+            self._update_order_notes_footer(
+                new_text,
+                self.current_order_note_order_id,
+                self.current_order_note_order_number,
+            )
+            dialog.destroy()
+
+        ttk.Button(button_row, text="Cancel", command=close_dialog, style="secondary.TButton").pack(
+            side="right", padx=(8, 0)
+        )
+        ttk.Button(button_row, text="Save", command=save_notes, style="success.TButton").pack(side="right")
+
+        dialog.update_idletasks()
+        width = max(520, dialog.winfo_reqwidth())
+        height = max(360, dialog.winfo_reqheight())
+        x = self.root.winfo_rootx() + max(0, (self.root.winfo_width() - width) // 2)
+        y = self.root.winfo_rooty() + max(0, (self.root.winfo_height() - height) // 2)
+        dialog.geometry(f"{width}x{height}+{x}+{y}")
+        editor.focus_set()
+        dialog.wait_window()
 
     def _refresh_primary_battery_state(self) -> None:
         try:
@@ -596,6 +730,7 @@ class AppController:
             "display": "Not Run",
             "webcam": "Not Run",
             "usb": "Not Run",
+            "wifi": "Not Run",
             "activation": "Not Run",
         }
         if self.mdm_status is None:
@@ -721,7 +856,7 @@ class AppController:
             self.tests_window.focus_force()
             return
 
-        test_keys = ["keyboard", "speaker", "microphone", "display", "webcam", "usb"]
+        test_keys = ["keyboard", "speaker", "microphone", "display", "webcam", "usb", "wifi"]
         test_values = [self.test_results.get(k, "Not Run") for k in test_keys]
 
         if all(v == "Not Run" for v in test_values):
