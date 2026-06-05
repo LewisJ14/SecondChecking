@@ -469,6 +469,135 @@ def upload_hash_csv(
     log_event(f"Hash upload failed {identifier_text} file={file_name} retries exhausted")
     return False
 
+
+def _load_webtools_api_config():
+    config_base_url = ""
+    config_api_key = ""
+    try:
+        config = load_config()
+        if config.has_section("webtools"):
+            config_base_url = config.get("webtools", "base_url", fallback="").strip()
+            config_api_key = config.get("webtools", "second_check_key", fallback="").strip()
+    except Exception as exc:
+        log_event(f"Web-Tools API config read warning: {exc}")
+
+    base_url = (
+        os.getenv("SECOND_CHECK_BASE_URL", "").strip()
+        or config_base_url
+        or "http://192.168.1.188:5001"
+    )
+    api_key = (
+        os.getenv("SECOND_CHECK_KEY", "").strip()
+        or HARDCODED_SECOND_CHECK_KEY
+        or config_api_key
+    )
+    return base_url.rstrip("/"), api_key
+
+
+def upload_stock_unit_check_report(
+    *,
+    order_id,
+    order_number,
+    serial_number,
+    sku,
+    specs,
+    test_results,
+    mdm_status=None,
+    assigned_by=None,
+    hash_csv_path=None,
+    checked_at=None,
+):
+    """Upload the full SecondChecking result to the Web-Tools stock-unit API."""
+
+    serial_text = str(serial_number or "").strip()
+    if not serial_text or serial_text == "Unknown":
+        log_event("Stock report upload skipped: missing serial number.")
+        return False, {"error": "missing serial number"}
+
+    base_url, api_key = _load_webtools_api_config()
+    if not api_key or api_key == "<SECRET>":
+        log_event("Stock report upload skipped: X-Second-Check-Key is not configured.")
+        return False, {"error": "missing API key"}
+
+    utc_stamp = checked_at or datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
+    hash_filename = ""
+    hash_text = ""
+    if hash_csv_path:
+        if os.path.exists(hash_csv_path):
+            hash_filename = os.path.basename(hash_csv_path)
+            try:
+                with open(hash_csv_path, "r", encoding="utf-8-sig") as handle:
+                    hash_text = handle.read()
+            except UnicodeDecodeError:
+                with open(hash_csv_path, "r", encoding="utf-8", errors="ignore") as handle:
+                    hash_text = handle.read()
+            except OSError as exc:
+                log_event(f"Stock report hash read failed: {exc}")
+        else:
+            log_event(f"Stock report hash file not found: {hash_csv_path}")
+
+    payload = {
+        "order_id": order_id,
+        "order_number": order_number,
+        "serial_number": serial_text,
+        "sku": sku,
+        "specs": specs or {},
+        "test_results": test_results or {},
+        "mdm": mdm_status or {},
+        "activation": (test_results or {}).get("activation"),
+        "assigned_by": assigned_by,
+        "checked_at": utc_stamp,
+        "hash_uploaded_at": utc_stamp,
+        "hash_filename": hash_filename,
+        "hash_file_data": hash_text,
+    }
+
+    url = f"{base_url}/api/stock_units/check-report"
+    headers = {
+        "X-Second-Check-Key": api_key,
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
+    max_attempts = 4
+    backoff_seconds = 1
+    for attempt in range(1, max_attempts + 1):
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=30)
+        except requests.RequestException as exc:
+            if attempt < max_attempts:
+                log_event(
+                    f"Stock report upload retry ({attempt}/{max_attempts}) serial={serial_text} network_error={exc}"
+                )
+                time.sleep(backoff_seconds)
+                backoff_seconds *= 2
+                continue
+            log_event(f"Stock report upload failed serial={serial_text} network_error={exc}")
+            return False, {"error": str(exc)}
+
+        try:
+            body = response.json()
+        except ValueError:
+            body = {"error": (response.text or "").strip()}
+
+        if response.status_code == 200 and body.get("success"):
+            log_event(f"Stock report upload success serial={serial_text}")
+            return True, body
+
+        if response.status_code in {500, 502, 503, 504} and attempt < max_attempts:
+            log_event(
+                f"Stock report upload retry ({attempt}/{max_attempts}) serial={serial_text} status={response.status_code}"
+            )
+            time.sleep(backoff_seconds)
+            backoff_seconds *= 2
+            continue
+
+        log_event(
+            f"Stock report upload failed serial={serial_text} status={response.status_code} payload={body}"
+        )
+        return False, body
+
+    return False, {"error": "retries exhausted"}
+
 def log_event(message):
     log_path = get_log_path()
     try:

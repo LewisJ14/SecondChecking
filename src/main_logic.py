@@ -22,6 +22,7 @@ from utils.helpers import (
     storage_specs_are_compatible,
     capture_autopilot_hash_csv,
     upload_hash_csv,
+    upload_stock_unit_check_report,
 )
 from utils.specs import get_laptop_specs
 from logic.view_serials_logic import open_serial_viewer
@@ -1158,7 +1159,6 @@ def assign_serial_logic(
             )
             if not confirm:
                 return
-            cursor.execute("DELETE FROM order_serials WHERE serial_number = %s", (serial_number,))
 
         sku_value = (sku or "").strip()
         if not sku_value:
@@ -1192,6 +1192,48 @@ def assign_serial_logic(
                     sku_value = selected
         mdm_state = mdm_status.get("state") if mdm_status else None
         mdm_details = mdm_status.get("details") if mdm_status else None
+        checked_at = datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
+        normalized_tests = {
+            "keyboard": normalise_test_result(test_results.get("keyboard")),
+            "speaker": normalise_test_result(test_results.get("speaker")),
+            "microphone": normalise_test_result(test_results.get("microphone")),
+            "display": normalise_test_result(test_results.get("display")),
+            "webcam": normalise_test_result(test_results.get("webcam")),
+            "usb": normalise_test_result(test_results.get("usb")),
+            "wifi": normalise_test_result(test_results.get("wifi")),
+            "activation": normalise_test_result(test_results.get("activation")),
+        }
+
+        hash_csv_path = capture_autopilot_hash_csv(preferred_serial=serial_number)
+        stock_report_ok, stock_report_response = upload_stock_unit_check_report(
+            order_id=order_db_id,
+            order_number=order_number,
+            serial_number=serial_number,
+            sku=sku_value,
+            specs=specs,
+            test_results=normalized_tests,
+            mdm_status=mdm_status,
+            assigned_by=assigned_by,
+            hash_csv_path=hash_csv_path,
+            checked_at=checked_at,
+        )
+        if stock_report_ok:
+            user_text = f" by '{assigned_by}'" if assigned_by else ""
+            hash_status_text = "OK" if hash_csv_path else "Not collected"
+            show_assign_success_dialog(
+                root,
+                f"Serial '{serial_number}' (SKU '{sku_value or 'Unknown'}') assigned to order '{order_number}'{user_text}."
+                f"\nStock Report Upload: OK"
+                f"\nHash Upload: {hash_status_text}",
+            )
+            return
+
+        log_event(
+            f"Falling back to legacy order_serials insert for serial={serial_number}; "
+            f"stock report response={stock_report_response}"
+        )
+        if existing:
+            cursor.execute("DELETE FROM order_serials WHERE serial_number = %s", (serial_number,))
 
         cursor.execute(
             """
@@ -1218,14 +1260,14 @@ def assign_serial_logic(
                 specs.get("Battery", ""),
                 specs.get("Battery 2", ""),
                 "Reserved",
-                normalise_test_result(test_results.get("keyboard")),
-                normalise_test_result(test_results.get("speaker")),
-                normalise_test_result(test_results.get("microphone")),
-                normalise_test_result(test_results.get("display")),
-                normalise_test_result(test_results.get("webcam")),
-                normalise_test_result(test_results.get("usb")),
-                normalise_test_result(test_results.get("wifi")),
-                normalise_test_result(test_results.get("activation")),
+                normalized_tests["keyboard"],
+                normalized_tests["speaker"],
+                normalized_tests["microphone"],
+                normalized_tests["display"],
+                normalized_tests["webcam"],
+                normalized_tests["usb"],
+                normalized_tests["wifi"],
+                normalized_tests["activation"],
                 mdm_state,
                 mdm_details,
                 assigned_by,
@@ -1235,13 +1277,12 @@ def assign_serial_logic(
         conn.commit()
 
         hash_upload_ok = False
-        hash_csv_path = capture_autopilot_hash_csv(preferred_serial=serial_number)
         if hash_csv_path:
             hash_upload_ok = upload_hash_csv(
                 hash_csv_path,
                 serial_id=serial_row_id,
                 sku=sku_value,
-                uploaded_at=datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z"),
+                uploaded_at=checked_at,
             )
         else:
             log_event(
