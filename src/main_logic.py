@@ -24,7 +24,11 @@ from utils.helpers import (
     upload_hash_csv,
     upload_stock_unit_check_report,
 )
-from utils.specs import get_laptop_specs
+from utils.specs import (
+    capture_batteryinfoview_report,
+    get_laptop_specs,
+    get_latest_batteryinfoview_report,
+)
 from logic.view_serials_logic import open_serial_viewer
 import traceback
 import ttkbootstrap as tb
@@ -1205,6 +1209,12 @@ def assign_serial_logic(
         }
 
         hash_csv_path = capture_autopilot_hash_csv(preferred_serial=serial_number)
+        battery_report = get_latest_batteryinfoview_report()
+        if not battery_report:
+            try:
+                battery_report = capture_batteryinfoview_report()
+            except Exception as exc:
+                log_event(f"BatteryInfoView report capture failed during assignment: {exc}")
         stock_report_ok, stock_report_response = upload_stock_unit_check_report(
             order_id=order_db_id,
             order_number=order_number,
@@ -1215,6 +1225,7 @@ def assign_serial_logic(
             mdm_status=mdm_status,
             assigned_by=assigned_by,
             hash_csv_path=hash_csv_path,
+            battery_report=battery_report,
             checked_at=checked_at,
         )
         if (
@@ -1241,6 +1252,7 @@ def assign_serial_logic(
                     mdm_status=mdm_status,
                     assigned_by=assigned_by,
                     hash_csv_path=hash_csv_path,
+                    battery_report=battery_report,
                     checked_at=checked_at,
                     create_stock_unit=True,
                 )

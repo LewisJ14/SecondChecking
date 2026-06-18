@@ -107,6 +107,7 @@ def parse_cpu_family_and_model(cpu_name):
     return cpu_name
 
 _laptop_specs_cache = None
+_latest_batteryinfoview_report = None
 
 def reset_specs_cache() -> None:
     """Clear the in-memory cache and remove the persisted specs cache file."""
@@ -251,21 +252,42 @@ def get_live_battery_percent():
         log_event(f"Error reading live battery percent: {e}")
     return None
 
+def get_latest_batteryinfoview_report():
+    """Return the most recent raw BatteryInfoView export captured during spec scan."""
+    if isinstance(_latest_batteryinfoview_report, dict):
+        return _latest_batteryinfoview_report.copy()
+    return None
+
+
+def capture_batteryinfoview_report():
+    global _latest_batteryinfoview_report
+    exe_path = ensure_batteryinfoview()
+    csv_path = os.path.join(os.environ.get("TEMP", "/tmp"), "batteryinfoview.csv")
+    creationflags = 0
+    if sys.platform == "win32":
+        creationflags = subprocess.CREATE_NO_WINDOW
+    cmd = [exe_path, "/scomma", csv_path]
+    subprocess.run(cmd, check=True, creationflags=creationflags)
+    if not os.path.exists(csv_path):
+        log_event("BatteryInfoView CSV not created.")
+        _latest_batteryinfoview_report = None
+        return None
+    with open(csv_path, encoding="utf-8", errors="ignore") as f:
+        content = f.read()
+    _latest_batteryinfoview_report = {
+        "filename": os.path.basename(csv_path),
+        "content": content,
+    }
+    return _latest_batteryinfoview_report.copy()
+
+
 # --- BatteryInfoView fallback ---
 def get_battery_health_batteryinfoview():
     try:
-        exe_path = ensure_batteryinfoview()
-        csv_path = os.path.join(os.environ.get("TEMP", "/tmp"), "batteryinfoview.csv")
-        creationflags = 0
-        if sys.platform == "win32":
-            creationflags = subprocess.CREATE_NO_WINDOW
-        cmd = [exe_path, "/scomma", csv_path]
-        subprocess.run(cmd, check=True, creationflags=creationflags)
-        if not os.path.exists(csv_path):
-            log_event("BatteryInfoView CSV not created.")
+        report = capture_batteryinfoview_report()
+        if not report:
             return ["Unknown (batteryinfoview)"]
-        with open(csv_path, encoding="utf-8", errors="ignore") as f:
-            lines = f.readlines()
+        lines = str(report.get("content") or "").splitlines()
 
         designed_matches = []
         full_matches = []

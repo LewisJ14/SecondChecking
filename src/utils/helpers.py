@@ -505,6 +505,7 @@ def upload_stock_unit_check_report(
     mdm_status=None,
     assigned_by=None,
     hash_csv_path=None,
+    battery_report=None,
     checked_at=None,
     create_stock_unit=False,
 ):
@@ -551,6 +552,7 @@ def upload_stock_unit_check_report(
         "hash_uploaded_at": utc_stamp,
         "hash_filename": hash_filename,
         "hash_file_data": hash_text,
+        "battery_report": battery_report or {},
         "create_stock_unit": bool(create_stock_unit),
     }
 
