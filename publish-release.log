@@ -298,3 +298,12 @@
 2026-03-18T13:31:34 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
 2026-03-18T13:31:52 Created release v0.1.30
 2026-03-18T13:31:52 Release v0.1.30 uploaded
+2026-06-16T14:01:10 Starting publish-release.ps1 (notes='Release build' force=False skipCompile=False pause=False)
+2026-06-16T14:01:10 Preparing release (notes = 'Release build')...
+2026-06-16T14:01:10 Auto-incremented version to 0.1.36
+2026-06-16T14:01:10 GitHub CLI available
+2026-06-16T14:01:10 Invoking compile.ps1
+2026-06-16T14:01:57 Copied C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe -> C:\Users\lewie\Documents\GitHub\SecondChecking\dist\SecondChecking-0.1.36.exe
+2026-06-16T14:01:57 Manifest written to C:\Users\lewie\Documents\GitHub\SecondChecking\update.json
+2026-06-16T14:02:19 Created release v0.1.36
+2026-06-16T14:02:19 Release v0.1.36 uploaded

@@ -1381,3 +1381,107 @@ requests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.
 ⚠ Model: Expected T480, Found HP EliteDesk 800 G4 DM 65W
 ⚠ CPU: Expected i5, Found i5-8500
 [2025-11-24 10:14:25] Opening test panel.
+[2026-06-17 09:28:00] Starting application after authenticating via login panel.
+[2026-06-17 09:28:01] Attempting to establish database connection...
+[2026-06-17 09:28:01] Loading configuration file...
+[2026-06-17 09:28:01] Configuration file loaded successfully.
+[2026-06-17 09:28:01] Database connection attempt 1/2.
+[2026-06-17 09:28:01] Database connection established successfully.
+[2026-06-17 09:28:03] Login attempt for 'Lewis'.
+[2026-06-17 09:28:03] Attempting to establish database connection...
+[2026-06-17 09:28:03] Loading configuration file...
+[2026-06-17 09:28:03] Configuration file loaded successfully.
+[2026-06-17 09:28:03] Database connection attempt 1/2.
+[2026-06-17 09:28:03] Database connection established successfully.
+[2026-06-17 09:28:03] Fetched user row for 'Lewis'.
+[2026-06-17 09:28:03] User 'Lewis' logged in successfully.
+[2026-06-17 09:28:03] Fetching laptop specs...
+[2026-06-17 09:28:03] Initialized WMI interface.
+[2026-06-17 09:28:04] Detected CPU: Ryzen 7 PRO 4750U
+[2026-06-17 09:28:04] Detected Serial Number: PF24NEM2
+[2026-06-17 09:28:04] Detected Resolution: 1920x1080
+[2026-06-17 09:28:04] Detected Windows Version: Windows 11
+[2026-06-17 09:28:04] Detected Model: T14 Gen 1
+[2026-06-17 09:28:04] Detected RAM: 46GB
+[2026-06-17 09:28:04] Detected SSD: 1024GB (HDD)
+[2026-06-17 09:28:04] Gathering battery health via BatteryInfoView.
+[2026-06-17 09:28:04] BatteryInfoView: Battery 1 Designed=50500, Full=38750, Health=76%
+[2026-06-17 09:28:04] Detected Battery Health: 76% (batteryinfoview)
+[2026-06-17 09:28:04] Laptop specs fetched successfully.
+[2026-06-17 09:28:04] Microsoft MDM lock not detected.
+[2026-06-17 09:28:05] Updating results footer: summary='Model: SKU spec is Unknown (review required)
+CPU: SKU spec is Unknown (review required)
+SSD: SKU spec is Unknown (review required)
+RAM: SKU spec is Unknown (review required)
+Resolution: SKU spec is Unknown (review required)
+Windows: SKU spec is Unknown (review required)
+Battery: SKU spec is Unknown (review required)', mdm='No Microsoft MDM lock detected.
+No Autopilot tenant information was found.', battery_lines=['Battery: 98% Charging']
+[2026-06-17 09:28:05] render_results(active) start: order_id=00000, sku=Laptop Spec, serial=PF24NEM2, canvas_width=1366, canvas_height=650
+[2026-06-17 09:28:05] render_results(active) fields=['Model', 'CPU', 'SSD', 'RAM', 'Resolution', 'Windows', 'Battery']
+[2026-06-17 09:28:05] Spec mismatches detected for order 00000:
+Model: SKU spec is Unknown (review required)
+CPU: SKU spec is Unknown (review required)
+SSD: SKU spec is Unknown (review required)
+RAM: SKU spec is Unknown (review required)
+Resolution: SKU spec is Unknown (review required)
+Windows: SKU spec is Unknown (review required)
+Battery: SKU spec is Unknown (review required)
+[2026-06-17 09:28:10] Running headless MDM refresh.
+[2026-06-17 09:28:10] Running headless update checker.
+[2026-06-17 09:28:10] Refreshing Windows root certificates via certutil.
+[2026-06-17 09:28:10] dsregcmd /sync succeeded with args ['/sync'].
+[2026-06-17 09:28:10] Root certificate store refreshed.
+[2026-06-17 09:28:11] Fetched update manifest for version 0.1.36.
+[2026-06-17 09:28:11] No new update available.
+[2026-06-17 09:28:12] User initiated search for order ID: 5424
+[2026-06-17 09:28:12] User initiated search for order: 5424
+[2026-06-17 09:28:12] Starting search for order ID: 5424
+[2026-06-17 09:28:12] Attempting to establish database connection...
+[2026-06-17 09:28:12] Loading configuration file...
+[2026-06-17 09:28:12] Configuration file loaded successfully.
+[2026-06-17 09:28:12] Database connection attempt 1/2.
+[2026-06-17 09:28:12] Database connection established successfully.
+[2026-06-17 09:28:12] Fetched 1 SKU candidates for order PC-5424 (id=5424).
+[2026-06-17 09:28:12] Returning cached laptop specs.
+[2026-06-17 09:28:13] [DEBUG] test_results['activation'] set to: pass for order PC-5424
+[2026-06-17 09:28:13] Processing SKU: T14SG1-RYZEN5-16RAM-256SSD-WIN11-B -- 1
+[2026-06-17 09:28:13] Loading configuration file...
+[2026-06-17 09:28:13] Configuration file loaded successfully.
+[2026-06-17 09:28:13] Microsoft MDM lock not detected.
+[2026-06-17 09:28:13] Loading configuration file...
+[2026-06-17 09:28:13] Configuration file loaded successfully.
+[2026-06-17 09:28:13] get_live_battery_percent error: <x_wmi: Unexpected COM Error (-2147352567, 'Exception occurred.', (0, 'SWbemServicesEx', None, None, 0, -2147221008), None)>
+[2026-06-17 09:28:13] get_live_battery_percent error: <x_wmi: Unexpected COM Error (-2147352567, 'Exception occurred.', (0, 'SWbemServicesEx', 'The application called an interface that was marshalled for a different thread. ', None, 0, -2147417842), None)>
+[2026-06-17 09:28:15] Autopilot hash CSV created: C:\Users\lewie\Documents\GitHub\SecondChecking\dist\AutopilotHashes\PF24NEM2.csv
+[2026-06-17 09:28:15] Autopilot hash ready after search: C:\Users\lewie\Documents\GitHub\SecondChecking\dist\AutopilotHashes\PF24NEM2.csv
+[2026-06-17 09:28:15] render_results(active) start: order_id=PC-5424, sku=T14SG1-RYZEN5-16RAM-256SSD-WIN11-B -- 1, serial=PF24NEM2, canvas_width=1366, canvas_height=650
+[2026-06-17 09:28:15] render_results(active) fields=['Model', 'CPU', 'SSD', 'RAM', 'Resolution', 'Windows', 'Battery']
+[2026-06-17 09:28:15] Spec mismatches detected for order PC-5424:
+Model: SKU spec is Unknown (review required)
+CPU: Expected Ryzen5, found Ryzen 7 PRO 4750U
+SSD: Expected 256GB, found 1024GB
+RAM: Expected 16GB, found 46GB
+Resolution: SKU spec is Unknown (review required)
+Battery: SKU spec is Unknown (review required)
+[2026-06-17 09:28:15] Updating results footer: summary='Model: SKU spec is Unknown (review required)
+CPU: Expected Ryzen5, found Ryzen 7 PRO 4750U
+SSD: Expected 256GB, found 1024GB
+RAM: Expected 16GB, found 46GB
+Resolution: SKU spec is Unknown (review required)
+Battery: SKU spec is Unknown (review required)', mdm='No Microsoft MDM lock detected.
+No Autopilot tenant information was found.', battery_lines=['Battery: NONE']
+[2026-06-17 09:28:16] Attempting to establish database connection...
+[2026-06-17 09:28:16] Loading configuration file...
+[2026-06-17 09:28:16] Configuration file loaded successfully.
+[2026-06-17 09:28:16] Database connection attempt 1/2.
+[2026-06-17 09:28:16] Database connection established successfully.
+[2026-06-17 09:28:21] gpupdate /force succeeded with args ['/force'].
+[2026-06-17 09:28:21] MDM policy commands completed before rechecking lock status.
+[2026-06-17 09:28:21] Microsoft MDM lock not detected.
+[2026-06-17 09:28:21] Attempting to establish database connection...
+[2026-06-17 09:28:21] Loading configuration file...
+[2026-06-17 09:28:21] Configuration file loaded successfully.
+[2026-06-17 09:28:21] Database connection attempt 1/2.
+[2026-06-17 09:28:21] Database connection established successfully.
+[2026-06-17 09:28:21] Removed serial 'PC201WKJ' from order 'PC-5424'

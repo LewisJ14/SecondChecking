@@ -1,147 +1,117 @@
-﻿2026-03-25 13:27:28 Starting compile script (Python=.\venv312\Scripts\python.exe SkipInstall=True UpgradePip=False)
-2026-03-25 13:27:28 Resolved Python command to C:\Users\PCR\Documents\GitHub\SecondChecking\venv312\Scripts\python.exe.
-2026-03-25 13:27:28 Running command: C:\Users\PCR\Documents\GitHub\SecondChecking\venv312\Scripts\python.exe --version
-2026-03-25 13:27:29 Python 3.12.0
-2026-03-25 13:27:29 Loaded runtime file manifest from C:\Users\PCR\Documents\GitHub\SecondChecking\runtime-files.json.
-2026-03-25 13:27:29 Cleaning dist directory before building.
-2026-03-25 13:27:29 Removed existing build directory.
-2026-03-25 13:27:29 Removed managed dist artifact logs.txt.
-2026-03-25 13:27:29 Removed existing dist\main.exe.
-2026-03-25 13:27:29 Invoking PyInstaller.
-2026-03-25 13:27:29 Running command: C:\Users\PCR\Documents\GitHub\SecondChecking\venv312\Scripts\python.exe -m PyInstaller --clean --noconfirm main.spec
-2026-03-25 13:28:36 1805 INFO: PyInstaller: 6.13.0, contrib hooks: 2025.4
-2026-03-25 13:28:36 1806 INFO: Python: 3.12.0
-2026-03-25 13:28:36 2023 INFO: Platform: Windows-11-10.0.26200-SP0
-2026-03-25 13:28:36 2023 INFO: Python environment: C:\Users\PCR\Documents\GitHub\SecondChecking\venv312
-2026-03-25 13:28:36 2026 INFO: Removing temporary files and cleaning cache in C:\Users\PCR\AppData\Local\pyinstaller
-2026-03-25 13:28:36 2028 INFO: Module search paths (PYTHONPATH):
-2026-03-25 13:28:36 ['C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking',
-2026-03-25 13:28:36  'C:\\Users\\PCR\\AppData\\Local\\Programs\\Python\\Python312\\python312.zip',
-2026-03-25 13:28:36  'C:\\Users\\PCR\\AppData\\Local\\Programs\\Python\\Python312\\DLLs',
-2026-03-25 13:28:36  'C:\\Users\\PCR\\AppData\\Local\\Programs\\Python\\Python312\\Lib',
-2026-03-25 13:28:36  'C:\\Users\\PCR\\AppData\\Local\\Programs\\Python\\Python312',
-2026-03-25 13:28:36  'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312',
-2026-03-25 13:28:36  'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages',
-2026-03-25 13:28:36  'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\win32',
-2026-03-25 13:28:36  'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\win32\\lib',
-2026-03-25 13:28:36  'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\Pythonwin',
-2026-03-25 13:28:36  'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\setuptools\\_vendor',
-2026-03-25 13:28:36  'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking',
-2026-03-25 13:28:36  'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\src']
-2026-03-25 13:28:36 4195 INFO: Appending 'datas' from .spec
-2026-03-25 13:28:36 4196 INFO: checking Analysis
-2026-03-25 13:28:36 4197 INFO: Building Analysis because Analysis-00.toc is non existent
-2026-03-25 13:28:36 4197 INFO: Running Analysis Analysis-00.toc
-2026-03-25 13:28:36 4197 INFO: Target bytecode optimization level: 0
-2026-03-25 13:28:36 4197 INFO: Initializing module dependency graph...
-2026-03-25 13:28:36 4198 INFO: Initializing module graph hook caches...
-2026-03-25 13:28:36 4223 INFO: Analyzing modules for base_library.zip ...
-2026-03-25 13:28:36 6144 INFO: Processing standard module hook 'hook-encodings.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-03-25 13:28:36 7956 INFO: Processing standard module hook 'hook-pickle.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-03-25 13:28:36 9104 INFO: Processing standard module hook 'hook-heapq.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-03-25 13:28:36 9555 INFO: Caching module dependency graph...
-2026-03-25 13:28:36 9602 INFO: Looking for Python shared library...
-2026-03-25 13:28:36 9610 INFO: Using Python shared library: C:\Users\PCR\AppData\Local\Programs\Python\Python312\python312.dll
-2026-03-25 13:28:36 9610 INFO: Analyzing C:\Users\PCR\Documents\GitHub\SecondChecking\src\main.py
-2026-03-25 13:28:36 9846 INFO: Processing pre-find-module-path hook 'hook-tkinter.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks\\pre_find_module_path'
-2026-03-25 13:28:36 9849 INFO: TclTkInfo: initializing cached Tcl/Tk info...
-2026-03-25 13:28:36 10215 INFO: Processing standard module hook 'hook-_tkinter.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-03-25 13:28:36 10320 INFO: Processing standard module hook 'hook-PIL.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-03-25 13:28:36 10494 INFO: Processing standard module hook 'hook-PIL.Image.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-03-25 13:28:36 11163 INFO: Processing standard module hook 'hook-numpy.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-03-25 13:28:36 11681 INFO: Processing standard module hook 'hook-platform.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-03-25 13:28:36 11928 INFO: Processing standard module hook 'hook-sysconfig.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-03-25 13:28:36 13372 INFO: Processing standard module hook 'hook-difflib.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-03-25 13:28:36 13617 INFO: Processing standard module hook 'hook-multiprocessing.util.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-03-25 13:28:36 13711 INFO: Processing standard module hook 'hook-xml.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-03-25 13:28:36 14754 INFO: Processing standard module hook 'hook-psutil.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-2026-03-25 13:28:36 15351 INFO: Processing pre-safe-import-module hook 'hook-typing_extensions.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-2026-03-25 13:28:36 15354 INFO: SetuptoolsInfo: initializing cached setuptools info...
-2026-03-25 13:28:36 20253 INFO: Setuptools: 'typing_extensions' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.typing_extensions'!
-2026-03-25 13:28:36 20262 INFO: Processing standard module hook 'hook-setuptools.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-03-25 13:28:36 20275 INFO: Processing pre-safe-import-module hook 'hook-distutils.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-2026-03-25 13:28:36 20305 INFO: Processing pre-safe-import-module hook 'hook-jaraco.functools.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-2026-03-25 13:28:36 20306 INFO: Setuptools: 'jaraco.functools' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.jaraco.functools'!
-2026-03-25 13:28:36 20317 INFO: Processing pre-safe-import-module hook 'hook-more_itertools.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-2026-03-25 13:28:36 20318 INFO: Setuptools: 'more_itertools' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.more_itertools'!
-2026-03-25 13:28:36 20528 INFO: Processing pre-safe-import-module hook 'hook-packaging.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-2026-03-25 13:28:36 20538 INFO: Processing standard module hook 'hook-packaging.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-03-25 13:28:36 20683 INFO: Processing pre-safe-import-module hook 'hook-jaraco.text.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-2026-03-25 13:28:36 20684 INFO: Setuptools: 'jaraco.text' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.jaraco.text'!
-2026-03-25 13:28:36 20694 INFO: Processing standard module hook 'hook-setuptools._vendor.jaraco.text.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-03-25 13:28:36 20696 INFO: Processing pre-safe-import-module hook 'hook-importlib_resources.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-2026-03-25 13:28:36 20698 INFO: Processing pre-safe-import-module hook 'hook-jaraco.context.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-2026-03-25 13:28:36 20698 INFO: Setuptools: 'jaraco.context' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.jaraco.context'!
-2026-03-25 13:28:36 20707 INFO: Processing pre-safe-import-module hook 'hook-backports.tarfile.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-2026-03-25 13:28:36 20707 INFO: Setuptools: 'backports.tarfile' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.backports.tarfile'!
-2026-03-25 13:28:36 20806 INFO: Processing standard module hook 'hook-backports.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-2026-03-25 13:28:36 20889 INFO: Processing pre-safe-import-module hook 'hook-importlib_metadata.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-2026-03-25 13:28:36 20889 INFO: Setuptools: 'importlib_metadata' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.importlib_metadata'!
-2026-03-25 13:28:36 20915 INFO: Processing standard module hook 'hook-setuptools._vendor.importlib_metadata.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-03-25 13:28:36 20917 INFO: Processing pre-safe-import-module hook 'hook-zipp.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-2026-03-25 13:28:36 20917 INFO: Setuptools: 'zipp' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.zipp'!
-2026-03-25 13:28:36 21329 INFO: Processing pre-safe-import-module hook 'hook-tomli.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-2026-03-25 13:28:36 21332 INFO: Setuptools: 'tomli' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.tomli'!
-2026-03-25 13:28:36 21915 INFO: Processing standard module hook 'hook-pkg_resources.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-03-25 13:28:36 22616 INFO: Processing pre-safe-import-module hook 'hook-platformdirs.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-2026-03-25 13:28:36 22618 INFO: Setuptools: 'platformdirs' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.platformdirs'!
-2026-03-25 13:28:36 22872 INFO: Processing pre-safe-import-module hook 'hook-wheel.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-2026-03-25 13:28:36 22873 INFO: Setuptools: 'wheel' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.wheel'!
-2026-03-25 13:28:36 23651 INFO: Processing standard module hook 'hook-charset_normalizer.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-2026-03-25 13:28:36 24565 INFO: Processing standard module hook 'hook-PIL.ImageFilter.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-03-25 13:28:36 C:\Users\PCR\Documents\GitHub\SecondChecking\venv312\Lib\site-packages\ttkbootstrap\validation.py:1: SyntaxWarning: invalid escape sequence '\d'
-2026-03-25 13:28:36   """
-2026-03-25 13:28:36 C:\Users\PCR\Documents\GitHub\SecondChecking\venv312\Lib\site-packages\wmi.py:2: SyntaxWarning: invalid escape sequence '\_'
-2026-03-25 13:28:36   """Windows Management Instrumentation (WMI) is Microsoft's answer to
-2026-03-25 13:28:36 C:\Users\PCR\Documents\GitHub\SecondChecking\venv312\Lib\site-packages\wmi.py:917: SyntaxWarning: invalid escape sequence '\_'
-2026-03-25 13:28:36   """This is the equivalent to the raw-WMI SpawnInstance\_
-2026-03-25 13:28:36 25117 INFO: Processing pre-safe-import-module hook 'hook-win32com.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\pre_safe_import_module'
-2026-03-25 13:28:36 25210 INFO: Processing standard module hook 'hook-win32com.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-2026-03-25 13:28:36 25212 INFO: Processing standard module hook 'hook-pythoncom.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-2026-03-25 13:28:36 25329 INFO: Processing standard module hook 'hook-pywintypes.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-2026-03-25 13:28:36 26118 INFO: Processing standard module hook 'hook-urllib3.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-2026-03-25 13:28:36 26834 INFO: Processing standard module hook 'hook-certifi.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-2026-03-25 13:28:36 27120 INFO: Processing standard module hook 'hook-cv2.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-2026-03-25 13:28:36 28031 INFO: Processing module hooks (post-graph stage)...
-2026-03-25 13:28:36 28446 INFO: Processing standard module hook 'hook-PIL.SpiderImagePlugin.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-03-25 13:28:36 28754 INFO: Processing standard module hook 'hook-_tkinter.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-03-25 13:28:36 28797 INFO: Performing binary vs. data reclassification (949 entries)
-2026-03-25 13:28:36 28930 INFO: Looking for ctypes DLLs
-2026-03-25 13:28:36 28996 INFO: Analyzing run-time hooks ...
-2026-03-25 13:28:36 28999 INFO: Including run-time hook 'pyi_rth_inspect.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
-2026-03-25 13:28:36 29002 INFO: Including run-time hook 'pyi_rth_setuptools.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
-2026-03-25 13:28:36 29004 INFO: Including run-time hook 'pyi_rth_pkgutil.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
-2026-03-25 13:28:36 29007 INFO: Including run-time hook 'pyi_rth_multiprocessing.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
-2026-03-25 13:28:36 29009 INFO: Including run-time hook 'pyi_rth_pkgres.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
-2026-03-25 13:28:36 29013 INFO: Including run-time hook 'pyi_rth__tkinter.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
-2026-03-25 13:28:36 29014 INFO: Including run-time hook 'pyi_rth_pythoncom.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\rthooks'
-2026-03-25 13:28:36 29015 INFO: Including run-time hook 'pyi_rth_pywintypes.py' from 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\rthooks'
-2026-03-25 13:28:36 29059 INFO: Creating base_library.zip...
-2026-03-25 13:28:36 29175 INFO: Looking for dynamic libraries
-2026-03-25 13:28:36 30737 INFO: Extra DLL search directories (AddDllDirectory): ['C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\numpy.libs', 'C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\cv2\\../../x64/vc14/bin']
-2026-03-25 13:28:36 30738 INFO: Extra DLL search directories (PATH): ['C:\\Users\\PCR\\Documents\\GitHub\\SecondChecking\\venv312\\Lib\\site-packages\\cv2\\../../x64/vc14/bin']
-2026-03-25 13:28:36 31988 INFO: Warnings written to C:\Users\PCR\Documents\GitHub\SecondChecking\build\main\warn-main.txt
-2026-03-25 13:28:36 32101 INFO: Graph cross-reference written to C:\Users\PCR\Documents\GitHub\SecondChecking\build\main\xref-main.html
-2026-03-25 13:28:36 32177 INFO: checking PYZ
-2026-03-25 13:28:36 32177 INFO: Building PYZ because PYZ-00.toc is non existent
-2026-03-25 13:28:36 32178 INFO: Building PYZ (ZlibArchive) C:\Users\PCR\Documents\GitHub\SecondChecking\build\main\PYZ-00.pyz
-2026-03-25 13:28:36 33850 INFO: Building PYZ (ZlibArchive) C:\Users\PCR\Documents\GitHub\SecondChecking\build\main\PYZ-00.pyz completed successfully.
-2026-03-25 13:28:36 33910 INFO: checking PKG
-2026-03-25 13:28:36 33910 INFO: Building PKG because PKG-00.toc is non existent
-2026-03-25 13:28:36 33910 INFO: Building PKG (CArchive) main.pkg
-2026-03-25 13:28:36 55698 INFO: Building PKG (CArchive) main.pkg completed successfully.
-2026-03-25 13:28:36 55728 INFO: Bootloader C:\Users\PCR\Documents\GitHub\SecondChecking\venv312\Lib\site-packages\PyInstaller\bootloader\Windows-64bit-intel\runw.exe
-2026-03-25 13:28:36 55728 INFO: checking EXE
-2026-03-25 13:28:36 55728 INFO: Building EXE because EXE-00.toc is non existent
-2026-03-25 13:28:36 55728 INFO: Building EXE from EXE-00.toc
-2026-03-25 13:28:36 55728 INFO: Copying bootloader EXE to C:\Users\PCR\Documents\GitHub\SecondChecking\dist\main.exe
-2026-03-25 13:28:36 55794 INFO: Copying icon to EXE
-2026-03-25 13:28:36 55844 INFO: Copying 0 resources to EXE
-2026-03-25 13:28:36 55844 INFO: Embedding manifest in EXE
-2026-03-25 13:28:36 55850 INFO: Appending PKG archive to EXE
-2026-03-25 13:28:36 55950 INFO: Fixing EXE headers
-2026-03-25 13:28:36 64119 INFO: Building EXE from EXE-00.toc completed successfully.
-2026-03-25 13:28:36 64149 INFO: Build complete! The results are available in: C:\Users\PCR\Documents\GitHub\SecondChecking\dist
-2026-03-25 13:28:36 Preserved existing config.ini in dist directory (user-managed).
-2026-03-25 13:28:36 Copied logs.txt to dist directory.
-2026-03-25 13:28:36 PyInstaller build completed successfully.
+﻿2026-06-16 14:01:10 Starting compile script (Python=python SkipInstall=True UpgradePip=False)
+2026-06-16 14:01:10 Resolved Python command to C:\Users\lewie\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\python.exe.
+2026-06-16 14:01:10 Running command: C:\Users\lewie\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\python.exe --version
+2026-06-16 14:01:10 Python 3.10.11
+2026-06-16 14:01:10 Loaded runtime file manifest from C:\Users\lewie\Documents\GitHub\SecondChecking\runtime-files.json.
+2026-06-16 14:01:10 Cleaning dist directory before building.
+2026-06-16 14:01:10 Removed existing build directory.
+2026-06-16 14:01:10 Removed managed dist artifact logs.txt.
+2026-06-16 14:01:10 Removed existing dist\main.exe.
+2026-06-16 14:01:10 Invoking PyInstaller.
+2026-06-16 14:01:10 Running command: C:\Users\lewie\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\python.exe -m PyInstaller --clean --noconfirm main.spec
+2026-06-16 14:01:56 599 INFO: PyInstaller: 6.3.0
+2026-06-16 14:01:56 599 INFO: Python: 3.10.11
+2026-06-16 14:01:56 599 INFO: Platform: Windows-10-10.0.22000-SP0
+2026-06-16 14:01:56 616 INFO: Removing temporary files and cleaning cache in C:\Users\lewie\AppData\Local\pyinstaller
+2026-06-16 14:01:56 616 INFO: Extending PYTHONPATH with paths
+2026-06-16 14:01:56 ['C:\\Users\\lewie\\Documents\\GitHub\\SecondChecking',
+2026-06-16 14:01:56  'C:\\Users\\lewie\\Documents\\GitHub\\SecondChecking\\src']
+2026-06-16 14:01:56 pygame 2.3.0 (SDL 2.24.2, Python 3.10.11)
+2026-06-16 14:01:56 Hello from the pygame community. https://www.pygame.org/contribute.html
+2026-06-16 14:01:56 1395 INFO: Appending 'datas' from .spec
+2026-06-16 14:01:56 1397 INFO: checking Analysis
+2026-06-16 14:01:56 1398 INFO: Building Analysis because Analysis-00.toc is non existent
+2026-06-16 14:01:56 1398 INFO: Initializing module dependency graph...
+2026-06-16 14:01:56 1400 INFO: Caching module graph hooks...
+2026-06-16 14:01:56 1420 INFO: Analyzing base_library.zip ...
+2026-06-16 14:01:56 2916 INFO: Loading module hook 'hook-heapq.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks'...
+2026-06-16 14:01:56 2976 INFO: Loading module hook 'hook-encodings.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks'...
+2026-06-16 14:01:56 4533 INFO: Loading module hook 'hook-pickle.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks'...
+2026-06-16 14:01:56 5624 INFO: Caching module dependency graph...
+2026-06-16 14:01:56 5752 INFO: Running Analysis Analysis-00.toc
+2026-06-16 14:01:56 5752 INFO: Looking for Python shared library...
+2026-06-16 14:01:56 5752 INFO: Using Python shared library: C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\python310.dll
+2026-06-16 14:01:56 5752 INFO: Analyzing C:\Users\lewie\Documents\GitHub\SecondChecking\src\main.py
+2026-06-16 14:01:56 6004 INFO: Loading module hook 'hook-PIL.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks'...
+2026-06-16 14:01:56 6070 INFO: Loading module hook 'hook-PIL.Image.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks'...
+2026-06-16 14:01:56 6983 INFO: Loading module hook 'hook-multiprocessing.util.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks'...
+2026-06-16 14:01:56 7107 INFO: Loading module hook 'hook-xml.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks'...
+2026-06-16 14:01:56 7750 INFO: Loading module hook 'hook-pycparser.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+2026-06-16 14:01:56 8183 INFO: Loading module hook 'hook-setuptools.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks'...
+2026-06-16 14:01:56 11284 INFO: Processing pre-safe import module hook distutils from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module\\hook-distutils.py'.
+2026-06-16 14:01:56 11284 INFO: Processing pre-find module path hook distutils from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks\\pre_find_module_path\\hook-distutils.py'.
+2026-06-16 14:01:56 12037 INFO: Loading module hook 'hook-distutils.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks'...
+2026-06-16 14:01:56 12073 INFO: Loading module hook 'hook-distutils.util.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks'...
+2026-06-16 14:01:56 12105 INFO: Loading module hook 'hook-sysconfig.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks'...
+2026-06-16 14:01:56 12357 INFO: Loading module hook 'hook-pkg_resources.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks'...
+2026-06-16 14:01:56 14188 INFO: Loading module hook 'hook-platform.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks'...
+2026-06-16 14:01:56 14394 INFO: Loading module hook 'hook-packaging.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks'...
+2026-06-16 14:01:56 15622 INFO: Loading module hook 'hook-numpy.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\numpy\\_pyinstaller'...
+2026-06-16 14:01:56 16130 INFO: Loading module hook 'hook-difflib.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks'...
+2026-06-16 14:01:56 16400 INFO: Loading module hook 'hook-psutil.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+2026-06-16 14:01:56 17295 INFO: Loading module hook 'hook-PIL.ImageFilter.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks'...
+2026-06-16 14:01:56 18065 INFO: Processing pre-safe import module hook win32com from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\_pyinstaller_hooks_contrib\\pre_safe_import_module\\hook-win32com.py'.
+2026-06-16 14:01:56 18178 INFO: Loading module hook 'hook-win32com.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+2026-06-16 14:01:56 18179 INFO: Loading module hook 'hook-pythoncom.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+2026-06-16 14:01:56 18300 INFO: Loading module hook 'hook-pywintypes.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+2026-06-16 14:01:56 19388 INFO: Loading module hook 'hook-charset_normalizer.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+2026-06-16 14:01:56 19483 INFO: Loading module hook 'hook-certifi.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+2026-06-16 14:01:56 19735 INFO: Loading module hook 'hook-sounddevice.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+2026-06-16 14:01:56 19767 INFO: Loading module hook 'hook-cv2.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'...
+2026-06-16 14:01:56 20766 INFO: Processing module hooks...
+2026-06-16 14:01:56 21032 INFO: Loading module hook 'hook-PIL.SpiderImagePlugin.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks'...
+2026-06-16 14:01:56 21764 INFO: Loading module hook 'hook-setuptools.msvc.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks'...
+2026-06-16 14:01:56 22341 INFO: Loading module hook 'hook-setuptools._distutils.command.check.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks'...
+2026-06-16 14:01:56 22595 INFO: Loading module hook 'hook-_tkinter.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks'...
+2026-06-16 14:01:56 22596 INFO: checking Tree
+2026-06-16 14:01:56 22596 INFO: Building Tree because Tree-00.toc is non existent
+2026-06-16 14:01:56 22596 INFO: Building Tree Tree-00.toc
+2026-06-16 14:01:56 22680 INFO: checking Tree
+2026-06-16 14:01:56 22680 INFO: Building Tree because Tree-01.toc is non existent
+2026-06-16 14:01:56 22680 INFO: Building Tree Tree-01.toc
+2026-06-16 14:01:56 22690 INFO: checking Tree
+2026-06-16 14:01:56 22690 INFO: Building Tree because Tree-02.toc is non existent
+2026-06-16 14:01:56 22690 INFO: Building Tree Tree-02.toc
+2026-06-16 14:01:56 22711 INFO: Performing binary vs. data reclassification (940 entries)
+2026-06-16 14:01:56 22979 INFO: Looking for ctypes DLLs
+2026-06-16 14:01:56 23012 INFO: Analyzing run-time hooks ...
+2026-06-16 14:01:56 23018 INFO: Including run-time hook 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_pkgutil.py'
+2026-06-16 14:01:56 23021 INFO: Processing pre-find module path hook _pyi_rth_utils from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks\\pre_find_module_path\\hook-_pyi_rth_utils.py'.
+2026-06-16 14:01:56 23022 INFO: Loading module hook 'hook-_pyi_rth_utils.py' from 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks'...
+2026-06-16 14:01:56 23023 INFO: Including run-time hook 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_multiprocessing.py'
+2026-06-16 14:01:56 23026 INFO: Including run-time hook 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_inspect.py'
+2026-06-16 14:01:56 23028 INFO: Including run-time hook 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth__tkinter.py'
+2026-06-16 14:01:56 23029 INFO: Including run-time hook 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\_pyinstaller_hooks_contrib\\rthooks\\pyi_rth_pythoncom.py'
+2026-06-16 14:01:56 23030 INFO: Including run-time hook 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\_pyinstaller_hooks_contrib\\rthooks\\pyi_rth_pywintypes.py'
+2026-06-16 14:01:56 23031 INFO: Including run-time hook 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_win32comgenpy.py'
+2026-06-16 14:01:56 23038 INFO: Including run-time hook 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_pkgres.py'
+2026-06-16 14:01:56 23042 INFO: Including run-time hook 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_setuptools.py'
+2026-06-16 14:01:56 23088 INFO: Looking for dynamic libraries
+2026-06-16 14:01:56 C:\Users\lewie\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\PyInstaller\building\build_main.py:194: UserWarning: The numpy.array_api submodule is still experimental. See NEP 47.
+2026-06-16 14:01:56   __import__(package)
+2026-06-16 14:01:56 24445 INFO: Extra DLL search directories (AddDllDirectory): ['C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\numpy.libs', 'C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\cv2\\../../x64/vc14/bin']
+2026-06-16 14:01:56 24445 INFO: Extra DLL search directories (PATH): ['C:\\Users\\lewie\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python310\\site-packages\\cv2\\../../x64/vc14/bin']
+2026-06-16 14:01:56 25814 INFO: Warnings written to C:\Users\lewie\Documents\GitHub\SecondChecking\build\main\warn-main.txt
+2026-06-16 14:01:56 25941 INFO: Graph cross-reference written to C:\Users\lewie\Documents\GitHub\SecondChecking\build\main\xref-main.html
+2026-06-16 14:01:56 26035 INFO: checking PYZ
+2026-06-16 14:01:56 26036 INFO: Building PYZ because PYZ-00.toc is non existent
+2026-06-16 14:01:56 26036 INFO: Building PYZ (ZlibArchive) C:\Users\lewie\Documents\GitHub\SecondChecking\build\main\PYZ-00.pyz
+2026-06-16 14:01:56 27558 INFO: Building PYZ (ZlibArchive) C:\Users\lewie\Documents\GitHub\SecondChecking\build\main\PYZ-00.pyz completed successfully.
+2026-06-16 14:01:56 27608 INFO: checking PKG
+2026-06-16 14:01:56 27608 INFO: Building PKG because PKG-00.toc is non existent
+2026-06-16 14:01:56 27608 INFO: Building PKG (CArchive) main.pkg
+2026-06-16 14:01:56 43976 INFO: Building PKG (CArchive) main.pkg completed successfully.
+2026-06-16 14:01:56 44004 INFO: Bootloader C:\Users\lewie\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\PyInstaller\bootloader\Windows-64bit-intel\runw.exe
+2026-06-16 14:01:56 44004 INFO: checking EXE
+2026-06-16 14:01:56 44004 INFO: Building EXE because EXE-00.toc is non existent
+2026-06-16 14:01:56 44004 INFO: Building EXE from EXE-00.toc
+2026-06-16 14:01:56 44005 INFO: Copying bootloader EXE to C:\Users\lewie\Documents\GitHub\SecondChecking\dist\main.exe
+2026-06-16 14:01:56 44092 INFO: Copying icon to EXE
+2026-06-16 14:01:56 44191 INFO: Copying 0 resources to EXE
+2026-06-16 14:01:56 44191 INFO: Embedding manifest in EXE
+2026-06-16 14:01:56 44295 INFO: Appending PKG archive to EXE
+2026-06-16 14:01:56 44391 INFO: Fixing EXE headers
+2026-06-16 14:01:56 45120 INFO: Building EXE from EXE-00.toc completed successfully.
+2026-06-16 14:01:57 Preserved existing config.ini in dist directory (user-managed).
+2026-06-16 14:01:57 Copied logs.txt to dist directory.
+2026-06-16 14:01:57 PyInstaller build completed successfully.

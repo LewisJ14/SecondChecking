@@ -1244,6 +1244,12 @@ def assign_serial_logic(
                     checked_at=checked_at,
                     create_stock_unit=True,
                 )
+            else:
+                messagebox.showinfo(
+                    "Assignment Cancelled",
+                    f"Serial '{serial_number}' was not assigned because no stock entry was created.",
+                )
+                return
         if stock_report_ok:
             user_text = f" by '{assigned_by}'" if assigned_by else ""
             hash_status_text = "OK" if hash_csv_path else "Not collected"
