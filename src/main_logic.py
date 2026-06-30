@@ -23,6 +23,7 @@ from utils.helpers import (
     capture_autopilot_hash_csv,
     upload_hash_csv,
     upload_stock_unit_check_report,
+    upload_trade_job_check_report,
 )
 from utils.specs import (
     capture_batteryinfoview_report,
@@ -71,6 +72,23 @@ def _close_existing_sysprep_processes() -> bool:
         messagebox.showerror("Sysprep Error", f"Failed to check for existing Sysprep process:\n{exc}")
         log_event(f"Sysprep preflight failed while checking existing process: {exc}")
         return False
+
+
+def _read_optional_hash_file(path: Optional[str]) -> Tuple[str, str]:
+    if not path:
+        return "", ""
+    try:
+        if not os.path.exists(path):
+            return os.path.basename(path), ""
+        try:
+            with open(path, "r", encoding="utf-8-sig") as handle:
+                return os.path.basename(path), handle.read()
+        except UnicodeDecodeError:
+            with open(path, "r", encoding="utf-8", errors="ignore") as handle:
+                return os.path.basename(path), handle.read()
+    except Exception as exc:
+        log_event(f"Failed to read Autopilot hash for job serial upsert: {exc}")
+    return os.path.basename(path), ""
 
 
 def _run_sysprep_shutdown() -> bool:
@@ -264,8 +282,14 @@ def normalise_test_result(value: Optional[str]) -> str:
     return "n/a"
 
 
-def prompt_for_sku_selection(root: tk.Tk, sku_options: List[str]) -> Optional[str]:
-    """Display a modal prompt so the user can choose which SKU to process."""
+def prompt_for_sku_selection(
+    root: tk.Tk,
+    sku_options: List[str],
+    *,
+    title: str = "Select SKU",
+    message: str = "Multiple SKUs were found for this order.\nSelect the one you want to process:",
+) -> Optional[str]:
+    """Display a modal prompt so the user can choose an option to process."""
 
     unique_options: List[str] = []
     seen = set()
@@ -297,13 +321,13 @@ def prompt_for_sku_selection(root: tk.Tk, sku_options: List[str]) -> Optional[st
     def show_dialog() -> None:
         dialog = tk.Toplevel(root)
         dialog_holder["dialog"] = dialog
-        dialog.title("Select SKU")
+        dialog.title(title)
         dialog.transient(root)
         dialog.grab_set()
 
         ttk.Label(
             dialog,
-            text="Multiple SKUs were found for this order.\nSelect the one you want to process:",
+            text=message,
             anchor="center",
             justify="center",
         ).pack(padx=20, pady=(20, 10))
@@ -567,6 +591,50 @@ def load_test_results(cursor, order_id, serial_number):
     }
 
 
+def load_trade_test_results(cursor, job_reference, serial_number):
+    cursor.execute(
+        """
+            SELECT test_keyboard, test_speaker, test_microphone, test_display, test_webcam, test_usb
+            FROM job_serials
+            WHERE job_reference = %s AND serial_number = %s
+        """,
+        (job_reference, serial_number),
+    )
+    row = cursor.fetchone()
+    if not row:
+        return {
+            "keyboard": "Not Run",
+            "speaker": "Not Run",
+            "microphone": "Not Run",
+            "display": "Not Run",
+            "webcam": "Not Run",
+            "usb": "Not Run",
+            "wifi": "Not Run",
+        }
+
+    def to_ui_value(value: Optional[str]) -> str:
+        if not value:
+            return "Not Run"
+        lowered = value.strip().lower()
+        if lowered == "pass":
+            return "pass"
+        if lowered == "fail":
+            return "fail"
+        if lowered in {"n/a", "na"}:
+            return "Not Run"
+        return value
+
+    return {
+        "keyboard": to_ui_value(row[0]),
+        "speaker": to_ui_value(row[1]),
+        "microphone": to_ui_value(row[2]),
+        "display": to_ui_value(row[3]),
+        "webcam": to_ui_value(row[4]),
+        "usb": to_ui_value(row[5]),
+        "wifi": "Not Run",
+    }
+
+
 def load_order_note_for_order_id(cursor, order_db_id: int) -> str:
     """Return the latest notes text for the order row id."""
 
@@ -615,6 +683,155 @@ def save_order_note_for_order_id(order_db_id: int, notes: str) -> None:
         )
         conn.commit()
         log_event(f"Saved order notes for order id {order_db_id}.")
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+
+def _job_row_to_identity(row) -> Optional[Tuple[int, str]]:
+    if not row:
+        return None
+    job_id, reference = row
+    return int(job_id), _decode_db_value(reference)
+
+
+def resolve_trade_job_by_reference(cursor, job_reference: str) -> Optional[Tuple[int, str]]:
+    trimmed_reference = (job_reference or "").strip()
+    if not trimmed_reference:
+        return None
+    cursor.execute(
+        """
+            SELECT id, reference_number
+            FROM job
+            WHERE UPPER(TRIM(reference_number)) = UPPER(TRIM(%s))
+              AND COALESCE(is_archived, 0) = 0
+            ORDER BY id DESC
+            LIMIT 1
+        """,
+        (trimmed_reference,),
+    )
+    return _job_row_to_identity(cursor.fetchone())
+
+
+def search_trade_jobs(cursor, search_text: str) -> List[Dict[str, Any]]:
+    text = (search_text or "").strip()
+    if not text:
+        return []
+    like = f"%{text}%"
+    cursor.execute(
+        """
+            SELECT j.id, j.reference_number, j.customer, j.summary
+            FROM job j
+            WHERE COALESCE(j.is_archived, 0) = 0
+              AND (
+                   j.reference_number LIKE %s
+                OR j.customer LIKE %s
+                OR j.summary LIKE %s
+                OR EXISTS (
+                    SELECT 1
+                    FROM product p
+                    WHERE p.job_id = j.id
+                      AND p.product_name LIKE %s
+                )
+              )
+            ORDER BY j.date_created DESC, j.id DESC
+            LIMIT 20
+        """,
+        (like, like, like, like),
+    )
+    rows = []
+    for job_id, reference, customer, summary in cursor.fetchall():
+        ref = _decode_db_value(reference)
+        details = " - ".join(
+            part
+            for part in (_decode_db_value(customer), _decode_db_value(summary))
+            if part
+        )
+        rows.append({"id": int(job_id), "reference": ref, "label": f"{ref} - {details}" if details else ref})
+    return rows
+
+
+def prompt_for_trade_job_selection(root: tk.Tk, matches: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    labels = [match["label"] for match in matches]
+    selected = prompt_for_sku_selection(
+        root,
+        labels,
+        title="Select Trade Job",
+        message="Multiple trade jobs were found.\nSelect the one you want to process:",
+    )
+    if not selected:
+        return None
+    return next((match for match in matches if match["label"] == selected), None)
+
+
+def _build_trade_product_details(product_row: Dict[str, Any]) -> Dict[str, str]:
+    return {
+        "Model": _decode_db_value(product_row.get("product_name")) or "Unknown",
+        "CPU": _decode_db_value(product_row.get("cpu")) or "Unknown",
+        "SSD": _decode_db_value(product_row.get("storage")) or "Unknown",
+        "RAM": _decode_db_value(product_row.get("memory")) or "Unknown",
+        "Resolution": "Unknown",
+        "Windows": _decode_db_value(product_row.get("os")) or "Unknown",
+        "Battery": "Unknown",
+        "Battery 2": "Unknown",
+    }
+
+
+def load_trade_product_candidates(cursor, job_id: int) -> List[Dict[str, Any]]:
+    cursor.execute(
+        """
+            SELECT id, product_name, cpu, os, memory, storage, quantity
+            FROM product
+            WHERE job_id = %s
+            ORDER BY id
+        """,
+        (job_id,),
+    )
+    candidates: List[Dict[str, Any]] = []
+    seen_labels = set()
+    for row in cursor.fetchall():
+        product_id, product_name, cpu, os_value, memory, storage, quantity = row
+        payload = {
+            "product_name": product_name,
+            "cpu": cpu,
+            "os": os_value,
+            "memory": memory,
+            "storage": storage,
+        }
+        name = _decode_db_value(product_name) or f"Product {product_id}"
+        qty = int(quantity or 0)
+        label_base = f"{name} x{qty}" if qty else name
+        label = label_base
+        if label in seen_labels:
+            label = f"{label_base} (line {product_id})"
+        seen_labels.add(label)
+        candidates.append(
+            {
+                "id": int(product_id),
+                "label": label,
+                "details": _build_trade_product_details(payload),
+            }
+        )
+    return candidates
+
+
+def load_trade_job_note_for_job_id(cursor, job_id: int) -> str:
+    cursor.execute("SELECT notes FROM job WHERE id = %s", (job_id,))
+    row = cursor.fetchone()
+    if not row:
+        return ""
+    return _decode_db_value(row[0])
+
+
+def save_trade_job_note_for_job_id(job_id: int, notes: str) -> None:
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE job SET notes = %s WHERE id = %s", (notes or "", job_id))
+        conn.commit()
+        log_event(f"Saved trade job notes for job id {job_id}.")
     finally:
         try:
             conn.close()
@@ -713,15 +930,18 @@ def render_results(
     show_serial_controls: bool,
     order_note_text: str,
     root,
+    mode: str = "order",
+    trade_job_id: Optional[int] = None,
 ):
     canvas.delete("all")
     canvas.configure(bg="#f4f6fa")
     canvas.update_idletasks()
     canvas_width = max(canvas.winfo_width(), 800)
     canvas_height = max(canvas.winfo_height(), 650)
+    active_mode = "trade" if mode == "trade" else "order"
     log_event(
         "render_results(active) start: "
-        f"order_id={order_id}, sku={sku}, serial={serial_number}, "
+        f"mode={active_mode}, order_id={order_id}, sku={sku}, serial={serial_number}, "
         f"canvas_width={canvas_width}, canvas_height={canvas_height}"
     )
     style = tb.Style()
@@ -747,7 +967,8 @@ def render_results(
     header_top = 20
     header_bottom = 96
     canvas.create_rectangle(outer_left, header_top, outer_right, header_bottom, fill=panel_bg, outline=border, width=1)
-    canvas.create_text(inner_left, header_top + 24, text=f"SKU: {sku}", font=("Segoe UI", 18, "bold"), fill=heading, anchor="w")
+    title_label = "Product" if active_mode == "trade" else "SKU"
+    canvas.create_text(inner_left, header_top + 24, text=f"{title_label}: {sku}", font=("Segoe UI", 18, "bold"), fill=heading, anchor="w")
     canvas.create_text(
         inner_left,
         header_top + 54,
@@ -758,11 +979,21 @@ def render_results(
     )
 
     if show_serial_controls:
-        assign_button = ttk.Button(
-            canvas,
-            text="Assign Serial",
-            style="success.TButton",
-            command=lambda: assign_serial_logic(
+        if active_mode == "trade":
+            assign_command = lambda: assign_trade_serial_logic(
+                trade_job_id,
+                order_id,
+                serial_number,
+                laptop_specs,
+                test_results,
+                sku,
+                details,
+                mdm_status,
+                assigned_by,
+                root,
+            )
+        else:
+            assign_command = lambda: assign_serial_logic(
                 order_id,
                 serial_number,
                 laptop_specs,
@@ -771,16 +1002,22 @@ def render_results(
                 mdm_status,
                 assigned_by,
                 root,
-            ),
-        )
-        view_serials_button = ttk.Button(
+            )
+        assign_button = ttk.Button(
             canvas,
-            text="View Serials",
-            style="info.TButton",
-            command=lambda: open_serial_viewer(order_id),
+            text="Assign Serial",
+            style="success.TButton",
+            command=assign_command,
         )
         canvas.create_window(outer_right - 236, header_top + 38, window=assign_button, anchor="w")
-        canvas.create_window(outer_right - 122, header_top + 38, window=view_serials_button, anchor="w")
+        if active_mode != "trade":
+            view_serials_button = ttk.Button(
+                canvas,
+                text="View Serials",
+                style="info.TButton",
+                command=lambda: open_serial_viewer(order_id),
+            )
+            canvas.create_window(outer_right - 122, header_top + 38, window=view_serials_button, anchor="w")
 
     table_top = header_bottom + 18
     row_height = 38
@@ -1022,20 +1259,6 @@ def search_order_logic(
                 except Exception as exc:
                     log_event(f"Search footer preparation failed: {exc}")
 
-            hash_status_text = "Autopilot Hash Failed"
-            hash_status_color = "#b42318"
-            hash_status_callback = getattr(root, "_update_hash_capture_status", None)
-            try:
-                hash_csv_path = capture_autopilot_hash_csv(preferred_serial=serial_number)
-                if hash_csv_path:
-                    hash_status_text = "Autopilot Hash Collected"
-                    hash_status_color = "#1f7a4d"
-                    log_event(f"Autopilot hash ready after search: {hash_csv_path}")
-                else:
-                    log_event("Autopilot hash capture returned no file during search.")
-            except Exception as exc:
-                log_event(f"Autopilot hash capture raised during search: {exc}")
-
             root.after(
                 0,
                 lambda: render_results(
@@ -1061,11 +1284,7 @@ def search_order_logic(
                     0,
                     lambda t=order_note_text, oid=db_order_id, on=order_number: order_notes_callback(t, oid, on),
                 )
-            if callable(hash_status_callback):
-                root.after(
-                    0,
-                    lambda t=hash_status_text, c=hash_status_color: hash_status_callback(t, c),
-                )
+            start_hash_capture_status_update(root, serial_number, "order search")
 
         except Exception as err:
             log_event(f"Unhandled exception in search logic for order {order_id}:\n{traceback.format_exc()}")
@@ -1082,6 +1301,186 @@ def search_order_logic(
                 root.after(0, on_complete)
 
     threading.Thread(target=run_search, daemon=True).start()
+
+
+def start_hash_capture_status_update(root: tk.Tk, serial_number: str, context_label: str) -> None:
+    hash_status_callback = getattr(root, "_update_hash_capture_status", None)
+    if not callable(hash_status_callback):
+        return
+
+    root.after(
+        0,
+        lambda: hash_status_callback("Autopilot Hash Pending", "#b54708"),
+    )
+
+    def worker() -> None:
+        hash_status_text = "Autopilot Hash Failed"
+        hash_status_color = "#b42318"
+        try:
+            hash_csv_path = capture_autopilot_hash_csv(preferred_serial=serial_number)
+            if hash_csv_path:
+                hash_status_text = "Autopilot Hash Collected"
+                hash_status_color = "#1f7a4d"
+                log_event(f"Autopilot hash ready after {context_label}: {hash_csv_path}")
+            else:
+                log_event(f"Autopilot hash capture returned no file after {context_label}.")
+        except Exception as exc:
+            log_event(f"Autopilot hash capture raised after {context_label}: {exc}")
+        root.after(
+            0,
+            lambda t=hash_status_text, c=hash_status_color: hash_status_callback(t, c),
+        )
+
+    threading.Thread(target=worker, daemon=True).start()
+
+
+def search_trade_job_logic(
+    job_reference: str,
+    canvas: tk.Canvas,
+    search_button: tk.Button,
+    test_results: dict,
+    test_labels: dict,
+    root: tk.Tk,
+    assigned_by: Optional[str] = None,
+    on_complete=None,
+) -> None:
+    log_event(f"Starting trade job search: {job_reference}")
+
+    def run_search():
+        conn = None
+        try:
+            conn = get_db_connection(show_errors=False)
+            if not conn:
+                root.after(
+                    0,
+                    lambda: messagebox.showerror(
+                        "Database Error",
+                        "The app started, but the database is unavailable. Please try again when the connection is back.",
+                    ),
+                )
+                return
+
+            cursor = conn.cursor()
+            identity = resolve_trade_job_by_reference(cursor, job_reference)
+            if not identity:
+                matches = search_trade_jobs(cursor, job_reference)
+                if not matches:
+                    root.after(
+                        0,
+                        lambda: messagebox.showerror(
+                            "Trade Job Not Found",
+                            f"No trade job matching '{job_reference}' was found.",
+                        ),
+                    )
+                    return
+                selected_match = prompt_for_trade_job_selection(root, matches)
+                if not selected_match:
+                    root.after(
+                        0,
+                        lambda: messagebox.showinfo(
+                            "Selection Cancelled",
+                            "No trade job was selected. Please search again when you are ready to continue.",
+                        ),
+                    )
+                    return
+                identity = (selected_match["id"], selected_match["reference"])
+
+            job_id, canonical_reference = identity
+            candidates = load_trade_product_candidates(cursor, job_id)
+            if not candidates:
+                root.after(
+                    0,
+                    lambda: messagebox.showerror(
+                        "Trade Job Missing Products",
+                        f"Trade job '{canonical_reference}' does not have any product rows recorded.",
+                    ),
+                )
+                return
+
+            selected_label = prompt_for_sku_selection(
+                root,
+                [candidate["label"] for candidate in candidates],
+                title="Select Product",
+                message=(
+                    f"Multiple products were found for trade job '{canonical_reference}'.\n"
+                    "Select the product you want to process:"
+                ),
+            )
+            if not selected_label:
+                root.after(
+                    0,
+                    lambda: messagebox.showinfo(
+                        "Selection Cancelled",
+                        "No product was selected. Please search again when you are ready to continue.",
+                    ),
+                )
+                return
+            selected_candidate = next(
+                candidate for candidate in candidates if candidate["label"] == selected_label
+            )
+
+            laptop_specs = load_laptop_specs()
+            serial_number = laptop_specs.get("Serial Number", "Unknown")
+            test_results.update(load_trade_test_results(cursor, canonical_reference, serial_number))
+            test_results["activation"] = "pass" if check_activation_status() else "fail"
+            mdm_status = check_mdm_lock_status()
+            details = selected_candidate["details"]
+            note_text = load_trade_job_note_for_job_id(cursor, job_id)
+            notes_callback = getattr(root, "_update_order_notes_footer", None)
+
+            footer_payload = None
+            footer_callback = getattr(root, "_update_results_footer", None)
+            if callable(footer_callback):
+                try:
+                    footer_payload = build_results_footer(laptop_specs, details, mdm_status)
+                except Exception as exc:
+                    log_event(f"Trade footer preparation failed: {exc}")
+
+            root.after(
+                0,
+                lambda: render_results(
+                    canvas,
+                    canonical_reference,
+                    selected_label,
+                    serial_number,
+                    laptop_specs,
+                    details,
+                    test_results,
+                    mdm_status,
+                    assigned_by,
+                    True,
+                    note_text,
+                    root,
+                    mode="trade",
+                    trade_job_id=job_id,
+                ),
+            )
+            if footer_payload and callable(footer_callback):
+                root.after(0, lambda payload=footer_payload: footer_callback(*payload))
+            if callable(notes_callback):
+                root.after(
+                    0,
+                    lambda t=note_text, jid=job_id, ref=canonical_reference: notes_callback(t, jid, ref),
+                )
+            start_hash_capture_status_update(root, serial_number, "trade search")
+
+        except Exception as err:
+            log_event(f"Unhandled exception in trade search logic for {job_reference}:\n{traceback.format_exc()}")
+            msg = f"{err}"
+            root.after(0, lambda: messagebox.showerror("Unexpected Error", msg))
+        finally:
+            if conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+            root.after(0, lambda: search_button.config(state="normal"))
+            if on_complete is not None:
+                root.after(0, on_complete)
+
+    threading.Thread(target=run_search, daemon=True).start()
+
+
 def assign_serial_logic(
     order_number: str,
     serial_number: str,
@@ -1345,6 +1744,250 @@ def assign_serial_logic(
         if conn:
             conn.rollback()
         messagebox.showerror("Error", f"Failed to assign serial: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+
+def assign_trade_serial_logic(
+    job_id: Optional[int],
+    job_reference: str,
+    serial_number: str,
+    specs: dict,
+    test_results: dict,
+    product_label: str,
+    expected_details: dict,
+    mdm_status: Optional[Dict[str, str]],
+    assigned_by: Optional[str],
+    root: tk.Tk,
+) -> None:
+    conn = None
+    try:
+        if not job_id or not job_reference or not serial_number or serial_number == "Unknown":
+            messagebox.showerror("Input Error", "Trade job reference and serial number must be provided.")
+            return
+
+        test_keys = ["keyboard", "speaker", "microphone", "display", "webcam", "usb", "wifi"]
+        incomplete = [
+            key.replace("_", " ").title()
+            for key in test_keys
+            if normalise_test_result(test_results.get(key)) == "n/a"
+        ]
+        mdm_locked = mdm_status and mdm_status.get("state") == "locked"
+
+        warning_lines = []
+        if incomplete:
+            warning_lines.append(f"The following tests are incomplete: {', '.join(incomplete)}.")
+        if mdm_locked:
+            mdm_details = mdm_status.get("details") if mdm_status else ""
+            detail_text = f" {mdm_details}" if mdm_details else ""
+            warning_lines.append(f"Microsoft MDM lock detected.{detail_text}")
+
+        conn = get_db_connection()
+        if not conn:
+            messagebox.showerror("Database Error", "Could not connect to the database.")
+            return
+
+        cursor = conn.cursor()
+        try:
+            mismatch_text, _, _, _, _ = build_results_footer(specs, expected_details or {}, mdm_status)
+            if mismatch_text != "All listed specs match.":
+                warning_lines.append("Spec mismatches were detected (items marked REVIEW in the results table).")
+        except Exception as exc:
+            log_event(f"Unable to prepare trade spec mismatch warning during assignment: {exc}")
+
+        if warning_lines:
+            warn_message = (
+                "There are outstanding issues before assigning this serial:\n"
+                + "\n".join(warning_lines)
+                + "\n\nPress OK to continue or Cancel to abort."
+            )
+            if not messagebox.askokcancel("Confirm Trade Assignment", warn_message):
+                return
+
+        identity = resolve_trade_job_by_reference(cursor, job_reference)
+        if not identity:
+            messagebox.showerror("Trade Job Not Found", f"Trade job '{job_reference}' could not be found.")
+            return
+        job_id, canonical_reference = identity
+
+        cursor.execute(
+            "SELECT order_number FROM order_serials WHERE serial_number = %s",
+            (serial_number,),
+        )
+        order_conflicts = [_decode_db_value(row[0]) for row in cursor.fetchall()]
+        cursor.execute(
+            "SELECT id, job_reference FROM job_serials WHERE serial_number = %s",
+            (serial_number,),
+        )
+        trade_conflicts = [(int(row[0]), _decode_db_value(row[1])) for row in cursor.fetchall()]
+
+        conflict_labels = []
+        conflict_labels.extend(f"order {value}" for value in order_conflicts if value)
+        conflict_labels.extend(
+            f"trade job {value}" for _serial_id, value in trade_conflicts if value and value != canonical_reference
+        )
+        if conflict_labels:
+            confirm = messagebox.askyesno(
+                "Reassign Serial",
+                (
+                    f"Serial '{serial_number}' is already assigned to {', '.join(conflict_labels)}.\n"
+                    f"Do you want to reassign it to trade job '{canonical_reference}'?"
+                ),
+            )
+            if not confirm:
+                return
+
+        normalized_tests = {
+            "keyboard": normalise_test_result(test_results.get("keyboard")),
+            "speaker": normalise_test_result(test_results.get("speaker")),
+            "microphone": normalise_test_result(test_results.get("microphone")),
+            "display": normalise_test_result(test_results.get("display")),
+            "webcam": normalise_test_result(test_results.get("webcam")),
+            "usb": normalise_test_result(test_results.get("usb")),
+            "wifi": normalise_test_result(test_results.get("wifi")),
+            "activation": normalise_test_result(test_results.get("activation")),
+        }
+        mdm_state = mdm_status.get("state") if mdm_status else None
+        mdm_details = mdm_status.get("details") if mdm_status else None
+        checked_at = datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
+
+        hash_csv_path = capture_autopilot_hash_csv(preferred_serial=serial_number)
+        battery_report = get_latest_batteryinfoview_report()
+        if not battery_report:
+            try:
+                battery_report = capture_batteryinfoview_report()
+            except Exception as exc:
+                log_event(f"BatteryInfoView report capture failed during trade assignment: {exc}")
+
+        report_ok, report_response = upload_trade_job_check_report(
+            job_reference=canonical_reference,
+            serial_number=serial_number,
+            product_label=product_label,
+            specs=specs,
+            test_results=normalized_tests,
+            mdm_status=mdm_status,
+            assigned_by=assigned_by,
+            hash_csv_path=hash_csv_path,
+            battery_report=battery_report,
+            checked_at=checked_at,
+        )
+        if (
+            not report_ok
+            and isinstance(report_response, dict)
+            and report_response.get("error") == "Stock unit not found"
+        ):
+            create_stock = messagebox.askyesno(
+                "Stock Entry Not Found",
+                (
+                    f"Serial '{serial_number}' was not found in the Stock List.\n\n"
+                    "Would you like to create a new Web-Tools stock entry for this laptop "
+                    "and continue assigning it to the trade job?"
+                ),
+            )
+            if create_stock:
+                report_ok, report_response = upload_trade_job_check_report(
+                    job_reference=canonical_reference,
+                    serial_number=serial_number,
+                    product_label=product_label,
+                    specs=specs,
+                    test_results=normalized_tests,
+                    mdm_status=mdm_status,
+                    assigned_by=assigned_by,
+                    hash_csv_path=hash_csv_path,
+                    battery_report=battery_report,
+                    checked_at=checked_at,
+                    create_stock_unit=True,
+                )
+            else:
+                messagebox.showinfo(
+                    "Assignment Cancelled",
+                    f"Serial '{serial_number}' was not assigned because no stock entry was created.",
+                )
+                return
+
+        if order_conflicts:
+            cursor.execute("DELETE FROM order_serials WHERE serial_number = %s", (serial_number,))
+
+        hash_filename, hash_file_data = _read_optional_hash_file(hash_csv_path)
+
+        cursor.execute(
+            """
+                INSERT INTO job_serials (
+                    job_id, job_reference, serial_number, cpu, ram, ssd, model, resolution, windows, battery,
+                    test_keyboard, test_speaker, test_microphone, test_display, test_webcam, test_usb, activation,
+                    mdm_state, mdm_details, hash_filename, hash_file_data, hash_uploaded_at, assigned_by, assigned_at
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), %s, NOW()
+                )
+                ON DUPLICATE KEY UPDATE
+                    job_id = VALUES(job_id),
+                    job_reference = VALUES(job_reference),
+                    cpu = VALUES(cpu),
+                    ram = VALUES(ram),
+                    ssd = VALUES(ssd),
+                    model = VALUES(model),
+                    resolution = VALUES(resolution),
+                    windows = VALUES(windows),
+                    battery = VALUES(battery),
+                    test_keyboard = VALUES(test_keyboard),
+                    test_speaker = VALUES(test_speaker),
+                    test_microphone = VALUES(test_microphone),
+                    test_display = VALUES(test_display),
+                    test_webcam = VALUES(test_webcam),
+                    test_usb = VALUES(test_usb),
+                    activation = VALUES(activation),
+                    hash_filename = IF(VALUES(hash_file_data) <> '', VALUES(hash_filename), hash_filename),
+                    hash_file_data = IF(VALUES(hash_file_data) <> '', VALUES(hash_file_data), hash_file_data),
+                    hash_uploaded_at = IF(VALUES(hash_file_data) <> '', VALUES(hash_uploaded_at), hash_uploaded_at),
+                    assigned_by = VALUES(assigned_by),
+                    assigned_at = NOW()
+            """,
+            (
+                job_id,
+                canonical_reference,
+                serial_number,
+                specs.get("CPU", ""),
+                specs.get("RAM", ""),
+                specs.get("SSD", ""),
+                specs.get("Model", ""),
+                specs.get("Resolution", ""),
+                specs.get("Windows", ""),
+                specs.get("Battery", ""),
+                normalized_tests["keyboard"],
+                normalized_tests["speaker"],
+                normalized_tests["microphone"],
+                normalized_tests["display"],
+                normalized_tests["webcam"],
+                normalized_tests["usb"],
+                normalized_tests["activation"],
+                mdm_state,
+                mdm_details,
+                hash_filename,
+                hash_file_data,
+                assigned_by,
+            ),
+        )
+        conn.commit()
+
+        cursor.execute("SELECT COUNT(*) FROM job_serials WHERE job_id = %s", (job_id,))
+        assigned_count = int(cursor.fetchone()[0] or 0)
+
+        user_text = f" by '{assigned_by}'" if assigned_by else ""
+        report_status_text = "OK" if report_ok else f"Failed ({report_response.get('error') if isinstance(report_response, dict) else 'unknown'})"
+        hash_status_text = "OK" if hash_csv_path else "Not collected"
+        show_assign_success_dialog(
+            root,
+            f"Serial '{serial_number}' assigned to trade job '{canonical_reference}'{user_text}."
+            f"\nAssigned Serials: {assigned_count}"
+            f"\nStock Report Upload: {report_status_text}"
+            f"\nHash Upload: {hash_status_text}",
+        )
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        messagebox.showerror("Error", f"Failed to assign trade serial: {e}")
     finally:
         if conn:
             conn.close()

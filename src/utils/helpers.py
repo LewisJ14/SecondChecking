@@ -11,7 +11,7 @@ import urllib.request
 import wmi
 import zipfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 import requests
 
 SYSROOT = Path(os.environ.get("WINDIR", r"C:\Windows"))
@@ -492,6 +492,119 @@ def _load_webtools_api_config():
         or config_api_key
     )
     return base_url.rstrip("/"), api_key
+
+
+def load_app_mode() -> str:
+    try:
+        config = load_config()
+        mode = config.get("app", "mode", fallback="order").strip().lower()
+    except Exception as exc:
+        log_event(f"App mode read warning: {exc}")
+        return "order"
+    return "trade" if mode == "trade" else "order"
+
+
+def save_app_mode(mode: str) -> None:
+    selected = "trade" if str(mode or "").strip().lower() == "trade" else "order"
+    config = configparser.ConfigParser()
+    path = get_config_path()
+    try:
+        config.read(path)
+        if not config.has_section("app"):
+            config.add_section("app")
+        config.set("app", "mode", selected)
+        with open(path, "w", encoding="utf-8") as handle:
+            config.write(handle)
+        log_event(f"Saved app mode: {selected}")
+    except Exception as exc:
+        log_event(f"App mode save warning: {exc}")
+
+
+def _read_optional_text_file(path: Optional[str]) -> Tuple[str, str]:
+    if not path:
+        return "", ""
+    if not os.path.exists(path):
+        log_event(f"Optional upload file not found: {path}")
+        return "", ""
+    try:
+        with open(path, "r", encoding="utf-8-sig") as handle:
+            return os.path.basename(path), handle.read()
+    except UnicodeDecodeError:
+        with open(path, "r", encoding="utf-8", errors="ignore") as handle:
+            return os.path.basename(path), handle.read()
+    except OSError as exc:
+        log_event(f"Optional upload file read failed: {exc}")
+        return "", ""
+
+
+def upload_trade_job_check_report(
+    *,
+    job_reference,
+    serial_number,
+    product_label,
+    specs,
+    test_results,
+    mdm_status=None,
+    assigned_by=None,
+    hash_csv_path=None,
+    battery_report=None,
+    checked_at=None,
+    create_stock_unit=False,
+):
+    serial_text = str(serial_number or "").strip()
+    if not serial_text or serial_text == "Unknown":
+        log_event("Trade report upload skipped: missing serial number.")
+        return False, {"error": "missing serial number"}
+
+    base_url, api_key = _load_webtools_api_config()
+    if not api_key or api_key == "<SECRET>":
+        log_event("Trade report upload skipped: X-Second-Check-Key is not configured.")
+        return False, {"error": "missing API key"}
+
+    utc_stamp = checked_at or datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
+    hash_filename, hash_text = _read_optional_text_file(hash_csv_path)
+    payload = {
+        "job_reference": job_reference,
+        "serial_number": serial_text,
+        "product_label": product_label,
+        "specs": specs or {},
+        "test_results": test_results or {},
+        "mdm": mdm_status or {},
+        "activation": (test_results or {}).get("activation"),
+        "assigned_by": assigned_by,
+        "checked_at": utc_stamp,
+        "hash_uploaded_at": utc_stamp,
+        "hash_filename": hash_filename,
+        "hash_file_data": hash_text,
+        "battery_report": battery_report or {},
+        "create_stock_unit": bool(create_stock_unit),
+    }
+
+    url = f"{base_url}/jobs/api/second-check/trade-report"
+    headers = {
+        "X-Second-Check-Key": api_key,
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
+    try:
+        response = requests.post(url, headers=headers, json=payload, timeout=30)
+    except requests.RequestException as exc:
+        log_event(f"Trade report upload failed serial={serial_text} network_error={exc}")
+        return False, {"error": str(exc)}
+
+    try:
+        body = response.json()
+    except ValueError:
+        body = {"error": (response.text or "").strip()}
+
+    if response.status_code == 200 and body.get("success"):
+        log_event(f"Trade report upload success serial={serial_text}")
+        return True, body
+
+    log_event(
+        f"Trade report upload failed serial={serial_text} status={response.status_code} payload={body}"
+    )
+    return False, body
 
 
 def upload_stock_unit_check_report(

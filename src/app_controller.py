@@ -18,7 +18,9 @@ from main_logic import (
     load_laptop_specs,
     render_results,
     save_order_note_for_order_id,
+    save_trade_job_note_for_job_id,
     search_order_logic,
+    search_trade_job_logic,
 )
 from utils.specs import reset_specs_cache
 from ui.tests import TestsWindow
@@ -27,7 +29,9 @@ from utils.helpers import (
     check_mdm_lock_status,
     get_live_battery_percent,
     is_battery_charging,
+    load_app_mode,
     log_event,
+    save_app_mode,
 )
 from utils.ui_scaling import get_work_area
 
@@ -46,6 +50,8 @@ class AppController:
         self._showing_default_specs = True
         self.current_order_note_order_id: Optional[int] = None
         self.current_order_note_order_number: Optional[str] = None
+        self.current_note_mode = "order"
+        self.current_mode = load_app_mode()
 
         width, height, x, y = self._compute_geometry()
         self.root.geometry(f"{width}x{height}+{x}+{y}")
@@ -105,13 +111,26 @@ class AppController:
         self.order_entry.grid(row=0, column=1, padx=(0, 5), pady=0, ipady=4, sticky="ew")
         self.order_entry.bind("<Return>", lambda event: self.run_search())
 
+        self.mode_var = tk.StringVar(value="Trade" if self.current_mode == "trade" else "Order")
+        self.mode_selector = ttk.Combobox(
+            header_frame,
+            width=8,
+            textvariable=self.mode_var,
+            values=("Order", "Trade"),
+            state="readonly",
+            font=("Segoe UI", 10),
+        )
+        self.mode_selector.grid(row=0, column=2, padx=(0, 5), pady=0, ipady=3, sticky="w")
+        self.mode_selector.bind("<<ComboboxSelected>>", self._on_mode_changed)
+
         self.search_button = ttk.Button(
             header_frame,
             text="Search",
             command=self.run_search,
             style="success.TButton",
         )
-        self.search_button.grid(row=0, column=2, padx=(0, 0), pady=0, ipady=4, sticky="w")
+        self.search_button.grid(row=0, column=3, padx=(0, 0), pady=0, ipady=4, sticky="w")
+        self._apply_mode_label()
 
         self.version_label = ttk.Label(
             header_frame,
@@ -119,12 +138,13 @@ class AppController:
             font=("Segoe UI", 9),
             foreground="#555",
         )
-        self.version_label.grid(row=0, column=3, padx=(10, 0), pady=0, sticky="e")
+        self.version_label.grid(row=0, column=4, padx=(10, 0), pady=0, sticky="e")
 
         header_frame.grid_columnconfigure(0, weight=0)
         header_frame.grid_columnconfigure(1, weight=1)
         header_frame.grid_columnconfigure(2, weight=0)
         header_frame.grid_columnconfigure(3, weight=0)
+        header_frame.grid_columnconfigure(4, weight=0)
 
         self.canvas_frame = tk.Frame(self.root, bg=primary_bg)
         self.canvas_frame.pack(expand=True, fill="both", padx=10, pady=10)
@@ -373,7 +393,8 @@ class AppController:
         self.current_order_note_order_id = order_id
         self.current_order_note_order_number = order_number
         self.order_notes_edit_button.configure(state="normal" if order_id else "disabled")
-        notes_value = (text or "").strip() or "No notes attached to this order."
+        item_label = "trade job" if self.current_note_mode == "trade" else "order"
+        notes_value = (text or "").strip() or f"No notes attached to this {item_label}."
         self.order_notes_footer.configure(state="normal")
         self.order_notes_footer.delete("1.0", "end")
         self.order_notes_footer.insert("1.0", notes_value)
@@ -382,15 +403,16 @@ class AppController:
     def _edit_order_notes(self) -> None:
         order_id = self.current_order_note_order_id
         if not order_id:
-            messagebox.showwarning("Order Notes", "Search for an order before editing notes.")
+            item_label = "trade job" if self.current_note_mode == "trade" else "order"
+            messagebox.showwarning("Notes", f"Search for a {item_label} before editing notes.")
             return
 
         current_text = self.order_notes_footer.get("1.0", "end").strip()
-        if current_text == "No notes attached to this order.":
+        if current_text.startswith("No notes attached to this "):
             current_text = ""
 
         dialog = tk.Toplevel(self.root)
-        dialog.title("Edit Order Notes")
+        dialog.title("Edit Trade Job Notes" if self.current_note_mode == "trade" else "Edit Order Notes")
         dialog.transient(self.root)
         dialog.grab_set()
         dialog.configure(bg="#f4f6fa")
@@ -399,9 +421,9 @@ class AppController:
         body = tk.Frame(dialog, bg="#ffffff", padx=14, pady=14)
         body.pack(fill="both", expand=True, padx=12, pady=12)
 
-        title = "Order Notes"
+        title = "Trade Job Notes" if self.current_note_mode == "trade" else "Order Notes"
         if self.current_order_note_order_number:
-            title = f"Order Notes - {self.current_order_note_order_number}"
+            title = f"{title} - {self.current_order_note_order_number}"
         tk.Label(
             body,
             text=title,
@@ -436,10 +458,13 @@ class AppController:
         def save_notes() -> None:
             new_text = editor.get("1.0", "end").strip()
             try:
-                save_order_note_for_order_id(order_id, new_text)
+                if self.current_note_mode == "trade":
+                    save_trade_job_note_for_job_id(order_id, new_text)
+                else:
+                    save_order_note_for_order_id(order_id, new_text)
             except Exception as exc:
-                log_event(f"Failed to save order notes for order id {order_id}: {exc}")
-                messagebox.showerror("Order Notes", f"Failed to save order notes:\n{exc}")
+                log_event(f"Failed to save notes for {self.current_note_mode} id {order_id}: {exc}")
+                messagebox.showerror("Notes", f"Failed to save notes:\n{exc}")
                 return
 
             self._update_order_notes_footer(
@@ -548,17 +573,34 @@ class AppController:
             font=("Segoe UI", 10, "bold"),
         )
 
+    def _on_mode_changed(self, event=None):
+        selected = self.mode_var.get().strip().lower()
+        self.current_mode = "trade" if selected == "trade" else "order"
+        self.current_note_mode = self.current_mode
+        save_app_mode(self.current_mode)
+        self._apply_mode_label()
+        self._update_order_notes_footer("")
+        log_event(f"User switched search mode to {self.current_mode}.")
+
+    def _apply_mode_label(self):
+        if hasattr(self, "search_button"):
+            label = "Trade Ref" if self.current_mode == "trade" else "Order"
+            self.search_button.configure(text=f"Search {label}")
+
     def run_search(self):
         order_id = self.order_entry.get().strip()
-        log_event(f"User initiated search for order ID: {order_id}")
+        active_mode = "trade" if self.current_mode == "trade" else "order"
+        reference_label = "trade job reference" if active_mode == "trade" else "order number"
+        log_event(f"User initiated {active_mode} search for reference: {order_id}")
         if not order_id or not re.match(r"^[A-Za-z0-9\-]{3,32}$", order_id):
             log_event(f"Invalid order ID entered: {order_id}")
-            messagebox.showerror("Invalid Order ID", "Please enter a valid order number (alphanumeric, 3-32 characters).")
+            messagebox.showerror("Invalid Reference", f"Please enter a valid {reference_label} (alphanumeric, 3-32 characters).")
             log_event(f"User entered invalid order ID: '{order_id}'")
             return
 
-        log_event(f"User initiated search for order: {order_id}")
+        log_event(f"User initiated search for {active_mode}: {order_id}")
         self._showing_default_specs = False
+        self.current_note_mode = active_mode
         self._update_hash_capture_status("", "#475467")
         self._update_order_notes_footer("")
 
@@ -581,7 +623,8 @@ class AppController:
             self.test_panel_button.config(state="normal")
             self.search_button.config(state="normal")
 
-        search_order_logic(
+        search_logic = search_trade_job_logic if active_mode == "trade" else search_order_logic
+        search_logic(
             order_id,
             self.canvas,
             self.search_button,

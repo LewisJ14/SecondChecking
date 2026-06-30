@@ -106,6 +106,20 @@ def parse_cpu_family_and_model(cpu_name):
     # Fallback: just return the first 2 words
     return cpu_name
 
+
+def format_windows_caption(os_info) -> str:
+    caption = str(getattr(os_info, "Caption", "") or "").strip()
+    caption = re.sub(r"^Microsoft\s+", "", caption, flags=re.IGNORECASE)
+    caption = re.sub(r"\s+", " ", caption).strip()
+    if caption:
+        return caption
+
+    try:
+        build_number = int(os_info.BuildNumber)
+    except (TypeError, ValueError):
+        return "Unknown"
+    return "Windows 11" if build_number >= 22000 else "Windows 10"
+
 _laptop_specs_cache = None
 _latest_batteryinfoview_report = None
 
@@ -167,8 +181,7 @@ def get_laptop_specs(force_refresh=False):
                 break
 
         os_info = c.Win32_OperatingSystem()[0]
-        build_number = int(os_info.BuildNumber)
-        specs["Windows"] = "Windows 11" if build_number >= 22000 else "Windows 10"
+        specs["Windows"] = format_windows_caption(os_info)
         log_event(f"Detected Windows Version: {specs['Windows']}")
 
         system_info = c.Win32_ComputerSystem()[0]
