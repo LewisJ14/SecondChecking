@@ -21,6 +21,8 @@ HARDCODED_SECOND_CHECK_KEY = "n_wHG3XvhznRp-bXm6tpN4OO_E4mnwu11XxkbVEStMv7W5fpjl
 
 _SKU_TAG_METADATA: Optional[List[Dict[str, Any]]] = None
 _DROPDOWN_OPTION_CACHE: Optional[Dict[int, Dict[str, str]]] = None
+_ADMIN_SKU_RULES: Optional[List[Dict[str, Any]]] = None
+_ADMIN_SKU_RULES_LOADED_AT = 0.0
 _CPU_KEYWORD_TOKENS: Optional[Set[str]] = None
 _NORMALIZE_PATTERN = re.compile(r"[^A-Z0-9]+")
 _STORAGE_PATTERN = re.compile(r"(\d+(?:\.\d+)?)\s*(TB|GB)\b", re.IGNORECASE)
@@ -1044,6 +1046,69 @@ def _category_to_spec_field(category: Optional[str]) -> Optional[str]:
     return _CATEGORY_TO_SPEC_FIELD.get(category.lower())
 
 
+def _load_admin_sku_rules(cursor) -> List[Dict[str, Any]]:
+    global _ADMIN_SKU_RULES, _ADMIN_SKU_RULES_LOADED_AT
+    if (
+        _ADMIN_SKU_RULES is not None
+        and time.monotonic() - _ADMIN_SKU_RULES_LOADED_AT < 30
+    ):
+        return _ADMIN_SKU_RULES
+
+    rules: List[Dict[str, Any]] = []
+    try:
+        cursor.execute(
+            """
+            SELECT id, category, sku_tag, detected_value, priority
+            FROM sku_detection_rule
+            WHERE enabled = 1
+            """
+        )
+        for rule_id, category, sku_tag, detected_value, priority in cursor.fetchall():
+            category_text = _normalize_string(category).lower()
+            normalized_tag = _normalize_token(_normalize_string(sku_tag))
+            detected_text = _normalize_string(detected_value)
+            field = _category_to_spec_field(category_text)
+            if not field or not normalized_tag or not detected_text:
+                continue
+            rules.append(
+                {
+                    "id": int(rule_id),
+                    "field": field,
+                    "normalized_tag": normalized_tag,
+                    "detected_value": detected_text,
+                    "priority": int(priority or 100),
+                }
+            )
+    except Exception as exc:
+        # Older Astro databases do not have this table yet.
+        log_event(f"Administrator SKU rules unavailable; using legacy mappings: {exc}")
+        rules = []
+
+    rules.sort(
+        key=lambda item: (
+            item["priority"],
+            -len(item["normalized_tag"]),
+            item["id"],
+        )
+    )
+    _ADMIN_SKU_RULES = rules
+    _ADMIN_SKU_RULES_LOADED_AT = time.monotonic()
+    return _ADMIN_SKU_RULES
+
+
+def _extract_details_from_admin_rules(cursor, sku) -> Dict[str, str]:
+    normalized_sku = _normalize_token(sku)
+    if not normalized_sku:
+        return {}
+    matched: Dict[str, str] = {}
+    for rule in _load_admin_sku_rules(cursor):
+        if rule["normalized_tag"] in normalized_sku and rule["field"] not in matched:
+            matched[rule["field"]] = rule["detected_value"]
+    if "Battery" in matched:
+        matched["Battery 2"] = matched["Battery"]
+    return matched
+
+
 def _extract_details_from_dropdown(cursor, sku) -> Optional[Dict[str, str]]:
     metadata = _load_sku_tag_metadata(cursor)
     if not metadata:
@@ -1153,18 +1218,27 @@ def extract_details_from_sku(cursor, sku):
     otherwise fall back to the legacy keyword parsing.
     """
     fallback = _extract_details_from_sku_keywords(sku)
+    admin_details = _extract_details_from_admin_rules(cursor, sku)
     dropdown_details = None
     try:
         dropdown_details = _extract_details_from_dropdown(cursor, sku)
     except Exception as exc:  # pragma: no cover - defensive safety
         log_event(f"SKU dropdown extraction failed: {exc}")
-    if not dropdown_details:
+    if not admin_details and not dropdown_details:
         return fallback
 
     combined = {}
     for field, value in fallback.items():
-        combined[field] = dropdown_details.get(field) or value
-    combined["Battery 2"] = dropdown_details.get("Battery 2") or fallback.get("Battery 2")
+        combined[field] = (
+            admin_details.get(field)
+            or (dropdown_details or {}).get(field)
+            or value
+        )
+    combined["Battery 2"] = (
+        admin_details.get("Battery 2")
+        or (dropdown_details or {}).get("Battery 2")
+        or fallback.get("Battery 2")
+    )
     return combined
 
 _wmi_instance = None  # Cache WMI instance
