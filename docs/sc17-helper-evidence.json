@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-22",
+  "scope": "SC17 windowed one-file fixture probe; not a released main executable or VM/physical acceptance",
+  "python": "3.12.0",
+  "pyinstaller": "6.3.0",
+  "artifact": "sc17-helper-probe.exe",
+  "sha256": "b9c59dbdbbcba6481c01730b22e64dbb78a7a33e36aed6a1252f0e8bcbeda47d",
+  "windows_pe_subsystem": 2,
+  "windowed": true,
+  "fixtures_only": true,
+  "host_maintenance_executed": false,
+  "source_tests_passed": 163,
+  "python_files_compiled": 99,
+  "probe_results": {
+    "windowed": true,
+    "asset_present": true,
+    "up_to_date": true,
+    "available": true,
+    "mdm": true,
+    "windows-update": true,
+    "error_diagnostic": "HelperError: Helper operation failed; no result was confirmed.",
+    "error": true,
+    "missing_diagnostic": "RuntimeError: Hardware worker exited without a result.",
+    "missing": true,
+    "malformed_diagnostic": "JSONDecodeError: Expecting value: line 1 column 1 (char 0)",
+    "malformed": true,
+    "mismatch_diagnostic": "HelperError: Helper result is missing, unsupported or mismatched.",
+    "mismatch": true,
+    "hang_diagnostic": "TimeoutError: Hardware operation timed out.",
+    "hang": true,
+    "all_passed": true
+  },
+  "source_sha256": {
+    "main.spec": "cef5458979650284986586acd90cfc440a3091876e368ce2d5fb1b0f91e55e9d",
+    "src/main.py": "0bb65062fe2aca10819e21ded174bc3c23e4c2e05f1c28a6e478fa2aceb9818c",
+    "src/services/app_helper.py": "38ce93e852e5eac7d11f215f0b39e74f0871b1e34b2e9ac4bd02cca3863b5b28",
+    "src/services/hardware_job.py": "0da05a93fae713dc27dc6c2484f57a3fc6bb274e23683b4eb5a188f3ba65ec04",
+    "src/services/maintenance.py": "59a86252fdbf629c0a96514ddecec6b9799704cdcade8a156ccb18e3ec3c56c6",
+    "src/Script.ps1": "0045bff2d3d2a801fdcbf5bac99e4a995c710196e6f42c5f726b672748aa11e2",
+    "src/app_controller.py": "7ecf1f686128784740db19f0bd318855d1b9cf785ba49712d7288bcb416e0430",
+    "src/update_service.py": "0c6f0734e3e4b0e35cea63f230d43ce62b3ba8eea8d875cff894ca039f7575e8",
+    "tests/test_app_helpers.py": "1a66a5da637130a8ab104d0b4952507915b7d2cddd715ed94c623d68366f44aa",
+    "tests/frozen_app_helper_probe.py": "508242f85bb0ed04e95d0a65c34d21bbb8cb8983de05e50d8457adb4fc760a5d"
+  },
+  "pending": [
+    "Exact main release executable",
+    "Clean VM",
+    "Physical MDM/Windows Update/UAC",
+    "Paired server deployment"
+  ]
+}

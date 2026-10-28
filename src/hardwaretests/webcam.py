@@ -1,185 +1,222 @@
-# hardware_tests/webcam.py
+"""Camera discovery and reads run in an isolated, cancellable worker."""
+
+import io
+import time
 import tkinter as tk
+from tkinter import ttk
+
 from PIL import Image, ImageTk
-import cv2
-import threading
-from utils.helpers import log_event
-from utils.ui_scaling import center_window, center_window_to_content
 
-def run_webcam_test(root, test_results, test_labels, tests_window=None, completion_event=None):
-    def finalize(result=None):
-        if result is not None:
-            test_results["webcam"] = result
-            if "webcam_label" in test_labels:
-                test_labels["webcam_label"].config(text="✅" if result == "pass" else "❌")
-            if tests_window and hasattr(tests_window, "update_icon"):
-                tests_window.update_icon("webcam")
-        if completion_event and not completion_event.is_set():
-            completion_event.set()
+from services.hardware_job import HardwareJob
+from services.test_coverage import record_coverage
+from utils.ui_scaling import center_window, get_work_area
+from ui.scrolling import ScrollableFrame
+from services.runtime import log_diagnostic
 
-    # Create loading popup
-    loading_popup = tk.Toplevel(root)
-    loading_popup.title("Loading")
-    loading_popup.resizable(True, True)
-    loading_popup.attributes("-topmost", True)
-    loading_popup.configure(bg="#f4f6fa")
 
-    loading_card = tk.Frame(
-        loading_popup,
-        bg="#ffffff",
-        padx=14,
-        pady=12,
-        highlightbackground="#d7dde8",
-        highlightthickness=1,
-    )
-    loading_card.pack(fill="both", expand=True, padx=8, pady=8)
+class CameraTest:
+    def __init__(self, root, results, labels, tests_window, completion_event):
+        self.results, self.labels = results, labels
+        self.panel, self.done = tests_window, completion_event
+        self.closed, self.after_id, self.job = False, None, None
+        self.details = {'camera_index': None, 'frames_seen': 0}
+        self.last_frame = None
+        self._frame_image = None
+        self._preview_size = None
+        self.started_at = time.monotonic()
+        self.window = tk.Toplevel(root)
+        self.window.title('Webcam Test')
+        self.window.protocol('WM_DELETE_WINDOW', self.cancel)
+        self.window.bind('<Escape>', lambda event: self.cancel())
+        self.window.bind('<Destroy>', self.destroyed, add='+')
+        self.window.columnconfigure(0, weight=1)
+        self.window.rowconfigure(0, weight=1)
+        self.body = ScrollableFrame(self.window, height=260)
+        self.body.grid(row=0, column=0, sticky='nsew')
+        body = self.body.content
+        title_label = ttk.Label(body, text='Camera check', font=('Segoe UI', 16, 'bold'))
+        title_label.pack(anchor='w', padx=12, pady=(14, 8))
+        actions = ttk.Frame(self.window, padding=12)
+        actions.grid(row=1, column=0, sticky='ew')
+        self.status = tk.StringVar(value='Discovering camera — Cancel is available.')
+        status_label = ttk.Label(body, textvariable=self.status, wraplength=600)
+        status_label.pack(fill='x', padx=12, pady=10)
+        self.preview = ttk.Label(body)
+        self.preview.pack(padx=12, pady=6)
+        guidance = ttk.Label(body, text='Inspect a clear, moving image, focus and colours.',
+                  wraplength=600)
+        guidance.pack(fill='x', padx=12, pady=6)
+        self.preview_text = (title_label, status_label, guidance)
+        def fit_body(event):
+            for label in (status_label, guidance):
+                label.configure(wraplength=max(100, event.width - 32))
+        self.body.canvas.bind('<Configure>', fit_body, add='+')
+        self.pass_button = ttk.Button(actions, text='Pass — live image correct',
+                                      style='success.TButton',
+                                      command=lambda: self.finish('pass'),
+                                      state='disabled')
+        for column in range(2):
+            actions.columnconfigure(column, weight=1, uniform='camera_actions')
+        self.pass_button.grid(row=0, column=0, sticky='ew', padx=4, pady=3)
+        ttk.Button(actions, text='Retry camera', command=self.retry).grid(
+            row=0, column=1, sticky='ew', padx=4, pady=3)
+        for index, (text, state) in enumerate([('Fail — observed image problem', 'fail'),
+                            ('Unavailable', 'unavailable'),
+                            ('Record test error', 'error'),
+                            ('Cancel', 'cancelled')]):
+            ttk.Button(actions, text=text,
+                       style='danger.Outline.TButton' if state == 'fail' else 'secondary.Outline.TButton',
+                       command=lambda s=state: self.finish(s)).grid(
+                           row=1 + index // 2, column=index % 2,
+                           sticky='ew', padx=4, pady=3)
+        if self.panel and hasattr(self.panel, 'register_cancel'):
+            self.panel.register_cancel(self.cancel)
+        scale = float(root.tk.call('tk', 'scaling')) / (96 / 72)
+        center_window(self.window, round(820 * scale), round(680 * scale),
+                      min_width=640, min_height=300)
+        _, _, work_width, work_height = get_work_area(self.window)
+        self.window.minsize(min(640, work_width - 40),
+                            min(actions.winfo_reqheight() + 80, work_height - 40))
+        self.start()
 
-    loading_label = tk.Label(
-        loading_card,
-        text="Loading camera",
-        font=("Segoe UI", 11, "bold"),
-        bg="#ffffff",
-        fg="#101828",
-    )
-    loading_label.pack(expand=True)
-    center_window_to_content(loading_popup, min_width=240, min_height=100)
-
-    ellipsis_states = ["", ".", "..", "..."]
-    ellipsis_index = [0]
-
-    def animate_ellipsis():
-        if not loading_popup.winfo_exists():
+    def retry(self):
+        if self.closed:
             return
-        loading_label.config(text="Loading camera" + ellipsis_states[ellipsis_index[0]])
-        ellipsis_index[0] = (ellipsis_index[0] + 1) % len(ellipsis_states)
-        loading_popup.after(300, animate_ellipsis)
+        if self.after_id is not None:
+            self.window.after_cancel(self.after_id)
+            self.after_id = None
+        if self.job:
+            self.job.close()
+        self.details = {'camera_index': None, 'frames_seen': 0}
+        self.last_frame = None
+        self._frame_image = None
+        self._preview_size = None
+        self.pass_button.config(state='disabled')
+        self.preview.config(image='')
+        self.preview.image = None
+        self.status.set('Discovering camera — Cancel is available.')
+        self.start()
 
-    animate_ellipsis()
+    def start(self):
+        try:
+            log_diagnostic('camera.started', kind='camera', timeout_seconds=25)
+            self.job = HardwareJob('camera', timeout=25)
+            self.after_id = self.window.after(40, self.poll)
+        except Exception as exc:
+            log_diagnostic('camera.start_failed', error=exc, stage='launch')
+            self.show_error(str(exc))
 
-    def start_camera():
-        def detect_cameras():
-            available_cams = []
-            for i in range(10):  # Increased range to 10
-                cap = cv2.VideoCapture(i, cv2.CAP_DSHOW)
-                if cap is not None and cap.read()[0]:
-                    available_cams.append(i)
-                    cap.release()
-            return available_cams
+    def poll(self):
+        if self.after_id is not None:
+            self.window.after_cancel(self.after_id)
+        self.after_id = None
+        if self.closed:
+            return
+        try:
+            reply = self.job.poll()
+            if reply:
+                if reply['state'] != 'preview':
+                    self.show_error(reply.get('detail', 'Camera unavailable.'))
+                    if reply['state'] == 'unavailable':
+                        self.finish('unavailable')
+                    return
+                if time.time() - reply['heartbeat'] > 5:
+                    raise TimeoutError('Camera stopped returning fresh frames.')
+                if self.job.process.poll() is not None:
+                    raise RuntimeError('Camera worker stopped.')
+                frame = self.job.directory / 'frame.jpg'
+                if reply['frames_seen'] != self.last_frame:
+                    # Load bytes fully before the worker replaces the file.
+                    data = frame.read_bytes()
+                    with Image.open(io.BytesIO(data)) as image:
+                        self._frame_image = image.copy()
+                    self.last_frame = reply['frames_seen']
+                    if self.details['frames_seen'] == 0:
+                        log_diagnostic('camera.preview_ready', camera_index=reply['camera_index'],
+                                       frames_seen=reply['frames_seen'])
+                self._fit_preview()
+                self.details.update(camera_index=reply['camera_index'],
+                                    frames_seen=reply['frames_seen'])
+                self.details.pop('preview_error', None)
+                self.pass_button.config(state='normal')
+                self.status.set('Live camera — inspect before deciding.')
+            self.after_id = self.window.after(70, self.poll)
+        except Exception as exc:
+            log_diagnostic('camera.preview_failed', error=exc, stage='preview',
+                           frames_seen=self.details['frames_seen'])
+            self.show_error(str(exc))
 
-        def initialize_camera():
-            available_cams = detect_cameras()
-            if not available_cams:
-                root.after(
-                    0,
-                    lambda: [
-                        loading_popup.destroy(),
-                        tk.messagebox.showerror("Webcam Error", "No camera found."),
-                        finalize("fail"),
-                    ],
-                )
+    def _fit_preview(self):
+        if self._frame_image is None:
+            return
+        text_height = sum(label.winfo_reqheight() for label in self.preview_text)
+        width = max(80, self.body.canvas.winfo_width() - 32)
+        height = max(60, self.body.canvas.winfo_height() - text_height - 70)
+        source_width, source_height = self._frame_image.size
+        ratio = min(width / source_width, height / source_height)
+        size = (max(1, int(source_width * ratio)),
+                max(1, int(source_height * ratio)))
+        # New frames always redraw; unchanged frames only redraw after a resize.
+        if self._preview_size == (self.last_frame, size):
+            return
+        image = self._frame_image.resize(size, Image.Resampling.BILINEAR)
+        self.preview.image = ImageTk.PhotoImage(image, master=self.window)
+        self.preview.config(image=self.preview.image)
+        self._preview_size = (self.last_frame, size)
+
+    def show_error(self, detail):
+        log_diagnostic('camera.error', state='error',
+                       reason='Preview unavailable; retry or record an outcome',
+                       frames_seen=self.details['frames_seen'])
+        self.details['preview_error'] = detail[:1000]
+        self.pass_button.config(state='disabled')
+        self.status.set('Camera error. Retry, record Error, Unavailable or Cancel.')
+        if self.job:
+            self.job.close()
+
+    def finish(self, result):
+        if self.closed:
+            return
+        if result == 'pass':
+            # Recheck the worker heartbeat at the moment of confirmation.
+            self.poll()
+            if self.closed:
                 return
-
-            cap = cv2.VideoCapture(available_cams[0], cv2.CAP_DSHOW)
-            root.after(0, lambda: open_test_window(cap))
-
-        threading.Thread(target=initialize_camera, daemon=True).start()
-
-    def open_test_window(cap):
-        loading_popup.destroy()
-
-        window = tk.Toplevel(root)
-        window.title("Webcam Test")
-        center_window(window, 700, 560, min_width=420, min_height=360)
-
-        label = tk.Label(window)
-        label.pack()
-
-        def update_frame():
-            if not cap.isOpened():
+            if not self.details['frames_seen'] or self.details.get('preview_error'):
                 return
-            ret, frame = cap.read()
-            if ret:
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                img = ImageTk.PhotoImage(Image.fromarray(frame))
-                label.img = img
-                label.config(image=img)
-            if window.winfo_exists():
-                window.after(30, update_frame)
+        self.closed = True
+        log_diagnostic('camera.finished', result=result,
+                       camera_index=self.details['camera_index'],
+                       frames_seen=self.details['frames_seen'],
+                       elapsed_ms=round((time.monotonic() - self.started_at) * 1000))
+        if self.after_id is not None:
+            self.window.after_cancel(self.after_id)
+            self.after_id = None
+        if self.job:
+            self.job.close()
+        record_coverage(self.results, 'webcam',
+                        'Operator preview of first readable DirectShow camera '
+                        'in indices 0–9; other cameras untested.', self.details)
+        self.results['webcam'] = result
+        try:
+            if 'webcam_label' in self.labels:
+                self.labels['webcam_label'].config(text=result.upper())
+            if self.panel:
+                self.panel.update_icon('webcam')
+        finally:
+            if self.done:
+                self.done.set()
+            self.window.destroy()
 
-        update_frame()
+    def cancel(self):
+        self.finish('cancelled')
 
-        def on_close():
-            try:
-                if cap.isOpened():
-                    cap.release()
-            except Exception as e:
-                log_event(f"Error releasing camera: {e}")
-            window.destroy()
-            prompt_result()
+    def destroyed(self, event):
+        if event.widget == self.window and not self.closed:
+            self.cancel()
 
-        def prompt_result():
-            result_window = tk.Toplevel(root)
-            result_window.title("Webcam Test Result")
-            result_window.resizable(True, True)
-            result_window.configure(bg="#f4f6fa")
 
-            card = tk.Frame(
-                result_window,
-                bg="#ffffff",
-                padx=16,
-                pady=16,
-                highlightbackground="#d7dde8",
-                highlightthickness=1,
-            )
-            card.pack(fill="both", expand=True, padx=12, pady=12)
-
-            tk.Label(
-                card,
-                text="Webcam Test Complete",
-                font=("Segoe UI", 12, "bold"),
-                bg="#ffffff",
-                fg="#101828",
-            ).pack(pady=(0, 8))
-            tk.Label(
-                card,
-                text="Did the webcam test pass?",
-                font=("Segoe UI", 10),
-                bg="#ffffff",
-                fg="#475467",
-            ).pack()
-            frame = tk.Frame(card, bg="#ffffff")
-            frame.pack(fill="x", pady=(14, 0))
-            frame.grid_columnconfigure((0, 1, 2), weight=1, uniform="webcam_result")
-
-            def handle_response(result):
-                finalize(result)
-                result_window.destroy()
-
-            from ttkbootstrap import ttk
-            yes_button = ttk.Button(frame, text="Yes", style="success.TButton", command=lambda: handle_response("pass"))
-            yes_button.grid(row=0, column=0, sticky="ew", padx=(0, 5))
-            ttk.Button(
-                frame,
-                text="Retry",
-                style="info.TButton",
-                command=lambda: [
-                    result_window.destroy(),
-                    run_webcam_test(
-                        root,
-                        test_results,
-                        test_labels,
-                        tests_window,
-                        completion_event=completion_event,
-                    ),
-                ],
-            ).grid(row=0, column=1, sticky="ew", padx=5)
-            ttk.Button(frame, text="No", style="danger.TButton", command=lambda: handle_response("fail")).grid(row=0, column=2, sticky="ew", padx=(5, 0))
-
-            result_window.protocol("WM_DELETE_WINDOW", lambda: handle_response("fail"))
-            result_window.bind("<Return>", lambda event: handle_response("pass"))
-            center_window_to_content(result_window, min_width=380, min_height=190)
-            yes_button.focus_set()
-
-        window.protocol("WM_DELETE_WINDOW", on_close)
-
-    threading.Thread(target=start_camera, daemon=True).start()
+def run_webcam_test(root, test_results, test_labels, tests_window=None,
+                    completion_event=None):
+    return CameraTest(root, test_results, test_labels, tests_window,
+                      completion_event)

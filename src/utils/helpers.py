@@ -1,3 +1,4 @@
+from services.operator_session import headers as operator_session_headers
 import configparser
 import datetime
 import hashlib
@@ -13,11 +14,12 @@ import zipfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 import requests
+from services import transport
+from services import operator_session
 
 SYSROOT = Path(os.environ.get("WINDIR", r"C:\Windows"))
 DSREGCMD_PATH = SYSROOT / "System32" / "dsregcmd.exe"
 GPUPDATE_PATH = SYSROOT / "System32" / "gpupdate.exe"
-HARDCODED_SECOND_CHECK_KEY = "n_wHG3XvhznRp-bXm6tpN4OO_E4mnwu11XxkbVEStMv7W5fpjl1saGb8Ks7NWA-i"
 
 _SKU_TAG_METADATA: Optional[List[Dict[str, Any]]] = None
 _DROPDOWN_OPTION_CACHE: Optional[Dict[int, Dict[str, str]]] = None
@@ -373,26 +375,7 @@ def upload_hash_csv(
         log_event(f"Hash upload skipped: file not found ({file_path}).")
         return False
 
-    config_base_url = ""
-    config_api_key = ""
-    try:
-        config = load_config()
-        if config.has_section("webtools"):
-            config_base_url = config.get("webtools", "base_url", fallback="").strip()
-            config_api_key = config.get("webtools", "second_check_key", fallback="").strip()
-    except Exception as exc:
-        log_event(f"Hash upload config read warning: {exc}")
-
-    base_url = (
-        os.getenv("SECOND_CHECK_BASE_URL", "").strip()
-        or config_base_url
-        or "http://192.168.1.188:5001"
-    )
-    api_key = (
-        os.getenv("SECOND_CHECK_KEY", "").strip()
-        or HARDCODED_SECOND_CHECK_KEY
-        or config_api_key
-    )
+    base_url, api_key = _load_webtools_api_config()
     if not api_key or api_key == "<SECRET>":
         log_event("Hash upload skipped: X-Second-Check-Key is not configured.")
         return False
@@ -410,13 +393,15 @@ def upload_hash_csv(
         form_data["sku"] = sku_text
 
     headers = {"X-Second-Check-Key": api_key}
+    from services.operator_session import headers as session_headers
+    headers.update(session_headers(base_url))
     max_attempts = 4
     backoff_seconds = 1
 
     for attempt in range(1, max_attempts + 1):
         try:
             with open(file_path, "rb") as csv_handle:
-                response = requests.post(
+                response = transport.post(
                     url,
                     headers=headers,
                     data=form_data,
@@ -435,9 +420,6 @@ def upload_hash_csv(
             return False
 
         status = response.status_code
-        body = (response.text or "").strip().replace("\n", " ")
-        if len(body) > 200:
-            body = f"{body[:200]}..."
         log_event(f"Hash upload response {identifier_text} file={file_name} status={status}")
 
         if status == 200:
@@ -453,7 +435,7 @@ def upload_hash_csv(
             continue
 
         if status == 400:
-            log_event(f"Hash upload failed {identifier_text} file={file_name} status=400 payload/format issue {body}")
+            log_event(f"Hash upload failed {identifier_text} file={file_name} status=400 payload/format issue")
             return False
         if status == 401:
             log_event(f"Hash upload failed {identifier_text} file={file_name} status=401 auth issue")
@@ -462,10 +444,10 @@ def upload_hash_csv(
             log_event(f"Hash upload failed {identifier_text} file={file_name} status=404 serial not found")
             return False
         if status >= 500:
-            log_event(f"Hash upload failed {identifier_text} file={file_name} status={status} server error {body}")
+            log_event(f"Hash upload failed {identifier_text} file={file_name} status={status} server error")
             return False
 
-        log_event(f"Hash upload failed {identifier_text} file={file_name} status={status} {body}")
+        log_event(f"Hash upload failed {identifier_text} file={file_name} status={status}")
         return False
 
     log_event(f"Hash upload failed {identifier_text} file={file_name} retries exhausted")
@@ -473,140 +455,13 @@ def upload_hash_csv(
 
 
 def _load_webtools_api_config():
-    config_base_url = ""
-    config_api_key = ""
+    from services.configuration import webtools_settings
+    # API callers already handle an absent key without issuing a request.
     try:
-        config = load_config()
-        if config.has_section("webtools"):
-            config_base_url = config.get("webtools", "base_url", fallback="").strip()
-            config_api_key = config.get("webtools", "second_check_key", fallback="").strip()
-    except Exception as exc:
-        log_event(f"Web-Tools API config read warning: {exc}")
-
-    base_url = (
-        os.getenv("SECOND_CHECK_BASE_URL", "").strip()
-        or config_base_url
-        or "http://192.168.1.188:5001"
-    )
-    api_key = (
-        os.getenv("SECOND_CHECK_KEY", "").strip()
-        or HARDCODED_SECOND_CHECK_KEY
-        or config_api_key
-    )
-    return base_url.rstrip("/"), api_key
-
-
-def load_app_mode() -> str:
-    try:
-        config = load_config()
-        mode = config.get("app", "mode", fallback="order").strip().lower()
-    except Exception as exc:
-        log_event(f"App mode read warning: {exc}")
-        return "order"
-    return "trade" if mode == "trade" else "order"
-
-
-def save_app_mode(mode: str) -> None:
-    selected = "trade" if str(mode or "").strip().lower() == "trade" else "order"
-    config = configparser.ConfigParser()
-    path = get_config_path()
-    try:
-        config.read(path)
-        if not config.has_section("app"):
-            config.add_section("app")
-        config.set("app", "mode", selected)
-        with open(path, "w", encoding="utf-8") as handle:
-            config.write(handle)
-        log_event(f"Saved app mode: {selected}")
-    except Exception as exc:
-        log_event(f"App mode save warning: {exc}")
-
-
-def _read_optional_text_file(path: Optional[str]) -> Tuple[str, str]:
-    if not path:
+        return webtools_settings(load_config())
+    except Exception:
+        log_event("Web-Tools configuration invalid; check SECOND_CHECK_BASE_URL and SECOND_CHECK_KEY.")
         return "", ""
-    if not os.path.exists(path):
-        log_event(f"Optional upload file not found: {path}")
-        return "", ""
-    try:
-        with open(path, "r", encoding="utf-8-sig") as handle:
-            return os.path.basename(path), handle.read()
-    except UnicodeDecodeError:
-        with open(path, "r", encoding="utf-8", errors="ignore") as handle:
-            return os.path.basename(path), handle.read()
-    except OSError as exc:
-        log_event(f"Optional upload file read failed: {exc}")
-        return "", ""
-
-
-def upload_trade_job_check_report(
-    *,
-    job_reference,
-    serial_number,
-    product_label,
-    specs,
-    test_results,
-    mdm_status=None,
-    assigned_by=None,
-    hash_csv_path=None,
-    battery_report=None,
-    checked_at=None,
-    create_stock_unit=False,
-):
-    serial_text = str(serial_number or "").strip()
-    if not serial_text or serial_text == "Unknown":
-        log_event("Trade report upload skipped: missing serial number.")
-        return False, {"error": "missing serial number"}
-
-    base_url, api_key = _load_webtools_api_config()
-    if not api_key or api_key == "<SECRET>":
-        log_event("Trade report upload skipped: X-Second-Check-Key is not configured.")
-        return False, {"error": "missing API key"}
-
-    utc_stamp = checked_at or datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
-    hash_filename, hash_text = _read_optional_text_file(hash_csv_path)
-    payload = {
-        "job_reference": job_reference,
-        "serial_number": serial_text,
-        "product_label": product_label,
-        "specs": specs or {},
-        "test_results": test_results or {},
-        "mdm": mdm_status or {},
-        "activation": (test_results or {}).get("activation"),
-        "assigned_by": assigned_by,
-        "checked_at": utc_stamp,
-        "hash_uploaded_at": utc_stamp,
-        "hash_filename": hash_filename,
-        "hash_file_data": hash_text,
-        "battery_report": battery_report or {},
-        "create_stock_unit": bool(create_stock_unit),
-    }
-
-    url = f"{base_url}/jobs/api/second-check/trade-report"
-    headers = {
-        "X-Second-Check-Key": api_key,
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-    }
-    try:
-        response = requests.post(url, headers=headers, json=payload, timeout=30)
-    except requests.RequestException as exc:
-        log_event(f"Trade report upload failed serial={serial_text} network_error={exc}")
-        return False, {"error": str(exc)}
-
-    try:
-        body = response.json()
-    except ValueError:
-        body = {"error": (response.text or "").strip()}
-
-    if response.status_code == 200 and body.get("success"):
-        log_event(f"Trade report upload success serial={serial_text}")
-        return True, body
-
-    log_event(
-        f"Trade report upload failed serial={serial_text} status={response.status_code} payload={body}"
-    )
-    return False, body
 
 
 def upload_stock_unit_check_report(
@@ -617,12 +472,17 @@ def upload_stock_unit_check_report(
     sku,
     specs,
     test_results,
+    test_overrides=None,
+    test_coverage=None,
+    assignment_review=None,
+    storage_review=None,
     mdm_status=None,
     assigned_by=None,
     hash_csv_path=None,
     battery_report=None,
     checked_at=None,
     create_stock_unit=False,
+    reassignment_prompt=None,
 ):
     """Upload the full SecondChecking result to the Web-Tools stock-unit API."""
 
@@ -653,14 +513,21 @@ def upload_stock_unit_check_report(
         else:
             log_event(f"Stock report hash file not found: {hash_csv_path}")
 
+    from services.mdm_evidence import qualified
+
     payload = {
         "order_id": order_id,
         "order_number": order_number,
         "serial_number": serial_text,
         "sku": sku,
-        "specs": specs or {},
+        "specs": {key: value for key, value in (specs or {}).items() if not key.startswith("_")},
         "test_results": test_results or {},
-        "mdm": mdm_status or {},
+        "result_policy_version": 1,
+        "test_overrides": test_overrides or {},
+        "test_coverage": test_coverage or {},
+        "assignment_review": assignment_review or {},
+        "storage_review": storage_review or {},
+        "mdm": qualified(mdm_status),
         "activation": (test_results or {}).get("activation"),
         "assigned_by": assigned_by,
         "checked_at": utc_stamp,
@@ -671,103 +538,84 @@ def upload_stock_unit_check_report(
         "create_stock_unit": bool(create_stock_unit),
     }
 
-    url = f"{base_url}/api/stock_units/check-report"
-    headers = {
-        "X-Second-Check-Key": api_key,
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-    }
-    max_attempts = 4
-    backoff_seconds = 1
-    for attempt in range(1, max_attempts + 1):
-        try:
-            response = requests.post(url, headers=headers, json=payload, timeout=30)
-        except requests.RequestException as exc:
-            if attempt < max_attempts:
-                log_event(
-                    f"Stock report upload retry ({attempt}/{max_attempts}) serial={serial_text} network_error={exc}"
-                )
-                time.sleep(backoff_seconds)
-                backoff_seconds *= 2
-                continue
-            log_event(f"Stock report upload failed serial={serial_text} network_error={exc}")
-            return False, {"error": str(exc)}
+    from services.assignment_api import post_assignment
 
-        try:
-            body = response.json()
-        except ValueError:
-            body = {"error": (response.text or "").strip()}
+    return post_assignment(
+        base_url, api_key, "/api/stock_units/check-report", payload,
+        reassignment_prompt=reassignment_prompt,
+    )
 
-        if response.status_code == 200 and body.get("success"):
-            log_event(f"Stock report upload success serial={serial_text}")
-            return True, body
 
-        if response.status_code in {500, 502, 503, 504} and attempt < max_attempts:
-            log_event(
-                f"Stock report upload retry ({attempt}/{max_attempts}) serial={serial_text} status={response.status_code}"
-            )
-            time.sleep(backoff_seconds)
-            backoff_seconds *= 2
-            continue
+def load_saved_check_results(order_number, serial_number):
+    """Read result provenance from the same service that saved the report."""
+    base_url, api_key = _load_webtools_api_config()
+    if not api_key or api_key == "<SECRET>":
+        raise ValueError("Configure the SecondChecking API key to load saved results.")
+    generation = operator_session.generation()
+    session_headers = operator_session_headers(base_url)
+    if not session_headers:
+        operator_session.clear_if_current(generation)
+        raise operator_session.SignInRequired()
+    response = transport.get(
+        base_url + "/api/stock_units/second-check-results",
+        params={"order_number": order_number, "serial_number": serial_number},
+        headers=dict({"X-Second-Check-Key": api_key}, **session_headers), timeout=15,
+    )
+    if response.status_code == 401:
+        operator_session.clear_if_current(generation)
+        raise operator_session.SignInRequired()
+    response.raise_for_status()
+    body = response.json()
+    if not isinstance(body, dict) or body.get("success") is not True:
+        raise ValueError("Web-Tools did not confirm the saved check results.")
+    if not isinstance(body.get("found"), bool):
+        raise ValueError("Web-Tools did not confirm whether a saved report exists.")
+    return body
 
-        log_event(
-            f"Stock report upload failed serial={serial_text} status={response.status_code} payload={body}"
-        )
-        return False, body
 
-    return False, {"error": "retries exhausted"}
+def unassign_order_serial(order_number, serial_number, assigned_by=None):
+    from services.assignment_api import post_assignment
+
+    base_url, api_key = _load_webtools_api_config()
+    if not api_key or api_key == "<SECRET>":
+        return False, {"error": "missing API key"}
+    return post_assignment(base_url, api_key, "/api/stock_units/unassign", {
+        "order_number": order_number,
+        "serial_number": serial_number,
+        "assigned_by": assigned_by,
+    })
+
 
 def log_event(message):
-    log_path = get_log_path()
-    try:
-        # Log rotation: if log file > 5MB, rotate
-        if os.path.exists(log_path) and os.path.getsize(log_path) > 5 * 1024 * 1024:
-            if os.path.exists(log_path + ".1"):
-                os.remove(log_path + ".1")
-            os.rename(log_path, log_path + ".1")
-        # Append the log message with a timestamp
-        with open(log_path, "a", encoding="utf-8") as log_file:
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            log_file.write(f"[{timestamp}] {message}\n")
-    except Exception as e:
-        print(f"Failed to log event: {e}")
+    from services.runtime import log_event as write_log
+    write_log(message)
 
 def get_config_path():
     # Determine the path to the configuration file
-    return os.path.join(get_app_dir(), "config.ini")
+    from services.configuration import config_path
+    return str(config_path())
 
 
 def get_log_path():
-    return os.path.join(get_app_dir(), "logs.txt")
+    from services.runtime import log_path
+    return str(log_path())
 
 
 def get_app_dir():
-    if getattr(sys, "frozen", False):
-        return os.path.abspath(os.path.dirname(sys.executable))
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    from services.runtime import app_directory
+    return str(app_directory())
 
 def load_config():
-    log_event("Loading configuration file...")
-    config = configparser.ConfigParser()
-    try:
-        config.read(get_config_path())
-        log_event("Configuration file loaded successfully.")
-    except Exception as e:
-        log_event(f"Error loading configuration file: {e}")
-        raise
-    return config
+    from services.configuration import read_config
+    return read_config()
+
 
 def parse_percent(text):
-    if text is None:
-        return None
-    try:
-        # Extract a percentage value from the given text
-        match = re.search(r"-?\d+(\.\d+)?", text)
-        if match:
-            return int(float(match.group()))
-    except Exception as e:
-        log_event(f"parse_percent error: {e} for input: {text}")
+    match = re.search(r"(?<![\d.,-])(\d+(?:[.,]\d+)?)\s*%", str(text or ""))
+    if match:
+        return float(match.group(1).replace(",", "."))
     return None
+
 
 def check_activation_status():
     """
@@ -812,87 +660,69 @@ def is_internet_available(timeout: int = 5) -> bool:
     return False
 
 
-def check_mdm_lock_status() -> Dict[str, str]:
-    """Inspect Autopilot registry values to determine Microsoft MDM lock status."""
+def check_mdm_lock_status() -> Dict[str, Any]:
+    """Read local Autopilot evidence without asserting tenant/lock status."""
+    from services.mdm_evidence import evidence
 
     if sys.platform != "win32":
-        message = "Microsoft MDM lock checks are only available on Windows."
-        log_event(message)
-        return {"state": "unsupported", "details": message}
+        return evidence("unsupported", "The local registry check requires Windows.")
 
-    import winreg  # type: ignore[import]
+    import winreg
 
-    autopilot_key_path = r"SOFTWARE\Microsoft\Provisioning\Diagnostics\Autopilot"
-
+    path = r"SOFTWARE\Microsoft\Provisioning\Diagnostics\Autopilot"
+    observations = {}
+    errors = []
     try:
-        autopilot_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, autopilot_key_path)
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, path, 0,
+                             winreg.KEY_READ | winreg.KEY_WOW64_64KEY)
     except FileNotFoundError:
-        message = "Autopilot diagnostics registry key not found; device is likely not MDM locked."
-        log_event(message)
-        return {"state": "not_locked", "details": message}
+        return evidence("no_local_indicators", "Diagnostics registry key is absent.",
+                        key_present=False)
     except OSError as exc:
-        message = f"Failed to open Autopilot diagnostics registry key: {exc}"
-        log_event(message)
-        return {"state": "error", "details": message}
+        return evidence("error", "Diagnostics registry key could not be opened.",
+                        read_errors=[str(exc)])
 
-    def _query_value(key, value_name):
+    def read_value(handle, name):
         try:
-            value, _ = winreg.QueryValueEx(key, value_name)
-            return value
+            value, _ = winreg.QueryValueEx(handle, name)
+            if not isinstance(value, str):
+                errors.append(name + ": unexpected registry value type")
+            elif value.strip():
+                observations[name] = value.strip()
         except FileNotFoundError:
-            return None
+            pass
         except OSError as exc:
-            log_event(f"Error reading Autopilot registry value '{value_name}': {exc}")
-            return None
+            errors.append(name + ": " + str(exc))
 
-    tenant_id = _query_value(autopilot_key, "CloudAssignedTenantId")
-    tenant_domain = _query_value(autopilot_key, "CloudAssignedTenantDomain")
-
-    entdm_id = None
-    ztd_id = None
     try:
-        correlations_key = winreg.OpenKey(autopilot_key, "EstablishedCorrelations")
-    except FileNotFoundError:
-        correlations_key = None
-    except OSError as exc:
-        log_event(f"Unable to open EstablishedCorrelations subkey: {exc}")
-        correlations_key = None
+        for name in ("CloudAssignedTenantId", "CloudAssignedTenantDomain"):
+            read_value(key, name)
+        try:
+            correlations = winreg.OpenKey(key, "EstablishedCorrelations")
+        except FileNotFoundError:
+            correlations = None
+        except OSError as exc:
+            correlations = None
+            errors.append("EstablishedCorrelations: " + str(exc))
+        if correlations is not None:
+            try:
+                for name in ("EntDMID", "ZTDRegistrationID"):
+                    read_value(correlations, name)
+            finally:
+                winreg.CloseKey(correlations)
+    finally:
+        winreg.CloseKey(key)
 
-    if correlations_key is not None:
-        entdm_id = _query_value(correlations_key, "EntDMID")
-        ztd_id = _query_value(correlations_key, "ZTDRegistrationID")
-        winreg.CloseKey(correlations_key)
-
-    winreg.CloseKey(autopilot_key)
-
-    details_parts = []
-    if tenant_id:
-        details_parts.append(f"Tenant ID: {tenant_id}")
-    if tenant_domain:
-        details_parts.append(f"Tenant Domain: {tenant_domain}")
-    if entdm_id:
-        details_parts.append(f"EntDMID: {entdm_id}")
-    if ztd_id:
-        details_parts.append(f"ZTDID: {ztd_id}")
-
-    if tenant_id:
-        detail_text = " | ".join(details_parts) if details_parts else "Autopilot profile detected."
-        log_event(f"Microsoft MDM lock detected: {detail_text}")
-        return {"state": "locked", "details": detail_text}
-
-    detail_text = "No Autopilot tenant information was found." if not details_parts else " | ".join(details_parts)
-    log_event("Microsoft MDM lock not detected.")
-    return {"state": "not_locked", "details": detail_text}
+    state = "local_indicators" if observations else ("error" if errors else "no_local_indicators")
+    details = (" | ".join(name + ": " + value for name, value in observations.items())
+               if observations else "No local tenant or registration identifiers were observed.")
+    log_event("Local Autopilot evidence result: " + state)
+    return evidence(state, details, observations=observations, read_errors=errors,
+                    key_present=True)
 
 
-def refresh_mdm_lock_status() -> Dict[str, str]:
-    """Run policy refresh commands and return the latest lock status."""
-
-    success = run_mdm_policy_commands()
-    if success:
-        log_event("MDM policy commands completed before rechecking lock status.")
-    else:
-        log_event("MDM policy commands failed or were skipped; reading lock status anyway.")
+def refresh_mdm_lock_status() -> Dict[str, Any]:
+    """Re-read local evidence; policy commands do not verify tenant registration."""
     return check_mdm_lock_status()
 
 
@@ -934,43 +764,63 @@ def is_generic_cpu_spec(value: Optional[str]) -> bool:
 
 def cpu_specs_are_compatible(sku_spec: Optional[str], laptop_spec: Optional[str]) -> bool:
     """Use SKU keywords to confirm when generic specs should match verbose names."""
+    if sku_spec and ',' in sku_spec:
+        return any(cpu_specs_are_compatible(option.strip(), laptop_spec)
+                   for option in sku_spec.split(',') if option.strip())
     sku_token = _normalize_token(sku_spec)
     laptop_token = _normalize_token(laptop_spec)
     if not sku_token or not laptop_token:
         return False
     if sku_token == laptop_token:
         return True
+    # WMI may include the manufacturer and clock speed around an exact model.
+    model = re.fullmatch(r'i[3579]-\d{3,5}[a-z0-9]*', str(sku_spec).strip(), re.I)
+    if model and re.search(r'(?<![a-z0-9])' + re.escape(model.group())
+                           + r'(?![a-z0-9])', str(laptop_spec), re.I):
+        return True
     if is_generic_cpu_spec(sku_spec):
         return sku_token in laptop_token
     return False
 
 
+def specification_matches(field, expected, actual):
+    """Compare explicit aliases without treating model substrings as matches."""
+    if field == 'CPU':
+        return cpu_specs_are_compatible(expected, actual)
+    for alias in str(expected).split(','):
+        left, right = alias.strip(), str(actual).strip()
+        if field == 'Model':
+            def model_token(value):
+                value = re.sub(r'^thinkpad\s+', '', value, flags=re.I)
+                value = re.sub(r'\s+notebook\s+pc$', '', value, flags=re.I)
+                return _normalize_token(value)
+            if model_token(left) and model_token(left) == model_token(right):
+                return True
+        elif field == 'Windows':
+            # A generic OS requirement accepts editions, an explicit edition does not.
+            if re.fullmatch(r'Windows\s+(10|11)', left, re.I):
+                if re.fullmatch(re.escape(left) + r'(?:\s+(?:Home|Pro|Enterprise|Education))?', right, re.I):
+                    return True
+            elif left.casefold() == right.casefold():
+                return True
+        elif left.casefold() == right.casefold():
+            return True
+    return False
+
+
 def _storage_capacity_to_gb(value: Optional[str]) -> Optional[int]:
-    text = _normalize_string(value)
-    if not text:
+    from services.storage import parse_configuration
+
+    drives = parse_configuration(value)
+    if drives is None or len(drives) != 1:
         return None
-    match = _STORAGE_PATTERN.search(text)
-    if not match:
-        return None
-    try:
-        amount = float(match.group(1))
-    except (TypeError, ValueError):
-        return None
-    unit = (match.group(2) or "").upper()
-    if unit == "TB":
-        amount *= 1024.0
-    return int(round(amount))
+    return round(drives[0]["size_bytes"] / 10**9)
 
 
-def storage_specs_are_compatible(sku_spec: Optional[str], laptop_spec: Optional[str]) -> bool:
-    """Treat equivalent storage capacities as a match (e.g. 1024GB == 1TB)."""
-    sku_gb = _storage_capacity_to_gb(sku_spec)
-    laptop_gb = _storage_capacity_to_gb(laptop_spec)
-    if sku_gb is not None and laptop_gb is not None:
-        return abs(sku_gb - laptop_gb) <= 1
-    sku_token = _normalize_token(sku_spec)
-    laptop_token = _normalize_token(laptop_spec)
-    return bool(sku_token and laptop_token and sku_token == laptop_token)
+def storage_specs_are_compatible(sku_spec, laptop_spec, captured=None):
+    from services.storage import compare_storage
+
+    return compare_storage(sku_spec, laptop_spec, captured)[0]
 
 
 def _build_dropdown_option_cache(cursor) -> Dict[int, Dict[str, str]]:
@@ -1154,13 +1004,17 @@ def _extract_details_from_sku_keywords(sku):
         "Battery": "Unknown",
     }
 
-    CPU_KEYWORDS = config.get("search", "cpu_keywords").split(",")
-    RAM_KEYWORDS = config.get("search", "ram_keywords").split(",")
-    SSD_KEYWORDS = config.get("search", "ssd_keywords").split(",")
-    MODEL_KEYWORDS = config.get("search", "model_keywords").split(",")
-    RESOLUTION_KEYWORDS = config.get("search", "resolution_keywords").split(",")
-    WINDOWS_KEYWORDS = config.get("search", "windows_keywords").split(",")
-    GRADE_KEYWORDS = config.get("search", "grade_keywords").split(",")
+    def keywords(option):
+        return [word.strip() for word in config.get(
+            "search", option, fallback="").split(",") if word.strip()]
+
+    CPU_KEYWORDS = keywords("cpu_keywords")
+    RAM_KEYWORDS = keywords("ram_keywords")
+    SSD_KEYWORDS = keywords("ssd_keywords")
+    MODEL_KEYWORDS = keywords("model_keywords")
+    RESOLUTION_KEYWORDS = keywords("resolution_keywords")
+    WINDOWS_KEYWORDS = keywords("windows_keywords")
+    GRADE_KEYWORDS = keywords("grade_keywords")
 
     grade_map = {
         "AGRADE": "70% Battery",
@@ -1185,12 +1039,9 @@ def _extract_details_from_sku_keywords(sku):
     if cpu_match:
         details["CPU"] = cpu_match
 
-    ssd_match = match_with_fallback(SSD_KEYWORDS, sku)
-    if ssd_match:
-        if "TB" in ssd_match.upper():
-            details["SSD"] = ssd_match.replace("SSD", "").strip()
-        else:
-            details["SSD"] = ssd_match.replace("SSD", "").strip() + "GB"
+    from services.storage import sku_storage
+
+    details["SSD"] = sku_storage(sku, SSD_KEYWORDS) or "Unknown"
 
     ram_match = match_with_fallback(RAM_KEYWORDS, sku)
     if ram_match:
@@ -1239,80 +1090,122 @@ def extract_details_from_sku(cursor, sku):
         or (dropdown_details or {}).get("Battery 2")
         or fallback.get("Battery 2")
     )
+    from services.storage import resolve_requirement
+
+    combined["SSD"] = resolve_requirement(combined["SSD"], fallback.get("SSD"))
     return combined
 
-_wmi_instance = None  # Cache WMI instance
 _last_wmi_error = None
 
 
 def _ensure_wmi_instance():
-    """Return a cached WMI instance, initialising when required."""
-
-    global _wmi_instance
+    """Create a client owned by the calling, COM-initialised thread."""
 
     if sys.platform != "win32":
         return None
 
-    if _wmi_instance is not None:
-        return _wmi_instance
-
     try:
-        try:
-            import pythoncom  # type: ignore[import]
-
-            pythoncom.CoInitialize()
-        except ImportError:
-            # pywin32 may not be installed when running unit tests on non-Windows platforms.
-            pass
-        _wmi_instance = wmi.WMI()
+        return wmi.WMI()
     except Exception as exc:  # noqa: BLE001 - log details for supportability
         _handle_wmi_error(exc)
         return None
 
-    return _wmi_instance
 
 
 def _handle_wmi_error(error):
     """Log WMI errors once and reset the cached client for a future retry."""
 
-    global _wmi_instance, _last_wmi_error
+    global _last_wmi_error
 
     message = str(error)
     if message != _last_wmi_error:
-        log_event(f"get_live_battery_percent error: {error}")
+        from services.runtime import log_diagnostic
+        log_diagnostic('battery.live_read_failed', error=error, stage='wmi',
+                       reason='Check Windows battery provider and COM apartment')
         _last_wmi_error = message
 
-    _wmi_instance = None
+
+
+def _read_native_battery_state(index, expected_count):
+    from services.measurements import native_battery_live_state
+    provider = None
+    try:
+        provider = wmi.WMI(namespace=r'root\wmi')
+        def rows(name, keys):
+            return [{key: getattr(row, key, None) for key in keys}
+                    for row in getattr(provider, name)()
+                    if getattr(row, 'Active', True)]
+        static = rows('BatteryStaticData', ('InstanceName', 'Capabilities'))
+        full = rows('BatteryFullChargedCapacity', ('InstanceName', 'FullChargedCapacity'))
+        status = rows('BatteryStatus', ('InstanceName', 'RemainingCapacity', 'Charging',
+                                      'Discharging', 'PowerOnline', 'ChargeRate', 'DischargeRate'))
+        return native_battery_live_state(static, full, status, index, expected_count)
+    except Exception:
+        # Optional provider failures must not discard the standard charge reading.
+        return None
+    finally:
+        provider = None
+
+
+def get_live_battery_state(index=0):
+    result = {"state": "unreadable", "percent": None, "charging": None,
+              "power_state": "Unknown", "source": "Win32_Battery live"}
+    com = None
+    instance, batteries, battery = None, None, None
+    try:
+        if sys.platform == 'win32':
+            import pythoncom
+            pythoncom.CoInitialize()
+            com = pythoncom
+        instance = _ensure_wmi_instance()
+        if instance is None:
+            return result
+        batteries = list(instance.Win32_Battery())
+        if index >= len(batteries):
+            return dict(result, state="absent", power_state="Absent")
+        battery = batteries[index]
+        native = _read_native_battery_state(index, len(batteries))
+        try:
+            percent = int(battery.EstimatedChargeRemaining)
+        except (TypeError, ValueError):
+            percent = None
+        try:
+            status = int(battery.BatteryStatus)
+        except (TypeError, ValueError):
+            status = None
+        if percent is not None and 0 <= percent <= 100:
+            result.update(state="measured", percent=percent)
+        names = {1: "Discharging", 2: "AC power (charging unconfirmed)",
+                 3: "Fully charged", 4: "Low", 5: "Critical",
+                 6: "Charging", 7: "Charging and high", 8: "Charging and low",
+                 9: "Charging and critical", 11: "Partially charged"}
+        result["power_state"] = names.get(status, "Unknown")
+        result["charging"] = True if status in {6, 7, 8, 9} else (False if status in {1, 3, 4, 5, 11} else None)
+        if native is not None:
+            # Single-pack fallback percentage is unambiguous. Multiple packs use
+            # their own matched remaining/full capacity rather than mixing orders.
+            percent = native.get('percent')
+            if percent is None and len(batteries) == 1:
+                percent = result['percent']
+            result.update(native, percent=percent,
+                          state='measured' if percent is not None else 'unreadable')
+    except Exception as exc:
+        _handle_wmi_error(exc)
+    finally:
+        # Release proxies before leaving the COM apartment that created them.
+        battery, batteries, instance = None, None, None
+        if com is not None:
+            com.CoUninitialize()
+    return result
 
 
 def get_live_battery_percent(index=0):
-    instance = _ensure_wmi_instance()
-    if instance is None:
-        return None
-
-    try:
-        batteries = instance.Win32_Battery()
-        if index < len(batteries):
-            return int(batteries[index].EstimatedChargeRemaining)
-    except Exception as exc:  # noqa: BLE001 - surface diagnostic info
-        _handle_wmi_error(exc)
-    return None
+    return get_live_battery_state(index)["percent"]
 
 
 def is_battery_charging(index=0) -> bool:
-    """Return True if the indexed battery is actively charging."""
+    return get_live_battery_state(index)["charging"] is True
 
-    instance = _ensure_wmi_instance()
-    if instance is None:
-        return False
-
-    try:
-        batteries = instance.Win32_Battery()
-        if index < len(batteries):
-            return batteries[index].BatteryStatus in {2, 6}  # Charging states
-    except Exception as exc:  # noqa: BLE001 - surface diagnostic info
-        _handle_wmi_error(exc)
-    return False
 
 def preload_previous_results():
     # Load previous test results from the database for the current serial number
@@ -1335,7 +1228,7 @@ def preload_previous_results():
         row = cursor.fetchone()
         conn.close()
 
-        print(f"Row from DB: {row}")  # 🧪 Debug output
+        print(f"Row from DB: {row}")  # ðŸ§ª Debug output
 
         if row:
             keys = ["keyboard", "speaker", "microphone", "display", "webcam", "usb", "wifi"]
@@ -1354,11 +1247,22 @@ def preload_previous_results():
 
     return results
 
-def ensure_batteryinfoview(download_dir="assets/BatteryInfoView"):
+def ensure_batteryinfoview(download_dir=None):
     """
     Ensure BatteryInfoView is downloaded and extracted in the specified directory.
     Returns the path to BatteryInfoView.exe.
     """
+    if download_dir is None:
+        bundled_root = (Path(sys._MEIPASS) if getattr(sys, "frozen", False)
+                        else Path(__file__).resolve().parents[1])
+        roots = [bundled_root, Path(get_app_dir())]
+        for root in roots:
+            bundled = root / "assets" / "BatteryInfoView" / "BatteryInfoView.exe"
+            if bundled.is_file():
+                return str(bundled.resolve())
+        download_dir = str(Path(get_app_dir()) / "assets" / "BatteryInfoView")
+    elif not Path(download_dir).is_absolute():
+        download_dir = str(Path(get_app_dir()) / download_dir)
     url = "https://www.nirsoft.net/utils/batteryinfoview-x64.zip"
     zip_name = "batteryinfoview-x64.zip"
     exe_name = "BatteryInfoView.exe"
@@ -1374,7 +1278,13 @@ def ensure_batteryinfoview(download_dir="assets/BatteryInfoView"):
     if not os.path.exists(zip_path):
         try:
             print(f"Downloading {url}...")
-            urllib.request.urlretrieve(url, zip_path)
+            with urllib.request.urlopen(url, timeout=30) as response:
+                with open(zip_path, "wb") as target:
+                    while True:
+                        chunk = response.read(65536)
+                        if not chunk:
+                            break
+                        target.write(chunk)
         except Exception as err:
             log_event(f"Failed to download BatteryInfoView: {err}")
             raise

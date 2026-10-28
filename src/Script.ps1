@@ -1,21 +1,18 @@
-# Script to Open Windows Update Settings and Initiate a Check for Updates
-
-# Run the script with administrative privileges
-if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    Write-Warning "You need to run this script as an administrator."
-    exit 1
+# Explicitly confirmed Windows Update action, run by the scoped UAC helper.
+$ErrorActionPreference = 'Stop'
+trap { exit 1 }
+if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] 'Administrator')) {
+    throw 'Administrator approval is required.'
 }
-
-# Ensure NuGet provider is installed (no prompt)
-Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
-
-# Install PSWindowsUpdate module (no prompt)
-Install-Module -Name PSWindowsUpdate -Force -Scope CurrentUser
-
-Import-Module PSWindowsUpdate
-
-# Start checking for updates and install them if available (no auto reboot)
-Write-Output "Initiating Windows Update check..."
-Get-WindowsUpdate -AcceptAll -Install
-
-Write-Output "Process completed."
+# Use machine-provisioned modules only. No provider/module downloads or profile scripts.
+$machineModules = Join-Path ([Environment]::GetFolderPath('ProgramFiles')) 'WindowsPowerShell\Modules'
+$systemModules = Join-Path ([Environment]::GetFolderPath('System')) 'WindowsPowerShell\v1.0\Modules'
+$env:PSModulePath = "$machineModules;$systemModules"
+$module = Get-Module -ListAvailable PSWindowsUpdate | Where-Object {
+    $_.ModuleBase.StartsWith($machineModules + '\', [StringComparison]::OrdinalIgnoreCase)
+} | Sort-Object Version -Descending | Select-Object -First 1
+if (-not $module) {
+    throw 'An administrator must provision PSWindowsUpdate in the machine module directory first.'
+}
+Import-Module $module.Path -ErrorAction Stop
+Get-WindowsUpdate -AcceptAll -Install -IgnoreReboot -ErrorAction Stop

@@ -43,3 +43,27 @@ config.ini
 .mypy_cache/
 .idea/
 .vscode/
+
+# Generated exports, update journals and per-machine preferences
+/src.zip
+/assets/
+/update.json
+last_user.txt
+*.log.*
+logs.txt.*
+check-drafts/
+pending-operations/
+BatteryInfoView.cfg
+.secondchecking-updates/
+*.previous
+*.update.lock
+build-identity.json
+build-record.json
+build-manifest.json
+version-resource.txt
+.env
+.env.*
+!.env.example
+*.pem
+*.pfx
+*.p12

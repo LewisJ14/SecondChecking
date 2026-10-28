@@ -2,20 +2,30 @@
 import json
 import re
 import time
+import tempfile
+import threading
+from copy import deepcopy
 import psutil
 import wmi
 import subprocess
 import os
 from pathlib import Path
 from typing import Optional
+from services.storage import inventory_label
+from services.measurements import fresh, utc_now, parse_battery_csv, battery_labels
+from services.measurements import pair_windows_batteries
 from utils.helpers import log_event, ensure_batteryinfoview, get_app_dir
 import pythoncom
 import configparser
 import getpass
 import sys
 
-config = configparser.ConfigParser()
-config.read(os.path.join(os.path.dirname(__file__), '..', 'config.ini'))
+from services.configuration import read_config, ConfigurationError
+
+try:
+    config = read_config()
+except ConfigurationError:
+    config = configparser.ConfigParser(interpolation=None)
 
 SPECS_CACHE_TTL = 300  # seconds
 
@@ -31,10 +41,10 @@ def _load_cached_specs() -> Optional[dict]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
         ts = float(data.get("timestamp", 0))
-        if time.time() - ts > SPECS_CACHE_TTL:
+        if not 0 <= time.time() - ts <= SPECS_CACHE_TTL:
             return None
         specs = data.get("specs")
-        if isinstance(specs, dict):
+        if isinstance(specs, dict) and fresh(specs, SPECS_CACHE_TTL):
             log_event("Loaded cached laptop specs.")
             return specs
     except Exception as exc:
@@ -71,7 +81,7 @@ def get_ssd_thresholds():
             thresholds[label.strip()] = float(val.strip())
         return thresholds
     except Exception as e:
-        log_event(f"Error reading SSD thresholds from config: {e}")
+        log_event("Invalid hardware.ssd_thresholds; using default thresholds.")
         # Fallback to hardcoded defaults
         return {
             "4TB": 3900,
@@ -122,6 +132,8 @@ def format_windows_caption(os_info) -> str:
 
 _laptop_specs_cache = None
 _latest_batteryinfoview_report = None
+_latest_battery_evidence = {}
+_specs_lock = threading.RLock()
 
 def reset_specs_cache() -> None:
     """Clear the in-memory cache and remove the persisted specs cache file."""
@@ -134,19 +146,46 @@ def reset_specs_cache() -> None:
         except Exception as exc:
             log_event(f"Failed to delete specs cache file: {exc}")
 
+def capture_storage(client):
+    """Capture every physical disk, independent of partitions or mount points."""
+    from services.storage import inventory
+
+    type_errors = []
+    try:
+        provider = wmi.WMI(namespace=r"root\Microsoft\Windows\Storage")
+        typed = list(provider.MSFT_PhysicalDisk())
+    except Exception as exc:
+        typed = []
+        type_errors.append("Media/bus provider unavailable: " + str(exc))
+    try:
+        disks = list(client.Win32_DiskDrive())
+        return inventory(disks, typed, type_errors)
+    except Exception as exc:
+        result = inventory([], type_errors=type_errors)
+        result["errors"].append("Physical disk query failed: " + str(exc))
+        return result
+
+
 def get_laptop_specs(force_refresh=False):
-    global _laptop_specs_cache
-    if _laptop_specs_cache is not None and not force_refresh:
+    with _specs_lock:
+        return _get_laptop_specs(force_refresh)
+
+
+def _get_laptop_specs(force_refresh=False):
+    global _laptop_specs_cache, _latest_battery_evidence, _latest_batteryinfoview_report
+    if _laptop_specs_cache is not None and not force_refresh and fresh(_laptop_specs_cache, SPECS_CACHE_TTL):
         log_event("Returning cached laptop specs.")
-        return _laptop_specs_cache.copy()
+        return deepcopy(_laptop_specs_cache)
 
     if not force_refresh:
         cached_specs = _load_cached_specs()
         if cached_specs:
-            _laptop_specs_cache = cached_specs.copy()
-            return _laptop_specs_cache.copy()
+            _laptop_specs_cache = deepcopy(cached_specs)
+            return deepcopy(_laptop_specs_cache)
 
     log_event("Fetching laptop specs...")
+    _latest_battery_evidence = {}
+    _latest_batteryinfoview_report = None
     pythoncom.CoInitialize()
     specs = {
         "Serial Number": "Unknown",
@@ -198,42 +237,13 @@ def get_laptop_specs(force_refresh=False):
         specs["RAM"] = f"{round(psutil.virtual_memory().total / (1024**3))}GB"
         log_event(f"Detected RAM: {specs['RAM']}")
 
-        # --- Improved SSD/Drive Size Calculation ---
-        drive_sizes = []
-        drive_type = "HDD"
-        physical_drives = {}
-        for disk in c.Win32_DiskDrive():
-            # Skip USB/removable drives
-            if hasattr(disk, "InterfaceType") and disk.InterfaceType and disk.InterfaceType.upper() == "USB":
-                continue
-            if hasattr(disk, "MediaType") and disk.MediaType and "removable" in disk.MediaType.lower():
-                continue
-            # Get size in GB
-            if disk.Size:
-                size_gb = int(int(disk.Size) / (1000 ** 3))
-                physical_drives[disk.DeviceID] = size_gb
-                caption = disk.Caption.lower()
-                media_type = disk.MediaType.lower() if disk.MediaType else ""
-                if any(x in caption for x in ["ssd", "nvme", "m.2"]) or "ssd" in media_type:
-                    drive_type = "SSD"
+        storage = capture_storage(c)
+        specs["Storage"] = storage
+        specs["SSD"] = inventory_label(storage)
+        kinds = {disk["kind"] for disk in storage["disks"] if not disk["excluded"]}
+        specs["Drive Type"] = " / ".join(sorted(kinds)) if kinds else "Unknown"
 
-        # Map logical disks to physical disks and only count those on non-removable drives
-        for partition in c.Win32_DiskPartition():
-            for logical in partition.associators("Win32_LogicalDiskToPartition"):
-                # Find the physical drive for this partition
-                for disk in c.Win32_DiskDrive():
-                    for part in disk.associators("Win32_DiskDriveToDiskPartition"):
-                        if part.DeviceID == partition.DeviceID and disk.DeviceID in physical_drives:
-                            # Only add size if not already counted
-                            if physical_drives[disk.DeviceID] not in drive_sizes:
-                                drive_sizes.append(physical_drives[disk.DeviceID])
-
-        if drive_sizes:
-            specs["SSD"] = "+".join(f"{size}GB" for size in drive_sizes)
-            specs["Drive Type"] = drive_type
-            log_event(f"Detected SSD: {specs['SSD']} ({specs['Drive Type']})")
-
-        healths = get_battery_health()
+        healths = get_battery_health(client=c)
         if not healths:
             specs["Battery"] = "Unknown"
             log_event("Detected Battery Health: Unknown")
@@ -246,12 +256,23 @@ def get_laptop_specs(force_refresh=False):
                 log_event(f"Detected Battery {index} Health: {stats}")
 
     except Exception as e:
-        log_event(f"Exception in get_laptop_specs: {e}")
+        from services.runtime import log_diagnostic
+        log_diagnostic('device.capture_failed', error=e, stage='inventory')
         raise
     finally:
         pythoncom.CoUninitialize()
 
-    _laptop_specs_cache = specs.copy()
+    specs["Battery Evidence"] = deepcopy(_latest_battery_evidence)
+    specs["_battery_report"] = deepcopy(_latest_batteryinfoview_report)
+    specs["Measurements"] = {
+        "version": 1, "checked_at": utc_now(),
+        "battery_source": _latest_battery_evidence.get("source", "Unknown"),
+        "sources": {"Resolution": "Win32_VideoController current mode; panel capability unverified",
+                    "Windows": "Win32_OperatingSystem edition; activation is a separate test",
+                    "Storage": "Win32_DiskDrive / optional MSFT_PhysicalDisk",
+                    "Battery": _latest_battery_evidence.get("source", "Unknown")},
+    }
+    _laptop_specs_cache = deepcopy(specs)
     _save_specs_cache(specs)
     log_event("Laptop specs fetched successfully.")
     return specs
@@ -266,82 +287,115 @@ def get_live_battery_percent():
     return None
 
 def get_latest_batteryinfoview_report():
-    """Return the most recent raw BatteryInfoView export captured during spec scan."""
-    if isinstance(_latest_batteryinfoview_report, dict):
-        return _latest_batteryinfoview_report.copy()
+    report = _latest_batteryinfoview_report
+    if isinstance(report, dict) and fresh({"Measurements": report}, SPECS_CACHE_TTL):
+        return deepcopy(report)
     return None
 
 
 def capture_batteryinfoview_report():
     global _latest_batteryinfoview_report
-    exe_path = ensure_batteryinfoview()
-    csv_path = os.path.join(os.environ.get("TEMP", "/tmp"), "batteryinfoview.csv")
-    creationflags = 0
-    if sys.platform == "win32":
-        creationflags = subprocess.CREATE_NO_WINDOW
-    cmd = [exe_path, "/scomma", csv_path]
-    subprocess.run(cmd, check=True, creationflags=creationflags)
-    if not os.path.exists(csv_path):
-        log_event("BatteryInfoView CSV not created.")
-        _latest_batteryinfoview_report = None
-        return None
-    with open(csv_path, encoding="utf-8", errors="ignore") as f:
-        content = f.read()
+    _latest_batteryinfoview_report = None
+    exe_path = os.path.abspath(ensure_batteryinfoview())
+    flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+    with tempfile.TemporaryDirectory(prefix="secondchecking-battery-") as directory:
+        csv_path = os.path.join(directory, "battery.csv")
+        subprocess.run([exe_path, "/scomma", csv_path], check=True,
+                       creationflags=flags, timeout=30, cwd=directory)
+        if not os.path.isfile(csv_path):
+            raise ValueError("BatteryInfoView did not produce a fresh export.")
+        raw = Path(csv_path).read_bytes()
+        if raw.startswith((b"\xff\xfe", b"\xfe\xff")):
+            content = raw.decode("utf-16")
+        else:
+            try:
+                content = raw.decode("utf-8-sig")
+            except UnicodeDecodeError:
+                content = raw.decode("cp1252")
     _latest_batteryinfoview_report = {
-        "filename": os.path.basename(csv_path),
-        "content": content,
+        "filename": "battery.csv", "content": content,
+        "checked_at": utc_now(), "source": "BatteryInfoView /scomma",
     }
-    return _latest_batteryinfoview_report.copy()
+    return deepcopy(_latest_batteryinfoview_report)
 
 
-# --- BatteryInfoView fallback ---
-def get_battery_health_batteryinfoview():
+def get_battery_health_batteryinfoview(expected_count=None):
+    global _latest_battery_evidence
     try:
         report = capture_batteryinfoview_report()
-        if not report:
-            return ["Unknown (batteryinfoview)"]
-        lines = str(report.get("content") or "").splitlines()
+        entries = parse_battery_csv(report["content"])
+        if expected_count and len(entries) != expected_count:
+            entries = [{"index": index + 1, "state": "unreadable",
+                        "reason": "Battery count differs between inventory and export"}
+                       for index in range(max(expected_count, len(entries))) ]
+        _latest_battery_evidence = {
+            "state": "measured" if all(row.get("state") == "measured" for row in entries) else "unreadable",
+            "checked_at": report["checked_at"], "source": report["source"],
+            "batteries": entries,
+        }
+        return battery_labels(entries)
+    except Exception as exc:
+        _latest_battery_evidence = {"state": "unreadable", "checked_at": utc_now(),
+                                    "source": "BatteryInfoView", "error": str(exc),
+                                    "batteries": []}
+        log_event("Battery health capture unavailable: " + str(exc))
+        return ["Unreadable (battery health)"] * max(expected_count or 1, 1)
 
-        designed_matches = []
-        full_matches = []
-        for line in lines:
-            label = line.split("\t", 1)[0]
-            if "Designed Capacity" not in label and "Full Charged Capacity" not in label:
-                continue
-            nums = [int(n.replace(",", "")) for n in re.findall(r"(\d[\d,]*)", line)]
-            if not nums:
-                continue
-            if "Designed Capacity" in label:
-                designed_matches.extend(nums)
-            else:
-                full_matches.extend(nums)
 
-        results = []
-        for index, (designed, full) in enumerate(
-            zip(designed_matches, full_matches), start=1
-        ):
-            if not designed or not full:
-                log_event(
-                    f"BatteryInfoView parsing incomplete for battery {index}: Designed={designed}, Full={full}"
-                )
-                continue
-            percent = int((full / designed) * 100)
-            log_event(
-                f"BatteryInfoView: Battery {index} Designed={designed}, Full={full}, Health={percent}%"
-            )
-            suffix = "" if index == 1 else f" battery {index}"
-            results.append(f"{percent}% (batteryinfoview{suffix})")
-
-        if results:
-            return results
-
-        log_event("BatteryInfoView parsing failed: no complete battery results.")
-        return ["Unknown (batteryinfoview)"]
-    except Exception as e:
-        log_event(f"BatteryInfoView failed: {e}")
-        return ["Unknown (batteryinfoview)"]
-
-# --- Main battery health function ---
-def get_battery_health():
-    log_event("Gathering battery health via BatteryInfoView.")
-    return get_battery_health_batteryinfoview()
+def get_battery_health(client=None):
+    global _latest_batteryinfoview_report, _latest_battery_evidence
+    _latest_batteryinfoview_report = None
+    expected = None
+    try:
+        rows = list((client or wmi.WMI()).Win32_Battery())
+        expected = len(rows)
+        if not rows:
+            _latest_battery_evidence = {"state": "absent", "checked_at": utc_now(),
+                                        "source": "Win32_Battery", "batteries": []}
+            return ["Absent (Windows battery inventory)"]
+    except Exception as exc:
+        log_event("Windows battery inventory unavailable: " + str(exc))
+    try:
+        capacities = wmi.WMI(namespace=r"root\wmi")
+        static = [{key: getattr(row, key, None)
+                   for key in ("InstanceName", "DesignedCapacity", "Capabilities")}
+                  for row in capacities.BatteryStaticData()
+                  if getattr(row, "Active", True)]
+        full = [{key: getattr(row, key, None)
+                 for key in ("InstanceName", "FullChargedCapacity")}
+                for row in capacities.BatteryFullChargedCapacity()
+                if getattr(row, "Active", True)]
+    except Exception as exc:
+        log_event("Windows battery capacity provider unavailable: " + str(exc))
+        return get_battery_health_batteryinfoview(expected)
+    try:
+        cycles = [{key: getattr(row, key, None)
+                   for key in ("InstanceName", "CycleCount")}
+                  for row in capacities.BatteryCycleCount()
+                  if getattr(row, "Active", True)]
+    except Exception:
+        # Cycle reporting is optional and must not discard valid capacities.
+        cycles = []
+    try:
+        entries = pair_windows_batteries(static, full, expected, cycles)
+    except ValueError as exc:
+        # An unavailable provider may use the legacy export; malformed identities
+        # must never cause selected-pack data to be copied across multiple packs.
+        log_event("Windows battery capacity capture unavailable: " + str(exc))
+        if not static and not full:
+            return get_battery_health_batteryinfoview(expected)
+        entries = [{"index": index + 1, "state": "unreadable", "reason": str(exc)}
+                   for index in range(max(expected or 1, len(static), len(full)))]
+    stamp = utc_now()
+    _latest_battery_evidence = {
+        "state": "measured" if all(row["state"] == "measured" for row in entries)
+        else "unreadable", "checked_at": stamp,
+        "source": "Windows battery WMI", "batteries": entries,
+    }
+    _latest_batteryinfoview_report = {
+        "filename": "battery-wmi.json", "checked_at": stamp,
+        "source": "Windows battery WMI",
+        "content": json.dumps({"static": static, "full": full, "cycles": cycles,
+                               "evidence": _latest_battery_evidence}, sort_keys=True),
+    }
+    return battery_labels(entries, source="Windows battery WMI")

@@ -1,10 +1,16 @@
 import json
+import queue
 import os
 import shutil
 import subprocess
 import sys
 import threading
+import time
+from copy import deepcopy
+from ui.scrolling import ScrollableFrame, bind_scrolling
+from ui.theme import apply_theme
 import tkinter as tk
+import tkinter.font as tkfont
 from typing import Optional
 
 import re
@@ -18,20 +24,24 @@ from main_logic import (
     load_laptop_specs,
     render_results,
     save_order_note_for_order_id,
-    save_trade_job_note_for_job_id,
     search_order_logic,
-    search_trade_job_logic,
 )
 from utils.specs import reset_specs_cache
 from ui.tests import TestsWindow
+from services import operator_session, auth_service
+from services.maintenance import MaintenanceCancelled, MaintenanceError
+from services.check_results import badge_text
+from services.check_session import CheckSession, result_state
+from services.mdm_evidence import summary as mdm_summary, qualified, evidence as mdm_evidence
+from services.measurements import measurement_summary, fresh
+from main_logic import start_hash_capture_status_update
 from update_service import UpdateManifest, UpdateService
 from utils.helpers import (
     check_mdm_lock_status,
     get_live_battery_percent,
+    get_live_battery_state,
     is_battery_charging,
-    load_app_mode,
     log_event,
-    save_app_mode,
 )
 from utils.ui_scaling import get_work_area
 
@@ -40,24 +50,38 @@ class AppController:
     def __init__(self, root: tk.Tk):
         reset_specs_cache()
         self.root = root
+        apply_theme(root)
         self.current_user: Optional[AuthenticatedUser] = None
+        self._note_save_inflight = 0
+        self._maintenance_running = False
+        self._operator_locked = False
+        self._update_preparing = False
         self.test_results = {}
         self.test_labels = {}
         self.tests_window = None
+        self._tests_runner = None
+        self._check_session = CheckSession()
+        self._lookup_valid = False
+        self._search_inflight = False
+        self._search_generation = 0
+        self._requested_reference = None
+        self._search_after_id = None
+        self._visible_specs = None
+        self._active_resolved = None
+        self._measurement_after_id = None
         self.update_service = UpdateService()
         self.mdm_status = None
         self._mdm_refresh_started = False
         self._showing_default_specs = True
         self.current_order_note_order_id: Optional[int] = None
         self.current_order_note_order_number: Optional[str] = None
-        self.current_note_mode = "order"
-        self.current_mode = load_app_mode()
 
         width, height, x, y = self._compute_geometry()
         self.root.geometry(f"{width}x{height}+{x}+{y}")
         self.root.minsize(800, 500)
         self.root.resizable(True, True)
 
+        self.root.bind("<Destroy>", self._operator_destroyed, add="+")
         self.login_panel = LoginPanel(root, self._on_authenticated)
 
     def _on_authenticated(self, user: Optional[AuthenticatedUser]) -> None:
@@ -68,10 +92,81 @@ class AppController:
 
         self.current_user = user
         self._build_ui()
+        self.root.after(800, self._show_update_outcome)
+
+    def _operator_destroyed(self, event):
+        if event.widget is self.root:
+            pending = getattr(self, '_details_resize_after_id', None)
+            if pending:
+                self.root.after_cancel(pending)
+                self._details_resize_after_id = None
+            previous = operator_session.clear()
+            if previous:
+                threading.Thread(target=auth_service.revoke, args=(previous,), daemon=True).start()
+
+    def _require_operator(self, action):
+        if getattr(self, "_update_preparing", False):
+            messagebox.showinfo("Update in progress", "Finish or cancel update preparation first.")
+            return False
+        if getattr(self, "_operator_locked", False) or not operator_session.allowed(action):
+            messagebox.showinfo("Sign in required",
+                                "Use Operator > Lock / change operator to sign in again.")
+            return False
+        return True
+
+    def lock_operator(self):
+        runner = getattr(self, "_tests_runner", None)
+        if (getattr(self, "_update_preparing", False) or self._search_inflight or getattr(self.root, "_assignment_running", False) is True
+                or self._note_save_inflight or self._maintenance_running
+                or (runner and runner.is_busy())):
+            messagebox.showinfo("Bench busy", "Finish the current operation before changing operator.")
+            return
+        if any(isinstance(child, tk.Toplevel) for child in self.root.winfo_children()):
+            messagebox.showinfo("Close open windows", "Save or close open dialogs before changing operator.")
+            return
+        if not self._preserve_check_draft():
+            return
+        self._operator_locked = True
+        self._lookup_valid = False
+        self._showing_default_specs = False
+        self._search_generation += 1
+        self.current_user = None
+        previous = operator_session.clear()
+        threading.Thread(target=auth_service.revoke, args=(previous,), daemon=True).start()
+        for name in ("_measurement_after_id", "_search_after_id", "_battery_bar_after_id",
+                     "_details_resize_after_id"):
+            timer = getattr(self, name, None)
+            if timer:
+                self.root.after_cancel(timer)
+                setattr(self, name, None)
+        job = getattr(self, "_battery_live_job", None)
+        if job:
+            job.cancel()
+        # A fresh process prevents old callbacks/dialogs adopting a new operator.
+        for child in self.root.winfo_children():
+            child.destroy()
+        self.root.config(menu="")
+        self.root.title("SecondChecking — Locked")
+        ttk.Label(self.root, text="Locked. Local check drafts are preserved.",
+                  padding=20).pack()
+        def sign_in_again():
+            command = ([sys.executable] if getattr(sys, "frozen", False) else
+                       [sys.executable, os.path.join(os.path.dirname(__file__), "main.py")])
+            try:
+                from services.update_process import fresh_environment
+                subprocess.Popen(command, env=fresh_environment(),
+                                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            except OSError:
+                messagebox.showerror("Sign in", "Could not open sign-in. Retry or reopen the app.")
+                return
+            self.root.destroy()
+        ttk.Button(self.root, text="Sign in / change operator", command=sign_in_again).pack(pady=10)
+        ttk.Button(self.root, text="Exit", command=self.root.destroy).pack()
 
     def _build_ui(self) -> None:
         version_label = self.update_service.current_version
-        title = f"Second Checking Tool - Version {version_label}"
+        from services.build_identity import display_label
+        title = f"Second Checking Tool - Version {version_label} ({display_label()})"
         if self.current_user:
             title = f"{title} - {self.current_user.username}"
         self.root.title(title)
@@ -79,81 +174,97 @@ class AppController:
         width, height, x, y = self._compute_geometry()
         self.root.geometry(f"{width}x{height}+{x}+{y}")
 
-        default_font = ("Segoe UI", 11)
-        self.root.option_add("*Font", default_font)
+        # A named default also keeps dialogs opened after a DPI transition at
+        # the current scale, rather than reusing an old anonymous font cache.
+        self._ui_font = tkfont.Font(root=self.root, family="Segoe UI", size=11)
+        self.root.option_add("*Font", self._ui_font)
 
-        style = tb.Style()
-        style.theme_use("flatly")
+        style = apply_theme(self.root)
 
-        primary_bg = "#f5f6fa"
+        primary_bg = "#f1f4f8"
         self.root.configure(bg=primary_bg)
-        style.configure("Header.TFrame", background="#e0e1e6")
+        style.configure("Header.TFrame", background="#ffffff")
 
-        menubar = tk.Menu(self.root, bg=primary_bg, fg="#222")
+        menubar = tk.Menu(self.root, autostyle=False, bg=primary_bg, fg="#222")
         self.root.config(menu=menubar)
-        tools_menu = tk.Menu(menubar, tearoff=0, bg=primary_bg, fg="#222")
+        tools_menu = tk.Menu(menubar, autostyle=False, tearoff=0, bg=primary_bg, fg="#222")
+        operator_menu = tk.Menu(menubar, tearoff=0)
+        operator_menu.add_command(label="Lock / change operator", command=self.lock_operator)
+        menubar.add_cascade(label="Operator", menu=operator_menu)
         menubar.add_cascade(label="Tools", menu=tools_menu)
         tools_menu.add_command(label="Check for App Updates", command=self.check_for_updates)
+        tools_menu.add_command(label="Restore previous app version", command=self.restore_previous_update)
         tools_menu.add_command(label="Run Windows Updates", command=self.run_windows_update_script)
 
-        header_frame = ttk.Frame(self.root, padding=(10, 10, 10, 10), style="Header.TFrame")
+        header_frame = ttk.Frame(self.root, padding=(18, 14, 18, 14), style="Header.TFrame")
         header_frame.pack(fill="x")
+        ttk.Label(header_frame, text='ASTRO · Second Checking', style='HeaderTitle.TLabel',
+                  font=('Segoe UI', 16, 'bold')).grid(
+            row=0, column=0, columnspan=2, sticky='w', pady=(0, 12))
 
         self.test_panel_button = ttk.Button(
             header_frame,
             text="Test Menu",
             command=self.open_test_panel,
-            style="info.TButton",
+            style="primary.Outline.TButton",
         )
-        self.test_panel_button.grid(row=0, column=0, padx=(0, 10), pady=0, ipady=4, sticky="w")
+        self.test_panel_button.grid(row=1, column=0, padx=(0, 10), pady=0, sticky="w")
 
-        self.order_entry = ttk.Entry(header_frame, width=32, font=("Segoe UI", 11))
-        self.order_entry.grid(row=0, column=1, padx=(0, 5), pady=0, ipady=4, sticky="ew")
+        self.order_reference = tk.StringVar()
+        self.order_entry = ttk.Entry(header_frame, textvariable=self.order_reference,
+                                     width=32, font=("Arial", 11))
+        self.order_entry.configure(width=12)
+        self.order_entry.grid(row=1, column=1, padx=(0, 10), pady=0, sticky="ew")
         self.order_entry.bind("<Return>", lambda event: self.run_search())
-
-        self.mode_var = tk.StringVar(value="Trade" if self.current_mode == "trade" else "Order")
-        self.mode_selector = ttk.Combobox(
-            header_frame,
-            width=8,
-            textvariable=self.mode_var,
-            values=("Order", "Trade"),
-            state="readonly",
-            font=("Segoe UI", 10),
-        )
-        self.mode_selector.grid(row=0, column=2, padx=(0, 5), pady=0, ipady=3, sticky="w")
-        self.mode_selector.bind("<<ComboboxSelected>>", self._on_mode_changed)
 
         self.search_button = ttk.Button(
             header_frame,
-            text="Search",
+            text="Search Order",
             command=self.run_search,
-            style="success.TButton",
+            style="primary.TButton",
         )
-        self.search_button.grid(row=0, column=3, padx=(0, 0), pady=0, ipady=4, sticky="w")
-        self._apply_mode_label()
+        self.search_button.grid(row=1, column=2, sticky="ew")
 
         self.version_label = ttk.Label(
             header_frame,
-            text=f"Version {self.update_service.current_version}",
-            font=("Segoe UI", 9),
-            foreground="#555",
+            text='{}  ·  Version {}'.format(
+                self.current_user.username if self.current_user else 'Operator',
+                self.update_service.current_version),
+            font=("Arial", 9),
+            style='HeaderMuted.TLabel',
         )
-        self.version_label.grid(row=0, column=4, padx=(10, 0), pady=0, sticky="e")
+        self.version_label.grid(row=0, column=2, sticky="e", pady=(0, 12))
+
+        self.order_context_label = ttk.Label(
+            header_frame, text="No order loaded. Bench checks are kept for this device.",
+            wraplength=760,
+            style='Header.TLabel',
+        )
+        self.order_context_label.grid(row=2, column=0, columnspan=2,
+                                      sticky="w", pady=(8, 0))
+        self.refresh_device_button = ttk.Button(
+            header_frame, text="Refresh Device", command=self.refresh_device,
+            style="secondary.Outline.TButton",
+        )
+        self.refresh_device_button.grid(row=2, column=2, sticky="e", pady=(8, 0))
+        self.measurement_label = ttk.Label(header_frame, text="Device measurements not captured.",
+                                           wraplength=760, style='HeaderMuted.TLabel',
+                                           font=('Arial', 9))
+        self.measurement_label.grid(row=3, column=0, columnspan=4, sticky="w", pady=(6, 0))
 
         header_frame.grid_columnconfigure(0, weight=0)
         header_frame.grid_columnconfigure(1, weight=1)
         header_frame.grid_columnconfigure(2, weight=0)
         header_frame.grid_columnconfigure(3, weight=0)
-        header_frame.grid_columnconfigure(4, weight=0)
 
-        self.canvas_frame = tk.Frame(self.root, bg=primary_bg)
+        self.canvas_frame = tk.Frame(self.root, autostyle=False, bg=primary_bg)
         self.canvas_frame.pack(expand=True, fill="both", padx=10, pady=10)
         self.canvas_frame.grid_rowconfigure(0, weight=1)
         self.canvas_frame.grid_columnconfigure(0, weight=1)
 
-        self.canvas = tk.Canvas(self.canvas_frame, bg="#fff", highlightthickness=0)
+        self.canvas = tk.Canvas(self.canvas_frame, autostyle=False, bg="#fff", highlightthickness=0)
         self.canvas.grid(row=0, column=0, sticky="nsew")
-        self.canvas.configure(borderwidth=2, relief="groove")
+        self.canvas.configure(borderwidth=0, relief="flat")
 
         self.canvas_scrollbar = ttk.Scrollbar(
             self.canvas_frame,
@@ -162,26 +273,39 @@ class AppController:
         )
         self.canvas_scrollbar.grid(row=0, column=1, sticky="ns")
         self.canvas.configure(yscrollcommand=self.canvas_scrollbar.set)
-        self.canvas.bind("<MouseWheel>", self._scroll_results_canvas)
-        self.canvas.bind("<Button-4>", self._scroll_results_canvas)
-        self.canvas.bind("<Button-5>", self._scroll_results_canvas)
+        bind_scrolling(self.canvas)
+        self.canvas._sc12_wheel = True
 
+        self.footer_shell = tk.Frame(self.root, autostyle=False, bg='#ffffff')
+        self.footer_shell.pack(side='bottom', fill='x', padx=10, pady=(0, 10),
+                               before=self.canvas_frame)
+        footer_heading = ttk.Frame(self.footer_shell, padding=(12, 8), style='Surface.TFrame')
+        footer_heading.pack(fill='x')
+        self.footer_overview = ttk.Label(footer_heading, text='Device review and order notes',
+                                         style='Surface.TLabel')
+        self.footer_overview.pack(side='left', fill='x', expand=True)
+        self.footer_toggle = ttk.Button(footer_heading, text='Hide details',
+                                        style='secondary.Outline.TButton',
+                                        command=self._toggle_footer)
+        self.footer_toggle.pack(side='right')
+        self.footer_scroll = ScrollableFrame(self.footer_shell, height=135)
+        self.footer_scroll.pack(fill='x')
         self.footer_frame = tk.Frame(
-            self.root,
-            bg="#ffffff",
+            self.footer_scroll.content,
+            autostyle=False, bg="#ffffff",
             padx=12,
             pady=8,
             highlightbackground="#d7dde8",
             highlightthickness=1,
         )
-        self.footer_frame.pack(fill="x", padx=10, pady=(0, 10))
+        self.footer_frame.pack(fill="x")
         self.footer_frame.grid_columnconfigure(0, weight=1)
         self.footer_frame.grid_columnconfigure(1, weight=0)
 
         self.spec_summary_footer = tk.Label(
             self.footer_frame,
-            text="",
-            font=("Segoe UI", 10, "bold"),
+            autostyle=False, text="",
+            font=("Arial", 10, "bold"),
             fg="#1f7a4d",
             bg="#ffffff",
             anchor="w",
@@ -191,19 +315,20 @@ class AppController:
 
         self.mdm_footer = tk.Label(
             self.footer_frame,
-            text="",
-            font=("Segoe UI", 10, "bold"),
+            autostyle=False, text="",
+            font=("Arial", 10, "bold"),
             fg="#1f7a4d",
             bg="#ffffff",
             anchor="w",
             justify="left",
         )
         self.mdm_footer.grid(row=1, column=0, sticky="ew", pady=(2, 0))
+        self.footer_frame.bind("<Configure>", self._resize_mdm_footer)
 
         self.autopilot_hash_footer = tk.Label(
             self.footer_frame,
-            text="",
-            font=("Segoe UI", 10, "bold"),
+            autostyle=False, text="",
+            font=("Arial", 10, "bold"),
             fg="#475467",
             bg="#ffffff",
             anchor="w",
@@ -213,8 +338,8 @@ class AppController:
 
         self.battery_footer = tk.Label(
             self.footer_frame,
-            text="",
-            font=("Segoe UI", 10, "bold"),
+            autostyle=False, text="",
+            font=("Arial", 10, "bold"),
             fg="#101828",
             bg="#ffffff",
             anchor="w",
@@ -224,7 +349,7 @@ class AppController:
 
         self.battery_bar_canvas = tk.Canvas(
             self.footer_frame,
-            height=22,
+            autostyle=False, height=22,
             bg="#ffffff",
             highlightthickness=0,
             bd=0,
@@ -233,21 +358,21 @@ class AppController:
 
         self.order_notes_card = tk.Frame(
             self.footer_frame,
-            bg="#f8fafc",
+            autostyle=False, bg="#f8fafc",
             highlightbackground="#d7dde8",
             highlightthickness=1,
             padx=10,
             pady=8,
         )
-        self.order_notes_card.grid(row=0, column=1, rowspan=4, sticky="ne", padx=(12, 0))
+        self.order_notes_card.grid(row=5, column=0, columnspan=2, sticky="ew", pady=(8, 0))
 
-        self.order_notes_header = tk.Frame(self.order_notes_card, bg="#f8fafc")
+        self.order_notes_header = tk.Frame(self.order_notes_card, autostyle=False, bg="#f8fafc")
         self.order_notes_header.pack(fill="x", anchor="w")
 
         self.order_notes_title = tk.Label(
             self.order_notes_header,
-            text="Order Notes",
-            font=("Segoe UI", 10, "bold"),
+            autostyle=False, text="Order Notes",
+            font=("Arial", 10, "bold"),
             fg="#101828",
             bg="#f8fafc",
             anchor="w",
@@ -264,14 +389,14 @@ class AppController:
         )
         self.order_notes_edit_button.pack(side="right")
 
-        self.order_notes_body = tk.Frame(self.order_notes_card, bg="#f8fafc")
+        self.order_notes_body = tk.Frame(self.order_notes_card, autostyle=False, bg="#f8fafc")
         self.order_notes_body.pack(fill="both", expand=False, pady=(4, 0))
 
         self.order_notes_footer = tk.Text(
             self.order_notes_body,
-            height=6,
-            width=44,
-            font=("Segoe UI", 10),
+            autostyle=False, height=3,
+            width=1,
+            font=("Arial", 10),
             fg="#475467",
             bg="#f8fafc",
             wrap="word",
@@ -300,6 +425,10 @@ class AppController:
         self.root._update_results_footer = self._update_results_footer
         self.root._update_hash_capture_status = self._update_hash_capture_status
         self.root._update_order_notes_footer = self._update_order_notes_footer
+        self.root._check_results_changed = self._preserve_check_draft
+        self.root._check_report_saved = self._check_report_saved
+        self.root.protocol("WM_DELETE_WINDOW", self._close_app)
+        self._details_resize_after_id = None
         self._render_laptop_specs()
         self.root.bind("<Configure>", self.on_resize)
         self.root.after(0, self._center_current_window)
@@ -307,7 +436,44 @@ class AppController:
         self.check_for_updates(silent=True)
 
     def on_resize(self, event):
-        pass
+        if event.widget in (self.root, self.canvas, self.footer_scroll.content,
+                            getattr(self.canvas, '_comparison_content', None)):
+            self._schedule_details_resize()
+        if event.widget != self.root:
+            return
+        width = max(240, event.width - 40)
+        self.order_context_label.config(wraplength=max(120, width - self.refresh_device_button.winfo_reqwidth() - 20))
+        self.measurement_label.config(wraplength=width)
+        self.footer_overview.config(wraplength=max(150, width - self.footer_toggle.winfo_reqwidth() - 20))
+
+    def _schedule_details_resize(self):
+        if self._details_resize_after_id is None:
+            self._details_resize_after_id = self.root.after_idle(self._fit_details_panel)
+
+    def _fit_details_panel(self):
+        self._details_resize_after_id = None
+        if not self.footer_scroll.winfo_manager():
+            return
+        details = self.footer_scroll.canvas
+        comparison = getattr(self.canvas, '_comparison_content', None)
+        baseline = max(80, min(160, int(self.root.winfo_height() * .22)))
+        target = baseline
+        if comparison is not None and comparison.winfo_exists():
+            combined = self.canvas.winfo_height() + details.winfo_height()
+            needed = max(120, comparison.winfo_reqheight() + 8)
+            spare = max(baseline, combined - needed)
+            target = min(max(baseline, self.footer_scroll.content.winfo_reqheight()), spare)
+        if int(float(details.cget('height'))) != target:
+            details.configure(height=target)
+
+    def _toggle_footer(self):
+        if self.footer_scroll.winfo_manager():
+            self.footer_scroll.pack_forget()
+            self.footer_toggle.config(text='Show details and notes')
+        else:
+            self.footer_scroll.pack(fill='x')
+            self.footer_toggle.config(text='Hide details')
+            self._schedule_details_resize()
 
     def _scroll_results_canvas(self, event) -> str:
         if event.num == 4:
@@ -321,10 +487,11 @@ class AppController:
 
     def _compute_geometry(self):
         left, top, screen_width, screen_height = get_work_area(self.root)
-        width = min(int(screen_width * 0.88), 1400)
-        height = min(int(screen_height * 0.88), 900)
-        width = max(760, min(width, screen_width - 24))
-        height = max(520, min(height, screen_height - 24))
+        scale = float(self.root.tk.call('tk', 'scaling')) / (96 / 72)
+        width = min(int(screen_width * .94), round(1400 * scale))
+        height = min(int(screen_height * .92), round(900 * scale))
+        width = min(max(760, width), screen_width - 40)
+        height = min(max(520, height), screen_height - 80)
         x = left + (screen_width - width) // 2
         y = top + (screen_height - height) // 2
         return width, height, x, y
@@ -346,16 +513,24 @@ class AppController:
         mdm_color: str,
         battery_lines,
     ) -> None:
-        log_event(
-            "Updating results footer: "
-            f"summary='{summary_text}', mdm='{mdm_text}', battery_lines={battery_lines}"
-        )
+        from services.runtime import log_diagnostic
+        log_diagnostic('comparison.footer_updated', count=len(battery_lines),
+                       state='match' if summary_text == 'All listed specs match.' else 'review')
         self.spec_summary_footer.config(text=summary_text, fg=summary_color)
+        self.footer_overview.config(text=("Review required; MDM NOT VERIFIED — details/notes"
+                                          if summary_text != "All listed specs match."
+                                          else "Listed specs match; MDM NOT VERIFIED — details/notes"))
         self.mdm_footer.config(text=mdm_text, fg=mdm_color)
         first_battery_line = battery_lines[0] if battery_lines else "Battery: Unknown"
         extra_lines = battery_lines[1:] if battery_lines and len(battery_lines) > 1 else []
         self.battery_footer.config(text="\n".join(extra_lines))
         self._set_battery_bar(first_battery_line)
+
+    def _resize_mdm_footer(self, event):
+        width = max(160, event.width - 30)
+        for label in (self.spec_summary_footer, self.mdm_footer,
+                      self.autopilot_hash_footer, self.battery_footer):
+            label.config(wraplength=width)
 
     def _set_battery_bar(self, battery_line: str) -> None:
         line = (battery_line or "Battery: Unknown").strip()
@@ -363,13 +538,8 @@ class AppController:
             self._battery_bar_name = line.split(":", 1)[0].strip() or "Battery"
         percent_match = re.search(r"(\d+)%", line)
         self._battery_bar_percent = int(percent_match.group(1)) if percent_match else None
-        self._battery_bar_charging = "charging" in line.lower()
-        if self._battery_bar_percent is None:
-            self._battery_bar_label = line
-        else:
-            base_label = re.sub(r"\s+(charging|discharging)\s*$", "", line, flags=re.IGNORECASE)
-            state_label = "Charging" if self._battery_bar_charging else "Discharging"
-            self._battery_bar_label = f"{base_label} {state_label}"
+        self._battery_bar_charging = "— Charging" in line
+        self._battery_bar_label = line
         self._battery_bar_pulse = 0.0
         self._draw_battery_bar()
         if self._battery_bar_after_id:
@@ -382,6 +552,8 @@ class AppController:
         self._schedule_battery_bar_animation()
 
     def _update_hash_capture_status(self, text: str, color: str) -> None:
+        if getattr(self, "_operator_locked", False):
+            return
         self.autopilot_hash_footer.config(text=text or "", fg=color or "#475467")
 
     def _update_order_notes_footer(
@@ -393,18 +565,18 @@ class AppController:
         self.current_order_note_order_id = order_id
         self.current_order_note_order_number = order_number
         self.order_notes_edit_button.configure(state="normal" if order_id else "disabled")
-        item_label = "trade job" if self.current_note_mode == "trade" else "order"
-        notes_value = (text or "").strip() or f"No notes attached to this {item_label}."
+        notes_value = (text or "").strip() or "No notes attached to this order."
         self.order_notes_footer.configure(state="normal")
         self.order_notes_footer.delete("1.0", "end")
         self.order_notes_footer.insert("1.0", notes_value)
         self.order_notes_footer.configure(state="disabled")
 
     def _edit_order_notes(self) -> None:
+        if not self._require_operator("notes"):
+            return
         order_id = self.current_order_note_order_id
         if not order_id:
-            item_label = "trade job" if self.current_note_mode == "trade" else "order"
-            messagebox.showwarning("Notes", f"Search for a {item_label} before editing notes.")
+            messagebox.showwarning("Notes", "Search for an order before editing notes.")
             return
 
         current_text = self.order_notes_footer.get("1.0", "end").strip()
@@ -412,34 +584,34 @@ class AppController:
             current_text = ""
 
         dialog = tk.Toplevel(self.root)
-        dialog.title("Edit Trade Job Notes" if self.current_note_mode == "trade" else "Edit Order Notes")
+        dialog.title("Edit Order Notes")
         dialog.transient(self.root)
         dialog.grab_set()
-        dialog.configure(bg="#f4f6fa")
+        dialog.configure(bg="#f1f4f8")
         dialog.minsize(460, 300)
 
-        body = tk.Frame(dialog, bg="#ffffff", padx=14, pady=14)
+        body = tk.Frame(dialog, autostyle=False, bg="#ffffff", padx=14, pady=14)
         body.pack(fill="both", expand=True, padx=12, pady=12)
 
-        title = "Trade Job Notes" if self.current_note_mode == "trade" else "Order Notes"
+        title = "Order Notes"
         if self.current_order_note_order_number:
             title = f"{title} - {self.current_order_note_order_number}"
         tk.Label(
             body,
-            text=title,
-            font=("Segoe UI", 11, "bold"),
+            autostyle=False, text=title,
+            font=("Arial", 11, "bold"),
             fg="#101828",
             bg="#ffffff",
             anchor="w",
         ).pack(fill="x", pady=(0, 8))
 
-        editor_frame = tk.Frame(body, bg="#ffffff")
+        editor_frame = tk.Frame(body, autostyle=False, bg="#ffffff")
         editor_frame.pack(fill="both", expand=True)
         editor = tk.Text(
             editor_frame,
             height=10,
             width=64,
-            font=("Segoe UI", 10),
+            font=("Arial", 10),
             wrap="word",
             undo=True,
         )
@@ -449,35 +621,89 @@ class AppController:
         editor.configure(yscrollcommand=scrollbar.set)
         editor.insert("1.0", current_text)
 
-        button_row = tk.Frame(body, bg="#ffffff")
+        button_row = tk.Frame(body, autostyle=False, bg="#ffffff")
         button_row.pack(fill="x", pady=(12, 0))
 
+        replies = queue.Queue()
+        state = {'closed': False, 'saving': False, 'after': None}
+        generation = self._search_generation
+        order_number = self.current_order_note_order_number
+        status = tk.StringVar(value='Changes are not saved until Save succeeds.')
+        ttk.Label(body, textvariable=status, wraplength=480).pack(fill='x')
+
         def close_dialog() -> None:
+            state['closed'] = True
+            if state['after'] is not None:
+                dialog.after_cancel(state['after'])
+                state['after'] = None
             dialog.destroy()
+
+        dialog.protocol('WM_DELETE_WINDOW', close_dialog)
+
+        def poll_save():
+            state['after'] = None
+            if state['closed']:
+                return
+            try:
+                ok, text, detail = replies.get_nowait()
+            except queue.Empty:
+                state['after'] = dialog.after(50, poll_save)
+                return
+            state['saving'] = False
+            if not ok:
+                editor.config(state='normal')
+                save_button.config(state='normal')
+                status.set('Save was not confirmed. Your text is retained. '
+                           'Reload/check the saved note before retrying after '
+                           'a connection error.')
+                log_event('Order note save not confirmed; editor contents retained.')
+                return
+            if (self._lookup_valid and self.current_order_note_order_id == order_id
+                    and self._search_generation == generation):
+                self._update_order_notes_footer(text, order_id, order_number)
+            close_dialog()
 
         def save_notes() -> None:
-            new_text = editor.get("1.0", "end").strip()
-            try:
-                if self.current_note_mode == "trade":
-                    save_trade_job_note_for_job_id(order_id, new_text)
-                else:
-                    save_order_note_for_order_id(order_id, new_text)
-            except Exception as exc:
-                log_event(f"Failed to save notes for {self.current_note_mode} id {order_id}: {exc}")
-                messagebox.showerror("Notes", f"Failed to save notes:\n{exc}")
+            if state['saving']:
                 return
+            new_text = editor.get('1.0', 'end').strip()
+            if (not self._lookup_valid
+                    or self.current_order_note_order_id != order_id
+                    or self._search_generation != generation):
+                status.set('Resolve the order again before saving notes.')
+                return
+            state['saving'] = True
+            self._note_save_inflight = getattr(self, "_note_save_inflight", 0) + 1
+            editor.config(state='disabled')
+            save_button.config(state='disabled')
+            status.set('Saving… Closing this editor stops waiting; it does not '
+                       'cancel the submitted database save.')
 
-            self._update_order_notes_footer(
-                new_text,
-                self.current_order_note_order_id,
-                self.current_order_note_order_number,
-            )
-            dialog.destroy()
+            def worker():
+                try:
+                    save_order_note_for_order_id(order_id, new_text)
+                except Exception as exc:
+                    from services.runtime import log_diagnostic
+                    log_diagnostic('order.note_save_failed', error=exc, stage='save')
+                    replies.put((False, new_text, str(exc)))
+                else:
+                    replies.put((True, new_text, ''))
+                finally:
+                    self._note_save_inflight -= 1
+            try:
+                threading.Thread(target=worker, daemon=True).start()
+            except Exception as exc:
+                self._note_save_inflight -= 1
+                from services.runtime import log_diagnostic
+                log_diagnostic('order.note_save_failed', error=exc, stage='launch')
+                replies.put((False, new_text, str(exc)))
+            state['after'] = dialog.after(50, poll_save)
 
-        ttk.Button(button_row, text="Cancel", command=close_dialog, style="secondary.TButton").pack(
-            side="right", padx=(8, 0)
-        )
-        ttk.Button(button_row, text="Save", command=save_notes, style="success.TButton").pack(side="right")
+        ttk.Button(button_row, text='Close editor', command=close_dialog,
+                   style='secondary.TButton').pack(side='right', padx=(8, 0))
+        save_button = ttk.Button(button_row, text='Save', command=save_notes,
+                                 style='success.TButton')
+        save_button.pack(side='right')
 
         dialog.update_idletasks()
         width = max(520, dialog.winfo_reqwidth())
@@ -489,24 +715,33 @@ class AppController:
         dialog.wait_window()
 
     def _refresh_primary_battery_state(self) -> None:
-        try:
-            percent = get_live_battery_percent(index=0)
-            charging = is_battery_charging(0)
-        except Exception:
+        from services.hardware_job import JobPoller
+        from services.measurements import battery_power_label
+        job = getattr(self, '_battery_live_job', None)
+        if job is not None and not job.closed:
             return
-
-        changed = (percent != self._battery_bar_percent) or (charging != self._battery_bar_charging)
-        self._battery_bar_percent = percent
-        self._battery_bar_charging = charging
-
-        if percent is None:
-            self._battery_bar_label = f"{self._battery_bar_name}: Unknown"
+        if time.monotonic() < getattr(self, '_battery_next_refresh', 0):
             return
+        self._battery_next_refresh = time.monotonic() + 10
 
-        state_label = "Charging" if charging else "Discharging"
-        self._battery_bar_label = f"{self._battery_bar_name}: {percent}% {state_label}"
-        if changed:
-            self._battery_bar_pulse = 0.0
+        def apply(reply):
+            live = reply.get('battery', {}) if reply.get('state') == 'complete' else {}
+            percent = live.get('percent')
+            charging = live.get('charging') is True
+            changed = (percent != self._battery_bar_percent
+                       or charging != self._battery_bar_charging)
+            self._battery_bar_percent = percent
+            self._battery_bar_charging = charging
+            if percent is None:
+                self._battery_bar_label = 'Current charge: {}'.format(
+                    live.get('state', 'unreadable').title())
+            else:
+                self._battery_bar_label = 'Current charge: {}% {}'.format(
+                    percent, battery_power_label(live))
+            if changed:
+                self._battery_bar_pulse = 0.0
+
+        self._battery_live_job = JobPoller(self.root, 'battery-live', apply, timeout=10)
 
     def _schedule_battery_bar_animation(self) -> None:
         self._battery_bar_poll_tick += 1
@@ -527,17 +762,30 @@ class AppController:
     def _draw_battery_bar(self) -> None:
         canvas = self.battery_bar_canvas
         canvas.delete("all")
-        canvas.update_idletasks()
-
-        width = max(canvas.winfo_width(), 320)
-        bar_width = min(340, width - 8)
-        bar_height = 18
-        x1 = 2
-        y1 = 2
+        width = canvas.winfo_width()
+        if width <= 1:
+            return
+        scale = float(canvas.tk.call('tk', 'scaling')) / (96 / 72)
+        padding = max(2, round(4 * scale))
+        text_id = canvas.create_text(
+            padding, padding, anchor="nw",
+            width=max(1, width - 2 * padding),
+            text=self._battery_bar_label, fill="#1f3447",
+            font=("Arial", 10, "bold"), tags="charge-label",
+        )
+        text_bounds = canvas.bbox(text_id)
+        bar_width = max(1, width - 2 * padding)
+        bar_height = max(6, round(8 * scale))
+        x1 = padding
+        y1 = text_bounds[3] + padding
         x2 = x1 + bar_width
         y2 = y1 + bar_height
+        required_height = y2 + padding
+        if int(canvas.cget('height')) != required_height:
+            canvas.configure(height=required_height)
 
-        canvas.create_rectangle(x1, y1, x2, y2, fill="#edf1f7", outline="#d7dde8")
+        canvas.create_rectangle(x1, y1, x2, y2, fill="#edf1f7",
+                                outline="#d7dde8", tags="charge-track")
 
         if self._battery_bar_percent is None:
             fill_width = 0
@@ -565,45 +813,41 @@ class AppController:
         if fill_width > 0:
             canvas.create_rectangle(x1, y1, x1 + fill_width, y2, fill=fill_color, outline="")
 
-        canvas.create_text(
-            x1 + (bar_width // 2),
-            y1 + (bar_height // 2),
-            text=self._battery_bar_label,
-            fill="#101828",
-            font=("Segoe UI", 10, "bold"),
-        )
-
-    def _on_mode_changed(self, event=None):
-        selected = self.mode_var.get().strip().lower()
-        self.current_mode = "trade" if selected == "trade" else "order"
-        self.current_note_mode = self.current_mode
-        save_app_mode(self.current_mode)
-        self._apply_mode_label()
-        self._update_order_notes_footer("")
-        log_event(f"User switched search mode to {self.current_mode}.")
-
-    def _apply_mode_label(self):
-        if hasattr(self, "search_button"):
-            label = "Trade Ref" if self.current_mode == "trade" else "Order"
-            self.search_button.configure(text=f"Search {label}")
-
     def run_search(self):
+        if not self._require_operator("read"):
+            return
+        if getattr(self, "_search_inflight", False) or getattr(self.root, "_assignment_running", False) is True:
+            return
+        runner = getattr(self, "_tests_runner", None)
+        if runner and runner.is_busy():
+            messagebox.showinfo("Tests running", "Finish the current hardware test before changing order.")
+            return
         order_id = self.order_entry.get().strip()
-        active_mode = "trade" if self.current_mode == "trade" else "order"
-        reference_label = "trade job reference" if active_mode == "trade" else "order number"
-        log_event(f"User initiated {active_mode} search for reference: {order_id}")
+        log_event(f"User initiated order search for reference: {order_id}")
         if not order_id or not re.match(r"^[A-Za-z0-9\-]{3,32}$", order_id):
             log_event(f"Invalid order ID entered: {order_id}")
-            messagebox.showerror("Invalid Reference", f"Please enter a valid {reference_label} (alphanumeric, 3-32 characters).")
+            messagebox.showerror("Invalid Reference", "Please enter a valid order number (alphanumeric, 3-32 characters).")
             log_event(f"User entered invalid order ID: '{order_id}'")
             return
 
-        log_event(f"User initiated search for {active_mode}: {order_id}")
+        if not self._preserve_check_draft():
+            return
+        self._invalidate_order_context()
+
+        log_event(f"User initiated search for order: {order_id}")
         self._showing_default_specs = False
-        self.current_note_mode = active_mode
         self._update_hash_capture_status("", "#475467")
         self._update_order_notes_footer("")
+        if getattr(self, "tests_window", None) and self.tests_window.winfo_exists():
+            self._tests_runner.on_close()
+            self.tests_window = None
 
+        self._search_inflight = True
+        self._search_generation = getattr(self, "_search_generation", 0) + 1
+        generation = self._search_generation
+        self._requested_reference = order_id
+        self.order_entry.config(state="disabled")
+        self._set_order_context(f"Searching {order_id}. Existing check drafts are preserved.")
         self.search_button.config(state="disabled")
         self.test_panel_button.config(state="disabled")
         self.canvas.delete("search_status")
@@ -619,12 +863,9 @@ class AppController:
         self.animate_dots(0)
 
         def reenable_button():
-            self.update_test_result_labels()
-            self.test_panel_button.config(state="normal")
-            self.search_button.config(state="normal")
+            self._finish_device_lookup(generation)
 
-        search_logic = search_trade_job_logic if active_mode == "trade" else search_order_logic
-        search_logic(
+        search_order_logic(
             order_id,
             self.canvas,
             self.search_button,
@@ -633,72 +874,265 @@ class AppController:
             self.root,
             self.current_user.username if self.current_user else None,
             on_complete=reenable_button,
+            on_resolved=lambda resolved: self._accept_order_search(
+                generation, order_id, resolved),
         )
 
-    def _build_helper_command(self, flag: str) -> list[str]:
-        if getattr(sys, "frozen", False):
-            return [sys.executable, flag]
-        return [sys.executable, os.path.abspath(sys.argv[0]), flag]
+    def _set_order_context(self, text):
+        label = getattr(self, "order_context_label", None)
+        if label is not None:
+            label.config(text=text)
 
-    def check_for_updates(self, silent: bool = False):
+    def _preserve_check_draft(self):
+        session = getattr(self, "_check_session", None)
+        if session is None:
+            self._check_session = CheckSession()
+            session = self._check_session
+        try:
+            if session.key is None and result_state(self.test_results) != result_state({}):
+                raise ValueError("A device serial is required before these checks can be stored safely.")
+            session.preserve(self.test_results)
+            if getattr(self, "_lookup_valid", False) and session.key and session.key[0]:
+                state = ("Unsaved checks kept as a local draft."
+                         if result_state(self.test_results) != session.baseline
+                         else "Checks ready.")
+                self._set_order_context(
+                    f"Loaded order: {session.order_number} | Device: {session.key[1]} | {state}")
+            return True
+        except (OSError, ValueError) as exc:
+            log_event(f"Could not preserve check draft: {exc}")
+            messagebox.showerror("Check draft not saved",
+                                 "Your checks remain in memory. Navigation was stopped.\n" + str(exc))
+            return False
+
+    def _stop_search_animation(self):
+        pending = getattr(self, "_search_after_id", None)
+        if pending:
+            self.root.after_cancel(pending)
+            self._search_after_id = None
+        self.canvas.delete("search_status")
+
+    def _invalidate_order_context(self):
+        self._lookup_valid = False
+        self._showing_default_specs = False
+        self._stop_search_animation()
+        for widget in self.canvas.winfo_children():
+            widget.destroy()
+        self.canvas.delete("all")
+        summary = getattr(self, "spec_summary_footer", None)
+        if summary is not None:
+            summary.config(text="No resolved order comparison.", fg="#475467")
+        self._update_hash_capture_status("", "#475467")
+        self.test_panel_button.config(state="disabled")
+        self._update_order_notes_footer("")
+        self._set_order_context("No order loaded. Submit a search to load an order.")
+
+    def _accept_order_search(self, generation, reference, resolved):
+        if (generation != self._search_generation
+                or self._requested_reference != reference):
+            return
+        try:
+            session = self._check_session
+            draft, conflict = session.candidate(
+                resolved["order_id"], resolved["serial_number"], resolved["test_results"])
+            if conflict:
+                choice = messagebox.askyesnocancel(
+                    "Local draft and saved report differ",
+                    f"Unsaved checks exist for order {resolved['order_number']} / "
+                    f"device {resolved['serial_number']}, but the saved report has changed.\n\n"
+                    "Yes: restore the local draft.\nNo: discard it and load the saved report.\nCancel: stop this lookup and keep the draft.",
+                )
+                if choice is None:
+                    return
+                if not choice:
+                    session.store.discard(tuple(draft["key"]))
+                    draft = None
+            results = session.activate(
+                resolved["order_id"], resolved["order_number"],
+                resolved["serial_number"], resolved["test_results"], draft)
+            self.test_results.clear()
+            self.test_results.update(results)
+            self._requested_reference = reference
+            self.mdm_status = qualified(resolved["mdm"])
+            guard = lambda: (self._lookup_valid
+                             and generation == self._search_generation
+                             and self._requested_reference == reference)
+            render_results(
+                self.canvas, resolved["order_number"], resolved["sku"],
+                resolved["serial_number"], resolved["specs"], resolved["details"],
+                self.test_results, resolved["mdm"],
+                self.current_user.username if self.current_user else None,
+                True, resolved["notes"], self.root, context_guard=guard,
+            )
+            if resolved["footer"]:
+                self._update_results_footer(*resolved["footer"])
+            self._update_order_notes_footer(resolved["notes"], resolved["order_id"],
+                                            resolved["order_number"])
+            self._lookup_valid = True
+            self._active_resolved = deepcopy(resolved)
+            self._visible_specs = deepcopy(resolved["specs"])
+            self._update_measurement_label()
+            suffix = "Local draft restored; not saved to Web-Tools." if draft else "Checks ready; changes are kept locally until assigned."
+            self._set_order_context(
+                f"Loaded order: {resolved['order_number']} | Device: {resolved['serial_number']} | {suffix}")
+            self.test_panel_button.config(state="normal")
+            start_hash_capture_status_update(self.root, resolved["serial_number"],
+                                             "order search", context_guard=guard)
+        except (OSError, ValueError, KeyError, tk.TclError) as exc:
+            self._invalidate_order_context()
+            messagebox.showerror("Order checks not loaded", str(exc))
+
+    def _check_report_saved(self, order_id, serial, saved_results):
+        try:
+            self._check_session.confirmed(order_id, serial, saved_results)
+            self._preserve_check_draft()
+        except (OSError, ValueError) as exc:
+            messagebox.showwarning("Check draft cleanup", "The server saved the report, but the local draft could not be cleared.\n" + str(exc))
+
+    def _finish_device_lookup(self, generation):
+        if generation != self._search_generation:
+            return
+        self._search_inflight = False
+        self._stop_search_animation()
+        self.update_test_result_labels()
+        self.test_panel_button.config(state="normal" if self._lookup_valid or self._showing_default_specs else "disabled")
+        self.search_button.config(state="normal")
+        self.order_entry.config(state="normal")
+        button = getattr(self, "refresh_device_button", None)
+        if button is not None:
+            button.config(state="normal")
+        if not self._lookup_valid and not self._showing_default_specs:
+            self._set_order_context("Order not resolved. Check drafts are preserved; search again.")
+
+    def _update_measurement_label(self):
+        label = getattr(self, "measurement_label", None)
+        if label is None:
+            return
+        pending = getattr(self, "_measurement_after_id", None)
+        if pending:
+            self.root.after_cancel(pending)
+        label.config(text=measurement_summary(self._visible_specs or {}))
+        self._measurement_after_id = self.root.after(15000, self._update_measurement_label)
+
+    def refresh_device(self):
+        if getattr(self, "_update_preparing", False):
+            return
+        if self._search_inflight or getattr(self.root, "_assignment_running", False) is True:
+            return
+        runner = self._tests_runner
+        if runner and runner.is_busy():
+            messagebox.showinfo("Tests running", "Finish the current hardware test before refreshing measurements.")
+            return
+        if not self._preserve_check_draft():
+            return
+        resolved = deepcopy(self._active_resolved) if self._lookup_valid else None
+        reference = self._requested_reference if resolved else None
+        if self.tests_window and self.tests_window.winfo_exists():
+            self._tests_runner.on_close()
+            self.tests_window = None
+        self._invalidate_order_context()
+        self._search_generation += 1
+        generation = self._search_generation
+        self._search_inflight = True
+        self.search_button.config(state="disabled")
+        self.order_entry.config(state="disabled")
+        self.refresh_device_button.config(state="disabled")
+        self._set_order_context("Refreshing device measurements; check drafts are preserved.")
+
         def worker():
             try:
-                result = subprocess.run(
-                    self._build_helper_command("--check-updates"),
-                    capture_output=True,
-                    text=True,
-                    timeout=60,
-                )
+                specs = load_laptop_specs(force_refresh=True)
+                serial = specs.get("Serial Number")
+                if not serial or serial == "Unknown" or not fresh(specs):
+                    raise ValueError("Fresh device measurements are unavailable.")
+                if resolved and serial != resolved["serial_number"]:
+                    raise ValueError("Device identity changed. The old draft was kept; search again for this device.")
+                mdm = check_mdm_lock_status()
+                def apply():
+                    if generation != self._search_generation:
+                        return
+                    try:
+                        if resolved:
+                            resolved["specs"], resolved["mdm"] = specs, mdm
+                            resolved["footer"] = build_results_footer(specs, resolved["details"], mdm)
+                            self._accept_order_search(generation, reference, resolved)
+                        else:
+                            draft, _ = self._check_session.candidate(0, serial, {})
+                            results = self._check_session.activate(0, "", serial, {}, draft)
+                            self.test_results.clear()
+                            self.test_results.update(results)
+                            self._visible_specs, self.mdm_status = specs, mdm
+                            self._showing_default_specs = True
+                            self._search_inflight = False
+                            self._render_laptop_specs()
+                            self._update_measurement_label()
+                            self._set_order_context("No order loaded. Device refreshed; bench checks are kept locally.")
+                    except (OSError, ValueError, KeyError, tk.TclError) as exc:
+                        self._invalidate_order_context()
+                        messagebox.showerror("Device refresh failed", str(exc))
+                self.root.after(0, apply)
+            except Exception as exc:
+                text = str(exc)
+                self.root.after(0, lambda: messagebox.showerror("Device refresh failed", text))
+            finally:
+                self.root.after(0, lambda: self._finish_device_lookup(generation))
+        try:
+            threading.Thread(target=worker, daemon=True).start()
+        except Exception as exc:
+            self._finish_device_lookup(generation)
+            messagebox.showerror("Device refresh failed", str(exc))
+
+    def _close_app(self):
+        if getattr(self, "_update_preparing", False):
+            messagebox.showinfo("Update preparation", "Use Cancel in the update dialog before closing.")
+            return
+        if getattr(self, "_maintenance_running", False):
+            messagebox.showinfo("Maintenance running", "Wait for Windows Update to finish before closing.")
+            return
+        if getattr(self.root, "_assignment_running", False) is True:
+            messagebox.showinfo("Assignment in progress", "Wait for the assignment outcome before closing.")
+            return
+        runner = getattr(self, "_tests_runner", None)
+        if runner and runner.is_busy():
+            messagebox.showinfo("Tests running", "Finish the current hardware test before closing.")
+            return
+        if self._preserve_check_draft():
+            self.root.destroy()
+
+    def check_for_updates(self, silent: bool = False):
+        if getattr(self, "_operator_locked", False):
+            return
+        def worker():
+            try:
+                from services.app_helper import run_helper
+                result = run_helper("updates", timeout=60)
             except Exception as err:
                 log_event(f"App update check process failed: {err}")
                 if not silent:
                     self.root.after(
                         0,
-                        lambda: messagebox.showerror(
+                        lambda detail=str(err): messagebox.showerror(
                             "Update Check Failed",
-                            f"Unable to check for updates:\n{err}",
+                            "Unable to check for updates:\n" + detail,
                         ),
                     )
                 return
 
-            if result.returncode != 0:
-                log_event(
-                    f"Update helper exited {result.returncode}: "
-                    f"{(result.stderr or result.stdout).strip()}"
-                )
-                if not silent:
-                    self.root.after(
-                        0,
-                        lambda: messagebox.showerror(
-                            "Update Check Failed",
-                            "Unable to check for updates; see log for details.",
-                        ),
-                    )
-                return
-
-            stdout = result.stdout.strip()
-            if not stdout:
-                if not silent:
-                    self.root.after(
-                        0,
-                        lambda: messagebox.showinfo(
-                            "No Updates", "You are already running the latest version."
-                        ),
-                    )
-                return
-
+            from services.update_result import decode_update_result
             try:
-                manifest_data = json.loads(stdout)
-            except json.JSONDecodeError as exc:
-                log_event(f"Failed to parse update helper output: {exc}")
+                manifest_data = decode_update_result(
+                    json.dumps(result), self.update_service.current_version)
+            except (ValueError, TypeError) as exc:
+                log_event('Invalid update helper result: {}'.format(exc))
                 if not silent:
-                    self.root.after(
-                        0,
-                        lambda: messagebox.showerror(
-                            "Update Check Failed",
-                            "Received invalid response from update helper.",
-                        ),
-                    )
+                    self.root.after(0, lambda detail=str(exc): messagebox.showerror(
+                        'Update Check Failed', detail))
+                return
+            if manifest_data is None:
+                if not silent:
+                    self.root.after(0, lambda: messagebox.showinfo(
+                        'No Updates', 'The update service confirmed no newer release '
+                        'for this version.'))
                 return
 
             manifest = UpdateManifest(
@@ -707,55 +1141,167 @@ class AppController:
                 release_page=manifest_data.get("release_page"),
                 notes=manifest_data.get("notes"),
                 metadata=manifest_data.get("metadata", {}),
+                sha256=manifest_data.get("sha256"), size=manifest_data.get("size"),
+                signer_sha256=manifest_data.get("signer_sha256"),
             )
 
             notes = (manifest.notes or "No release notes provided.").strip()
 
             def show_update_prompt():
-                message = (
-                    f"A new release ({manifest.version}) is available.\n"
-                    f"You are running version {self.update_service.current_version}.\n\n"
-                    f"{notes}\n\n"
-                    "Install it now?"
-                )
+                if getattr(self, "_operator_locked", False):
+                    return
+                automatic = self.update_service.can_auto_install(manifest)
+                action = ("Download, verify and install it now?" if automatic else
+                          "Open the trusted release page? Automatic installation "
+                          "requires release hashes and a configured trusted publisher.")
+                message = (f"Release {manifest.version} is available.\n"
+                           f"Running version: {self.update_service.current_version}.\n\n"
+                           f"{notes}\n\n{action}")
                 if messagebox.askyesno("Update Available", message):
-                    try:
-                        self.update_service.launch_update(manifest)
-                    except Exception as err:
-                        log_event(f"App update launch failed: {err}")
-                        self.root.after(
-                            0,
-                            lambda: messagebox.showerror(
-                                "Update Failed",
-                                f"Failed to install update:\n{err}",
-                            ),
-                        )
-                        return
-                    self._shutdown_for_update()
+                    self._begin_update(manifest)
 
             self.root.after(0, show_update_prompt)
 
         threading.Thread(target=worker, daemon=True).start()
 
+    def _update_busy(self):
+        runner = getattr(self, "_tests_runner", None)
+        return bool(getattr(self, "_update_preparing", False)
+            or getattr(self, "_search_inflight", False)
+            or getattr(self, "_note_save_inflight", 0)
+            or getattr(self, "_maintenance_running", False)
+            or getattr(self.root, "_assignment_running", False) is True
+            or (runner and runner.is_busy())
+            or any(isinstance(child, tk.Toplevel) for child in self.root.winfo_children()))
+
+    def _show_update_outcome(self):
+        if getattr(self, "_operator_locked", False):
+            return
+        outcome = self.update_service.last_outcome()
+        if outcome:
+            messagebox.showinfo("App update outcome",
+                "Update result: {}. Running version: {}.\n"
+                "Local settings and drafts remain in place. If recovery is needed, "
+                "use Tools > Restore previous app version; update journals and the "
+                "retained backup are beside the application.".format(
+                    outcome.replace("_", " "), self.update_service.current_version))
+
+    def restore_previous_update(self):
+        if not self._require_operator("maintenance"):
+            return
+        if messagebox.askyesno("Restore previous version", "Restore the retained previous app version and restart? Local configuration and drafts will stay in place."):
+            self._begin_update(None, restore=True)
+
+    def _begin_update(self, manifest, restore=False):
+        if self._update_busy():
+            messagebox.showinfo("Bench busy", "Finish current work and save/close dialogs before updating.")
+            return
+        if not self._preserve_check_draft():
+            return
+        self._update_preparing = True
+        self.root._update_preparing = True
+        cancel = threading.Event()
+        replies = queue.Queue()
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Preparing app update")
+        dialog.transient(self.root)
+        status = tk.StringVar(value="Preparing verified update…")
+        ttk.Label(dialog, textvariable=status, padding=18, wraplength=440).pack()
+        def cancel_request():
+            cancel.set()
+            status.set("Cancelling… The installed app will be retained.")
+        ttk.Button(dialog, text="Cancel", command=cancel_request).pack(pady=12)
+        dialog.protocol("WM_DELETE_WINDOW", cancel_request)
+        def progress(text):
+            replies.put(("progress", text))
+        def worker():
+            try:
+                if restore:
+                    result = self.update_service.restore_previous(progress, cancel)
+                else:
+                    result = self.update_service.launch_update(manifest, progress, cancel)
+                replies.put(("done", result))
+            except Exception as exc:
+                replies.put(("error", str(exc)))
+        def poll():
+            if not dialog.winfo_exists():
+                cancel.set()
+                self.update_service.cancel_prepared()
+                return
+            final = None
+            try:
+                while True:
+                    kind, value = replies.get_nowait()
+                    if kind == "progress":
+                        status.set(value)
+                    else:
+                        final = kind, value
+                        break
+            except queue.Empty:
+                pass
+            if final is None:
+                dialog.after(60, poll)
+                return
+            self._update_preparing = False
+            self.root._update_preparing = False
+            dialog.destroy()
+            kind, value = final
+            if cancel.is_set():
+                self.update_service.cancel_prepared()
+                return
+            if kind == "error":
+                self.update_service.cancel_prepared()
+                messagebox.showerror("Update not installed", value)
+            elif value is True:
+                if not self._shutdown_for_update():
+                    self.update_service.cancel_prepared()
+            # False means a manual release page opened; the app remains running.
+        threading.Thread(target=worker, daemon=True).start()
+        dialog.after(60, poll)
+
     def _shutdown_for_update(self):
+        runner = getattr(self, "_tests_runner", None)
+        if ((runner and runner.is_busy())
+                or getattr(self.root, "_assignment_running", False) is True):
+            messagebox.showinfo("Bench busy", "Finish the current test or assignment before updating.")
+            return
+        if not self._preserve_check_draft():
+            return
         log_event("Shutting down to install update.")
         try:
             self.root.quit()
         except tk.TclError:
             pass
         self.root.destroy()
-        sys.exit(0)
+        return True
 
     def animate_dots(self, count):
         if self.canvas.find_withtag("search_status"):
             dots = "." * (count % 4)
             text = f"Searching{dots}"
             self.canvas.itemconfigure("search_status", text=text)
-            self.root.after(500, lambda: self.animate_dots(count + 1))
+            self._search_after_id = self.root.after(500, lambda: self.animate_dots(count + 1))
 
     def _render_laptop_specs(self):
-        self._showing_default_specs = True
-        specs = load_laptop_specs()
+        if (not self._showing_default_specs or self._search_inflight
+                or self._lookup_valid):
+            return
+        specs = self._visible_specs
+        if not specs or not fresh(specs):
+            self.refresh_device()
+            return
+        if self._check_session.key is None:
+            try:
+                serial = specs.get("Serial Number")
+                draft, _ = self._check_session.candidate(0, serial, self.test_results)
+                results = self._check_session.activate(0, "", serial,
+                                                       self.test_results, draft)
+                self.test_results.clear()
+                self.test_results.update(results)
+                if draft:
+                    self._set_order_context("Local bench draft restored for device " + str(serial))
+            except (OSError, ValueError) as exc:
+                messagebox.showerror("Bench draft not loaded", str(exc))
         placeholder_details = {
             "Model": "Unknown",
             "CPU": "Unknown",
@@ -780,6 +1326,8 @@ class AppController:
             self.mdm_status = check_mdm_lock_status()
         mdm_status = self.mdm_status
         def draw():
+            if not self._showing_default_specs or self._search_inflight:
+                return
             self._update_results_footer(
                 *build_results_footer(specs, placeholder_details, mdm_status)
             )
@@ -807,26 +1355,7 @@ class AppController:
         if not self.mdm_status:
             return
 
-        status = self.mdm_status
-        mdm_state = status.get("state", "error")
-        mdm_details = status.get("details", "")
-
-        if mdm_state == "locked":
-            mdm_text = "Microsoft MDM lock detected."
-            if mdm_details:
-                mdm_text = f"{mdm_text}\n{mdm_details}"
-            mdm_color = "#b42318"
-        elif mdm_state == "not_locked":
-            mdm_text = "No Microsoft MDM lock detected."
-            if mdm_details:
-                mdm_text = f"{mdm_text}\n{mdm_details}"
-            mdm_color = "#1f7a4d"
-        elif mdm_state == "unsupported":
-            mdm_text = mdm_details or "Microsoft MDM lock checks are not supported on this platform."
-            mdm_color = "#475467"
-        else:
-            mdm_text = mdm_details or "Unable to retrieve Microsoft MDM lock status."
-            mdm_color = "#b54708"
+        mdm_text, mdm_color = mdm_summary(self.mdm_status)
 
         self.mdm_footer.config(text=mdm_text, fg=mdm_color)
 
@@ -837,39 +1366,19 @@ class AppController:
 
         def worker():
             try:
-                result = subprocess.run(
-                    self._build_helper_command("--refresh-mdm"),
-                    capture_output=True,
-                    text=True,
-                    timeout=120,
-                )
+                from services.app_helper import run_helper
+                status = run_helper("mdm", timeout=30)
             except Exception as err:
                 log_event(f"MDM refresh process failed: {err}")
-                return
+                status = mdm_evidence("error", "Background local evidence refresh failed or timed out.")
 
-            if result.returncode != 0:
-                log_event(
-                    f"MDM refresh helper exited {result.returncode}: "
-                    f"{(result.stderr or result.stdout).strip()}"
-                )
-                return
+            def apply_status():
+                if (not getattr(self, "_operator_locked", False)
+                        and self._showing_default_specs and not self._search_inflight):
+                    self.mdm_status = qualified(status)
+                    self._apply_mdm_status_to_footer_only()
 
-            stdout = result.stdout.strip()
-            if not stdout:
-                log_event("MDM refresh helper finished with no status.")
-                return
-
-            try:
-                status = json.loads(stdout)
-            except json.JSONDecodeError as exc:
-                log_event(f"Failed to parse MDM refresh output: {exc}")
-                return
-
-            self.mdm_status = status
-            if self._showing_default_specs:
-                self.root.after(0, self._render_laptop_specs)
-            else:
-                self.root.after(0, self._apply_mdm_status_to_footer_only)
+            self.root.after(0, apply_status)
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -879,12 +1388,7 @@ class AppController:
             if label_widget:
                 try:
                     if label_widget.winfo_exists():
-                        if symbol == "pass":
-                            display = "OK"
-                        elif symbol == "fail":
-                            display = "X"
-                        else:
-                            display = "Not Run"
+                        display = badge_text(self.test_results, result_key)
                         label_widget.config(text=display)
                     else:
                         self.test_labels[f"{result_key}_label"] = None
@@ -892,6 +1396,8 @@ class AppController:
                     self.test_labels[f"{result_key}_label"] = None
 
     def open_test_panel(self):
+        if not self._require_operator("test"):
+            return
         log_event("Opening test panel.")
         if self.tests_window and tk.Toplevel.winfo_exists(self.tests_window):
             log_event("Test panel already open. Bringing it to focus.")
@@ -900,59 +1406,59 @@ class AppController:
             return
 
         test_keys = ["keyboard", "speaker", "microphone", "display", "webcam", "usb", "wifi"]
-        test_values = [self.test_results.get(k, "Not Run") for k in test_keys]
-
-        if all(v == "Not Run" for v in test_values):
-            messagebox.showwarning("Warning", "Not connected to database, failed to load test results.")
-
         for key in test_keys:
             if key not in self.test_results:
                 self.test_results[key] = "Not Run"
 
-        print(f"[DEBUG] Passing activation to UI: {self.test_results.get('activation')}")
 
-        tests_window_instance = TestsWindow(self.root, self.test_results, self.test_labels)
+        tests_window_instance = TestsWindow(
+            self.root, self.test_results, self.test_labels,
+            operator=self.current_user.username if self.current_user else None,
+            authorization_check=self._require_operator,
+            context_label=(f"Order: {self._check_session.order_number or 'bench checks'} | "
+                           f"Device: {self._check_session.key[1]}"
+                           if self._check_session.key else "Bench checks: device not yet identified"),
+        )
+        self._tests_runner = tests_window_instance
         self.tests_window = tests_window_instance.tests_window
 
         def on_tests_window_close():
-            self.tests_window.destroy()
-            self.tests_window = None
+            tests_window_instance.on_close()
+            if not tests_window_instance.tests_window.winfo_exists():
+                self.tests_window = None
 
         self.tests_window.protocol("WM_DELETE_WINDOW", on_tests_window_close)
 
     def run_windows_update_script(self):
+        if not self._require_operator("maintenance"):
+            return
+        if self._update_busy():
+            messagebox.showinfo("Bench busy", "Finish current work and close dialogs before maintenance.")
+            return
+        if not messagebox.askyesno("Install Windows updates", "Check for and install Windows updates on this computer?\n\nWindows will request administrator approval for this action. No automatic restart is requested. Save other work first."):
+            return
+        self._maintenance_running = True
         def worker():
             try:
-                self.update_status("Running Windows Update script...")
-                if getattr(sys, "frozen", False):
-                    base_path = sys._MEIPASS
-                else:
-                    base_path = os.path.dirname(os.path.abspath(__file__))
-                script_path = os.path.join(base_path, "Script.ps1")
-                temp_script = os.path.join(os.environ.get("TEMP", "/tmp"), "Script.ps1")
-                shutil.copyfile(script_path, temp_script)
-
-                ps_command = [
-                    "powershell",
-                    "-NoProfile",
-                    "-ExecutionPolicy",
-                    "Bypass",
-                    "-Command",
-                    f'Start-Process powershell -ArgumentList \'-NoProfile -ExecutionPolicy Bypass -File "{temp_script}"\' -Verb RunAs -Wait; exit $LASTEXITCODE',
-                ]
-
-                subprocess.run(ps_command, check=True)
+                self.update_status("Preparing and running Windows Update...")
+                from services.maintenance import run_windows_updates
+                run_windows_updates()
                 self.root.after(0, lambda: messagebox.showinfo(
                     "Windows Update",
                     "Windows Update script has finished.\nCheck Windows Update history for details."
                 ))
-            except subprocess.CalledProcessError as err:
-                msg = f"Windows Update script failed to run:\n{err}"
-                self.root.after(0, lambda: messagebox.showerror("Update Error", msg))
-            except Exception as err:
-                msg = f"Unexpected error running Windows Update script:\n{err}"
-                self.root.after(0, lambda: messagebox.showerror("Update Error", msg))
+            except MaintenanceCancelled as err:
+                self.root.after(0, lambda detail=str(err): messagebox.showinfo(
+                    "Windows Update cancelled", detail))
+            except MaintenanceError as err:
+                self.root.after(0, lambda detail=str(err): messagebox.showerror(
+                    "Windows Update", detail))
+            except Exception:
+                log_event("Windows Update failed unexpectedly; successful completion was not confirmed.")
+                self.root.after(0, lambda: messagebox.showerror(
+                    "Windows Update", "Windows Update could not complete. Retry or ask an administrator to check this machine."))
             finally:
+                self._maintenance_running = False
                 self.update_status("")
 
         threading.Thread(target=worker, daemon=True).start()

@@ -1,84 +1,76 @@
-# Database schema
+# Database compatibility and migrations
 
-This application consolidates eBay and WooCommerce orders inside a single MySQL
-schema. Orders are stored once in the `order` table, while assigned device
-serials, recorded hardware tests, and captured specification details live in
-`order_serials`. The SQL required to provision both tables is provided in
-[`sql/001_create_order.sql`](../sql/001_create_order.sql).
+Web-Tools owns the database schema. The desktop never creates or alters tables.
+`sql/001_create_order.sql` is retained as historical reference only: it is not a
+current provisioning or incremental migration script. `CREATE TABLE IF NOT EXISTS`
+does not upgrade definitions on existing tables.
 
-## `order`
+## Supported contract
 
-The `order` table captures the marketplace metadata for each line item so the
-application can look up an SKU regardless of the marketplace that produced it.
+Desktop contract 2 is defined in `src/db/schema.py`; minimum matching server
+migration `0d9e0f1a2b3c` follows the SC15 bridge `0c8d9e0f1a2b`. Later equivalent schemas are
+accepted by structure, without requiring the desktop account to read Alembic
+administrative tables. The check queries information_schema.columns with bound
+parameters before returning each normal connection; it does not cache success.
+Missing required tables/columns or failed inspection closes the connection and
+blocks use. Login retains Retry after the administrator corrects the schema.
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| `id` | `INT` | Surrogate primary key for internal joins. |
-| `local_id` | `INT` | Optional sequential identifier used for human friendly numbering. |
-| `platform` | `VARCHAR(32)` | Marketplace identifier such as `ebay` or `woocommerce`. |
-| `external_id` | `VARCHAR(128)` | Order reference from the originating marketplace. |
-| `sku` | `VARCHAR(128)` | SKU for the individual line item; multiple rows can exist per order. |
-| `title`, `status`, `customer` | `VARCHAR` fields | Optional descriptive metadata displayed in the UI. |
-| `total` | `DECIMAL(10,2)` | Monetary total reported by the marketplace. |
-| `order_date` | `DATETIME` | Timestamp from the marketplace payload. |
-| `raw_data` | `JSON` | Full raw connector payload for auditing and reprocessing. |
-| `created_at`, `updated_at` | `DATETIME` | Automatic timestamps tracking inserts and updates. |
-| `order_number` (virtual) | derived property | Within the application layer, display order numbers are generated as `PC-####` for `backmarket`, `remanufactured stock`, and `remanufactured-stock`; all other platforms use `LPAD(COALESCE(local_id, id), 5, '0')` (for example `00001`). |
+Required tables and purpose:
 
-Additional integrity rules:
+| Table | Desktop use |
+| --- | --- |
+| order | Resolve exact display/external references and SKU |
+| order_serials | Assigned serial list and legacy check-state read |
+| order_note | Read saved notes; writes now use the authenticated service |
+| custom_order_item | Saved per-item specification candidates |
+| dropdown_option | Specification metadata |
+| attribute_term_metadata | SKU tag metadata |
+| attribute_dropdown_map | Specification category mapping |
+| sku_detection_rule | Administrator-managed detection rules |
 
-- A unique constraint on `(platform, external_id, sku)` prevents duplicate line
-  items when syncing the same order multiple times.
-- `local_id` is unique so the UI can safely display `00001`, `00002`, etc.
-  using the derived `order_number` property without gaps.
-- An index on `platform` keeps marketplace specific lookups fast.
-- Backward compatibility is maintained by allowing numeric reference lookups
-  against `local_id` and `id` in addition to current display/external formats.
+The contract checks required column presence/visibility, not every server index,
+constraint, type or row privilege. API assignment/removal/report writes still go
+through the matching server and its capability checks. An unrelated table or newer
+extra column does not make a schema incompatible.
 
-## `order_serials`
+## Setup and upgrade
 
-Each physical device that has been matched to an order is tracked in the
-`order_serials` table along with the specification snapshot and recorded test
-results.
+Use private deployment settings and a separate administrator account. Stop clients
+and give setup exclusive database access. Verify backups before existing-schema work.
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| `id` | `BIGINT` | Surrogate primary key. |
-| `order_id` | `INT` | Foreign key pointing at `order.id`. |
-| `order_number` | `VARCHAR(64)` | Cached string used by the existing UI for lookups without an extra join. |
-| `serial_number` | `VARCHAR(64)` | Unique hardware identifier. |
-| `sku` | `VARCHAR(128)` | SKU selected during assignment so later views can display the matched item. |
-| `cpu`, `ram`, `ssd`, `model`, `resolution`, `windows`, `battery` | `VARCHAR(128)` | Specification snapshot captured when the device was assigned. |
-| `test_keyboard`, `test_speaker`, `test_microphone`, `test_display`, `test_webcam`, `test_usb`, `test_wifi`, `activation` | `VARCHAR(16)` | Stored test outcomes normalised to `pass`, `fail`, or `n/a`. |
-| `assigned_at` | `DATETIME` | Timestamp capturing when the serial was linked to the order. |
+- Empty database: in Web-Tools, run `flask --app run.py schema init-empty`. It
+  refuses any existing tables, creates current primary model tables, then records
+  the repository migration head. The external Aiken bind is untouched. The old
+  root-to-head replay currently fails on duplicate SKU-rule creation; use this
+  explicit fresh-install path rather than replaying historic initialization.
+- Existing versioned database: run `flask --app run.py db upgrade`, then
+  `flask --app run.py db current`. The SC15 bridge only adds missing legacy fields;
+  it preserves existing values and definitions and can resume after partial DDL.
+- Unversioned existing database: follow the server's reviewed legacy bootstrap
+  instructions with backup/inspection. Never stamp head merely to hide missing
+  migrations. `schema init-empty` deliberately refuses this case.
 
-`order_serials` enforces a unique serial number so a device can only appear once
-in the table. Indexes on `order_id`, `order_number`, and `sku` support the
-direct lookup paths used by the current application logic. The foreign key
-inherits cascade rules from `order` so removing an order automatically clears
-related serial assignments.
+Then from SecondChecking run `python src/main.py --check-schema`. Exit 0 means
+configuration, bounded SELECT 1 and desktop contract validation succeeded; exit 1
+reports a safe setup/compatibility failure. It does not verify API authorization.
+Validate the matching API and main-app workflow in isolation before deployment.
 
-## Applying the schema
+The bridge adds missing sku/battery/battery2/microphone/Wi-Fi/MDM/operator/status
+columns and missing user.must_reset_password (default true). The migration is
+forward-only: columns may already predate it and contain data, so downgrade refuses
+to delete them. Restore a verified backup for a full database rollback. Fresh setup
+may leave unstamped partial tables on DDL failure; inspect before retrying.
 
-Run the statements in [`sql/001_create_order.sql`](../sql/001_create_order.sql)
-against your MySQL instance to migrate to the consolidated schema:
+## Desktop permissions
 
-```sql
-SOURCE sql/001_create_order.sql;
-```
+The desktop needs SELECT on the eight contract tables. Login, password resets and
+note writes now use authenticated Web-Tools services; no user-table SELECT or
+INSERT/UPDATE/DELETE/CREATE/ALTER/DROP grants are needed. Migrations use separate
+credentials. Retire old clients before reducing grants. SC16 implemented operator
+sessions and authenticated attribution locally; deployment and transport/OS-boundary
+acceptance remain outstanding.
 
-When running directly from a shell, you can feed the schema file into MySQL in
-one step (replace the placeholders with your credentials):
+See [SC15 verification and pending acceptance](sc15-schema-migrations.md).
 
-```bash
-MYSQL_PWD="${DB_PASSWORD}" mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" < sql/001_create_order.sql
-```
 
-The script uses `CREATE TABLE IF NOT EXISTS`, making it safe to execute during
-initial provisioning or incremental deployments.
-
-The application also performs a lightweight schema check on startup and will
-apply any missing `order_serials` columns (such as `battery2`) automatically.
-Duplicate-column errors from a previously applied schema are treated as
-harmless so the app can recover even when the schema already contains the
-expected fields.
+SC16 supersedes the earlier direct password/note write grants. See [operator sessions](sc16-operator-sessions.md).

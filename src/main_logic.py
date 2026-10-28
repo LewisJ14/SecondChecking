@@ -1,4 +1,4 @@
-﻿# main_logic.py
+# main_logic.py
 import threading
 import tkinter as tk
 import wmi
@@ -6,7 +6,14 @@ import re
 import datetime
 import os
 import subprocess
+from copy import deepcopy
 from tkinter import messagebox
+from ui.assignment_review import prompt_assignment_review
+from services.storage import compare_storage, resolve_requirement
+from services.measurements import measurement_summary, fresh
+from services.mdm_evidence import qualified, summary as mdm_summary, needs_review as mdm_needs_review
+from services.check_results import (normalise, snapshot, review_lines,
+                                    needs_reason, start_measurement)
 from typing import Any, Dict, List, Optional, Tuple
 
 from db.database import get_db_connection
@@ -14,16 +21,18 @@ from utils.helpers import (
     log_event,
     extract_details_from_sku,
     get_live_battery_percent,
+    get_live_battery_state,
     parse_percent,
     check_mdm_lock_status,
     check_activation_status,
     is_battery_charging,
     cpu_specs_are_compatible,
+    specification_matches,
     storage_specs_are_compatible,
     capture_autopilot_hash_csv,
     upload_hash_csv,
     upload_stock_unit_check_report,
-    upload_trade_job_check_report,
+    load_saved_check_results,
 )
 from utils.specs import (
     capture_batteryinfoview_report,
@@ -34,44 +43,6 @@ from logic.view_serials_logic import open_serial_viewer
 import traceback
 import ttkbootstrap as tb
 from ttkbootstrap import ttk
-
-
-def _close_existing_sysprep_processes() -> bool:
-    if os.name != "nt":
-        return True
-
-    creationflags = subprocess.CREATE_NO_WINDOW
-    try:
-        tasklist = subprocess.run(
-            ["tasklist", "/FI", "IMAGENAME eq Sysprep.exe", "/NH"],
-            capture_output=True,
-            text=True,
-            creationflags=creationflags,
-            timeout=10,
-        )
-        if "sysprep.exe" not in tasklist.stdout.lower():
-            log_event("No existing Sysprep process found before launch.")
-            return True
-
-        taskkill = subprocess.run(
-            ["taskkill", "/IM", "Sysprep.exe", "/F", "/T"],
-            capture_output=True,
-            text=True,
-            creationflags=creationflags,
-            timeout=15,
-        )
-        if taskkill.returncode != 0:
-            details = (taskkill.stderr or taskkill.stdout or "").strip()
-            messagebox.showerror("Sysprep Error", f"Failed to close existing Sysprep window:\n{details}")
-            log_event(f"Sysprep preflight failed: could not close existing process. {details}")
-            return False
-
-        log_event("Closed existing Sysprep process before launching /oobe /shutdown.")
-        return True
-    except Exception as exc:
-        messagebox.showerror("Sysprep Error", f"Failed to check for existing Sysprep process:\n{exc}")
-        log_event(f"Sysprep preflight failed while checking existing process: {exc}")
-        return False
 
 
 def _read_optional_hash_file(path: Optional[str]) -> Tuple[str, str]:
@@ -91,66 +62,86 @@ def _read_optional_hash_file(path: Optional[str]) -> Tuple[str, str]:
     return os.path.basename(path), ""
 
 
-def _run_sysprep_shutdown() -> bool:
-    sysprep_dir = os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "System32", "Sysprep")
-    sysprep_exe = os.path.join(sysprep_dir, "Sysprep.exe")
-    if not os.path.exists(sysprep_exe):
-        messagebox.showerror("Sysprep Error", f"Sysprep.exe was not found:\n{sysprep_exe}")
-        log_event(f"Sysprep launch failed: executable not found at {sysprep_exe}")
-        return False
-
-    if not _close_existing_sysprep_processes():
-        return False
-
-    try:
-        creationflags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
-        subprocess.Popen(
-            [sysprep_exe, "/oobe", "/shutdown"],
-            cwd=sysprep_dir,
-            creationflags=creationflags,
-        )
-        log_event("Sysprep launched with /oobe /shutdown after serial assignment.")
-        return True
-    except Exception as exc:
-        messagebox.showerror("Sysprep Error", f"Failed to launch Sysprep:\n{exc}")
-        log_event(f"Sysprep launch failed: {exc}")
-        return False
+def _run_sysprep_shutdown():
+    from services.maintenance import run_sysprep_shutdown
+    run_sysprep_shutdown()
+    return True
 
 
 def show_assign_success_dialog(root: tk.Tk, message: str) -> None:
+    state = {"running": False}
     dialog = tk.Toplevel(root)
     dialog.title("Success")
     dialog.transient(root)
     dialog.grab_set()
     dialog.resizable(False, False)
-    dialog.configure(bg="#f4f6fa")
+    dialog.configure(bg="#f1f4f8")
 
-    body = tk.Frame(dialog, bg="#ffffff", padx=18, pady=16)
+    body = tk.Frame(dialog, autostyle=False, bg="#ffffff", padx=18, pady=16)
     body.pack(fill="both", expand=True, padx=12, pady=12)
 
     tk.Label(
         body,
-        text=message,
-        font=("Segoe UI", 10),
+        autostyle=False, text=message,
+        font=("Arial", 10),
         fg="#101828",
         bg="#ffffff",
         justify="left",
         anchor="w",
     ).pack(fill="x", pady=(0, 14))
 
-    button_row = tk.Frame(body, bg="#ffffff")
+    button_row = tk.Frame(body, autostyle=False, bg="#ffffff")
     button_row.pack(anchor="e")
 
     def close_dialog() -> None:
+        if state["running"]:
+            return
         dialog.destroy()
 
     def sysprep_and_close() -> None:
-        if _run_sysprep_shutdown():
-            dialog.destroy()
+        if state["running"]:
+            return
+        if not messagebox.askyesno("Prepare and shut down this computer",
+                "Sysprep will prepare Windows for first use and shut down this computer. "
+                "Save all other work. Continue and request administrator approval?", parent=dialog):
+            return
+        import queue
+        state["running"] = True
+        replies = queue.Queue()
+        sysprep_button.configure(state="disabled")
+        ok_button.configure(state="disabled")
+        dialog.protocol("WM_DELETE_WINDOW", lambda: None)
+
+        def worker():
+            try:
+                _run_sysprep_shutdown()
+            except Exception as exc:
+                replies.put(str(exc))
+            else:
+                replies.put(None)
+
+        def poll():
+            try:
+                error = replies.get_nowait()
+            except queue.Empty:
+                dialog.after(60, poll)
+                return
+            if error:
+                state["running"] = False
+                messagebox.showerror("Sysprep did not confirm success", error, parent=dialog)
+                sysprep_button.configure(state="normal")
+                ok_button.configure(state="normal")
+                dialog.protocol("WM_DELETE_WINDOW", close_dialog)
+            else:
+                dialog.destroy()
+
+        threading.Thread(target=worker, daemon=True).start()
+        dialog.after(60, poll)
 
     ok_button = ttk.Button(button_row, text="OK", command=close_dialog, style="secondary.TButton")
     ok_button.pack(side="left", padx=(0, 8))
-    ttk.Button(button_row, text="OK & Sysprep", command=sysprep_and_close, style="success.TButton").pack(side="left")
+    sysprep_button = ttk.Button(button_row, text="OK & Sysprep", command=sysprep_and_close, style="success.TButton")
+    sysprep_button.pack(side="left")
 
     dialog.protocol("WM_DELETE_WINDOW", close_dialog)
     dialog.bind("<Return>", lambda event: close_dialog())
@@ -163,6 +154,74 @@ def show_assign_success_dialog(root: tk.Tk, message: str) -> None:
     dialog.geometry(f"{width}x{height}+{x}+{y}")
     ok_button.focus_set()
     dialog.wait_window()
+
+
+def _call_on_ui(root, callback, *args):
+    """Run a dialog on the Tk thread and return its answer to the worker."""
+    if threading.current_thread() is threading.main_thread():
+        return callback(*args)
+    completed = threading.Event()
+    outcome = {}
+
+    def invoke():
+        try:
+            outcome["value"] = callback(*args)
+        except Exception as exc:
+            outcome["error"] = exc
+        finally:
+            completed.set()
+
+    root.after(0, invoke)
+    completed.wait()
+    if "error" in outcome:
+        raise outcome["error"]
+    return outcome.get("value")
+
+
+def start_serial_assignment(root, button, assignment):
+    """Keep Tk responsive while preventing concurrent edits or assignments."""
+    if getattr(root, "_update_preparing", False) is True:
+        return
+    if getattr(root, "_assignment_running", False):
+        return
+    root._assignment_running = True
+    button.configure(state="disabled")
+    progress = tk.Toplevel(root)
+    progress.title("Assigning Serial")
+    progress.transient(root)
+    progress.grab_set()
+    progress.protocol("WM_DELETE_WINDOW", lambda: None)
+    ttk.Label(
+        progress, text="Saving checks to Web-Tools. Please wait...", padding=24,
+    ).pack()
+
+    def finish():
+        root._assignment_running = False
+        if progress.winfo_exists():
+            progress.destroy()
+        if button.winfo_exists():
+            button.configure(state="normal")
+
+    def worker():
+        import pythoncom
+
+        initialized = False
+        try:
+            pythoncom.CoInitialize()
+            initialized = True
+            assignment()
+        except Exception as exc:
+            _call_on_ui(root, messagebox.showerror, "Assignment Error", str(exc))
+        finally:
+            if initialized:
+                pythoncom.CoUninitialize()
+            root.after(0, finish)
+
+    try:
+        threading.Thread(target=worker, daemon=True).start()
+    except Exception:
+        finish()
+        raise
 
 
 def _row_to_identity(row) -> Optional[Tuple[int, str]]:
@@ -271,15 +330,7 @@ def prompt_for_marketplace_search(root: tk.Tk) -> bool:
 def normalise_test_result(value: Optional[str]) -> str:
     """Convert UI test labels to the canonical database value."""
 
-    if not value:
-        return "n/a"
-
-    lowered = value.strip().lower()
-    if lowered in {"pass", "fail"}:
-        return lowered
-    if lowered in {"n/a", "na", "not run", "not_run", "pending"}:
-        return "n/a"
-    return "n/a"
+    return normalise(value)
 
 
 def prompt_for_sku_selection(
@@ -361,14 +412,7 @@ def prompt_for_sku_selection(
     selection_event.wait()
     return selection["value"]
 
-# Detect number of batteries and set labels
-try:
-    c = wmi.WMI()
-    batteries = c.Win32_Battery()
-    battery_labels = ["Battery"] if len(batteries) == 1 else ["Battery 1", "Battery 2"]
-except Exception as e:
-    log_event(f"Error detecting batteries: {e}")
-    battery_labels = ["Battery"]  # fallback to just one label
+battery_labels = ["Battery"]  # Actual per-capture count is used by the footer.
 
 def battery_charging_status(index: int = 0) -> bool:
     """Return True when the specified battery reports an active charging state."""
@@ -526,12 +570,13 @@ def merge_spec_details(primary: Dict[str, str], fallback: Dict[str, str]) -> Dic
             merged[field] = fallback_value
         else:
             merged[field] = "Unknown"
+    merged["SSD"] = resolve_requirement(merged["SSD"], (fallback or {}).get("SSD"))
     return merged
 
 
-def load_laptop_specs():
+def load_laptop_specs(force_refresh=False):
     try:
-        return get_laptop_specs()
+        return get_laptop_specs(force_refresh=force_refresh)
     except Exception as spec_err:
         log_event(f"Error during get_laptop_specs: {spec_err}")
         return {
@@ -549,90 +594,30 @@ def load_laptop_specs():
 
 
 def load_test_results(cursor, order_id, serial_number):
-    cursor.execute(
-        """
-            SELECT test_keyboard, test_speaker, test_microphone, test_display, test_webcam, test_usb, test_wifi
-            FROM order_serials
-            WHERE order_number = %s AND serial_number = %s
-        """,
-        (order_id, serial_number),
-    )
-    row = cursor.fetchone()
-    if row:
-        def to_ui_value(value: Optional[str]) -> str:
-            if not value:
-                return "Not Run"
-            lowered = value.strip().lower()
-            if lowered == "pass":
-                return "pass"
-            if lowered == "fail":
-                return "fail"
-            if lowered in {"n/a", "na"}:
-                return "Not Run"
-            return value
+    """Load complete saved results, including Wi-Fi and override provenance."""
+    from services.check_results import TEST_KEYS
 
-        return {
-            "keyboard": to_ui_value(row[0]),
-            "speaker": to_ui_value(row[1]),
-            "microphone": to_ui_value(row[2]),
-            "display": to_ui_value(row[3]),
-            "webcam": to_ui_value(row[4]),
-            "usb": to_ui_value(row[5]),
-            "wifi": to_ui_value(row[6]),
-        }
-    return {
-        "keyboard": "Not Run",
-        "speaker": "Not Run",
-        "microphone": "Not Run",
-        "display": "Not Run",
-        "webcam": "Not Run",
-        "usb": "Not Run",
-        "wifi": "Not Run",
-    }
-
-
-def load_trade_test_results(cursor, job_reference, serial_number):
-    cursor.execute(
-        """
-            SELECT test_keyboard, test_speaker, test_microphone, test_display, test_webcam, test_usb
-            FROM job_serials
-            WHERE job_reference = %s AND serial_number = %s
-        """,
-        (job_reference, serial_number),
-    )
-    row = cursor.fetchone()
-    if not row:
-        return {
-            "keyboard": "Not Run",
-            "speaker": "Not Run",
-            "microphone": "Not Run",
-            "display": "Not Run",
-            "webcam": "Not Run",
-            "usb": "Not Run",
-            "wifi": "Not Run",
-        }
-
-    def to_ui_value(value: Optional[str]) -> str:
-        if not value:
-            return "Not Run"
-        lowered = value.strip().lower()
-        if lowered == "pass":
-            return "pass"
-        if lowered == "fail":
-            return "fail"
-        if lowered in {"n/a", "na"}:
-            return "Not Run"
-        return value
-
-    return {
-        "keyboard": to_ui_value(row[0]),
-        "speaker": to_ui_value(row[1]),
-        "microphone": to_ui_value(row[2]),
-        "display": to_ui_value(row[3]),
-        "webcam": to_ui_value(row[4]),
-        "usb": to_ui_value(row[5]),
-        "wifi": "Not Run",
-    }
+    saved = load_saved_check_results(order_id, serial_number)
+    results = dict.fromkeys(TEST_KEYS, "Not Run")
+    results["_overrides"] = {}
+    results["_coverage"] = {}
+    results["_provenance_unknown"] = False
+    results["_history_unknown"] = []
+    if saved.get("found"):
+        tests = saved.get("test_results")
+        overrides = saved.get("test_overrides")
+        if not isinstance(tests, dict) or not isinstance(overrides, dict):
+            raise ValueError("Web-Tools returned invalid saved results.")
+        results.update({key: normalise(tests.get(key)) for key in TEST_KEYS})
+        results["_overrides"] = deepcopy(overrides)
+        coverage = saved.get("test_coverage", {})
+        if not isinstance(coverage, dict):
+            raise ValueError("Web-Tools returned invalid test coverage.")
+        results["_coverage"] = deepcopy(coverage)
+        results["_provenance_unknown"] = not saved.get("provenance_known", False)
+        results["_history_unknown"] = saved.get("history_unknown", list(TEST_KEYS)
+                                                if results["_provenance_unknown"] else [])
+    return results
 
 
 def load_order_note_for_order_id(cursor, order_db_id: int) -> str:
@@ -651,7 +636,8 @@ def load_order_note_for_order_id(cursor, order_db_id: int) -> str:
         )
         row = cursor.fetchone()
     except Exception as exc:
-        log_event(f"Order note lookup failed for order id {order_db_id}: {exc}")
+        from services.runtime import log_diagnostic
+        log_diagnostic('order.note_read_failed', error=exc, stage='read')
         return ""
 
     if not row:
@@ -666,180 +652,13 @@ def load_order_note_for_order_id(cursor, order_db_id: int) -> str:
 
 
 def save_order_note_for_order_id(order_db_id: int, notes: str) -> None:
-    """Create or update the single notes row attached to an order."""
-
-    conn = get_db_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-                INSERT INTO order_note (order_id, notes, created_at, updated_at)
-                VALUES (%s, %s, NOW(), NOW())
-                ON DUPLICATE KEY UPDATE
-                    notes = VALUES(notes),
-                    updated_at = NOW()
-            """,
-            (order_db_id, notes or ""),
-        )
-        conn.commit()
-        log_event(f"Saved order notes for order id {order_db_id}.")
-    finally:
-        try:
-            conn.close()
-        except Exception:
-            pass
-
-
-def _job_row_to_identity(row) -> Optional[Tuple[int, str]]:
-    if not row:
-        return None
-    job_id, reference = row
-    return int(job_id), _decode_db_value(reference)
-
-
-def resolve_trade_job_by_reference(cursor, job_reference: str) -> Optional[Tuple[int, str]]:
-    trimmed_reference = (job_reference or "").strip()
-    if not trimmed_reference:
-        return None
-    cursor.execute(
-        """
-            SELECT id, reference_number
-            FROM job
-            WHERE UPPER(TRIM(reference_number)) = UPPER(TRIM(%s))
-              AND COALESCE(is_archived, 0) = 0
-            ORDER BY id DESC
-            LIMIT 1
-        """,
-        (trimmed_reference,),
-    )
-    return _job_row_to_identity(cursor.fetchone())
-
-
-def search_trade_jobs(cursor, search_text: str) -> List[Dict[str, Any]]:
-    text = (search_text or "").strip()
-    if not text:
-        return []
-    like = f"%{text}%"
-    cursor.execute(
-        """
-            SELECT j.id, j.reference_number, j.customer, j.summary
-            FROM job j
-            WHERE COALESCE(j.is_archived, 0) = 0
-              AND (
-                   j.reference_number LIKE %s
-                OR j.customer LIKE %s
-                OR j.summary LIKE %s
-                OR EXISTS (
-                    SELECT 1
-                    FROM product p
-                    WHERE p.job_id = j.id
-                      AND p.product_name LIKE %s
-                )
-              )
-            ORDER BY j.date_created DESC, j.id DESC
-            LIMIT 20
-        """,
-        (like, like, like, like),
-    )
-    rows = []
-    for job_id, reference, customer, summary in cursor.fetchall():
-        ref = _decode_db_value(reference)
-        details = " - ".join(
-            part
-            for part in (_decode_db_value(customer), _decode_db_value(summary))
-            if part
-        )
-        rows.append({"id": int(job_id), "reference": ref, "label": f"{ref} - {details}" if details else ref})
-    return rows
-
-
-def prompt_for_trade_job_selection(root: tk.Tk, matches: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
-    labels = [match["label"] for match in matches]
-    selected = prompt_for_sku_selection(
-        root,
-        labels,
-        title="Select Trade Job",
-        message="Multiple trade jobs were found.\nSelect the one you want to process:",
-    )
-    if not selected:
-        return None
-    return next((match for match in matches if match["label"] == selected), None)
-
-
-def _build_trade_product_details(product_row: Dict[str, Any]) -> Dict[str, str]:
-    return {
-        "Model": _decode_db_value(product_row.get("product_name")) or "Unknown",
-        "CPU": _decode_db_value(product_row.get("cpu")) or "Unknown",
-        "SSD": _decode_db_value(product_row.get("storage")) or "Unknown",
-        "RAM": _decode_db_value(product_row.get("memory")) or "Unknown",
-        "Resolution": "Unknown",
-        "Windows": _decode_db_value(product_row.get("os")) or "Unknown",
-        "Battery": "Unknown",
-        "Battery 2": "Unknown",
-    }
-
-
-def load_trade_product_candidates(cursor, job_id: int) -> List[Dict[str, Any]]:
-    cursor.execute(
-        """
-            SELECT id, product_name, cpu, os, memory, storage, quantity
-            FROM product
-            WHERE job_id = %s
-            ORDER BY id
-        """,
-        (job_id,),
-    )
-    candidates: List[Dict[str, Any]] = []
-    seen_labels = set()
-    for row in cursor.fetchall():
-        product_id, product_name, cpu, os_value, memory, storage, quantity = row
-        payload = {
-            "product_name": product_name,
-            "cpu": cpu,
-            "os": os_value,
-            "memory": memory,
-            "storage": storage,
-        }
-        name = _decode_db_value(product_name) or f"Product {product_id}"
-        qty = int(quantity or 0)
-        label_base = f"{name} x{qty}" if qty else name
-        label = label_base
-        if label in seen_labels:
-            label = f"{label_base} (line {product_id})"
-        seen_labels.add(label)
-        candidates.append(
-            {
-                "id": int(product_id),
-                "label": label,
-                "details": _build_trade_product_details(payload),
-            }
-        )
-    return candidates
-
-
-def load_trade_job_note_for_job_id(cursor, job_id: int) -> str:
-    cursor.execute("SELECT notes FROM job WHERE id = %s", (job_id,))
-    row = cursor.fetchone()
-    if not row:
-        return ""
-    return _decode_db_value(row[0])
-
-
-def save_trade_job_note_for_job_id(job_id: int, notes: str) -> None:
-    conn = get_db_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("UPDATE job SET notes = %s WHERE id = %s", (notes or "", job_id))
-        conn.commit()
-        log_event(f"Saved trade job notes for job id {job_id}.")
-    finally:
-        try:
-            conn.close()
-        except Exception:
-            pass
+    """The server derives note attribution from the operator session."""
+    from services.auth_service import api_request
+    api_request("POST", "/notes/{}".format(order_db_id), {"notes": notes or ""})
 
 
 def build_results_footer(laptop_specs, details, mdm_status):
+    from services.measurements import battery_power_label
     success_color = "#1f7a4d"
     warning_color = "#b54708"
     danger_color = "#b42318"
@@ -863,56 +682,39 @@ def build_results_footer(laptop_specs, details, mdm_status):
             mismatches.append(f"{field}: SKU spec is Unknown (review required)")
         elif laptop_is_unknown:
             mismatches.append(f"{field}: Laptop spec is Unknown (review required)")
+        elif field == "Resolution":
+            mismatches.append("Resolution: current Windows mode only; native panel capability is unverified.")
         elif field.startswith("Battery"):
             sku_pct = parse_percent(sku_value)
             laptop_pct = parse_percent(laptop_value)
-            if sku_pct is not None and laptop_pct is not None and laptop_pct < sku_pct:
+            if sku_pct is None or laptop_pct is None:
+                mismatches.append(f"{field}: health is unavailable or unreadable (review required)")
+            elif laptop_pct < sku_pct:
                 mismatches.append(f"{field}: Expected at least {sku_pct}%, found {laptop_pct}%")
         elif not sku_is_unknown and not laptop_is_unknown:
             if field == "CPU":
                 if not cpu_specs_are_compatible(sku_value, laptop_value):
                     mismatches.append(f"{field}: Expected {sku_value}, found {laptop_value}")
             elif field == "SSD":
-                if not storage_specs_are_compatible(sku_value, laptop_value):
-                    mismatches.append(f"{field}: Expected {sku_value}, found {laptop_value}")
-            elif str(sku_value).lower().strip() != str(laptop_value).lower().strip():
+                if not storage_specs_are_compatible(sku_value, laptop_value, laptop_specs.get("Storage", {})):
+                    mismatches.append(f"{field}: Expected {sku_value}, found {laptop_value}. "
+                                      + compare_storage(sku_value, laptop_value, laptop_specs.get("Storage", {}))[1])
+            elif not specification_matches(field, sku_value, laptop_value):
                 mismatches.append(f"{field}: Expected {sku_value}, found {laptop_value}")
 
     mismatch_text = "\n".join(mismatches) if mismatches else "All listed specs match."
     mismatch_color = danger_color if mismatches else success_color
 
-    status = mdm_status or {}
-    mdm_state = status.get("state", "error")
-    mdm_details = status.get("details", "")
-
-    if mdm_state == "locked":
-        mdm_text = "Microsoft MDM lock detected."
-        if mdm_details:
-            mdm_text = f"{mdm_text}\n{mdm_details}"
-        mdm_color = danger_color
-    elif mdm_state == "not_locked":
-        mdm_text = "No Microsoft MDM lock detected."
-        if mdm_details:
-            mdm_text = f"{mdm_text}\n{mdm_details}"
-        mdm_color = success_color
-    elif mdm_state == "unsupported":
-        mdm_text = mdm_details or "Microsoft MDM lock checks are not supported on this platform."
-        mdm_color = secondary_color
-    else:
-        mdm_text = mdm_details or "Unable to retrieve Microsoft MDM lock status."
-        mdm_color = warning_color
+    mdm_text, mdm_color = mdm_summary(mdm_status)
 
     battery_lines = []
-    for index, label in enumerate(battery_labels):
-        percent = get_live_battery_percent(index=index)
-        charging = battery_charging_status(index=index)
-        if percent is None:
-            line = f"{label}: NONE"
-        else:
-            line = f"{label}: {percent}%"
-        if charging and percent is not None:
-            line = f"{line} Charging"
-        battery_lines.append(line)
+    count = max(1, len((laptop_specs.get("Battery Evidence") or {}).get("batteries", [])))
+    for index in range(count):
+        live = get_live_battery_state(index)
+        percent = live["percent"]
+        label = "Battery" if count == 1 else f"Battery {index + 1}"
+        value = f"{percent}%" if percent is not None else live["state"].title()
+        battery_lines.append(f"{label} current charge: {value} — {battery_power_label(live)}")
 
     return mismatch_text, mismatch_color, mdm_text, mdm_color, battery_lines
 
@@ -930,138 +732,92 @@ def render_results(
     show_serial_controls: bool,
     order_note_text: str,
     root,
-    mode: str = "order",
-    trade_job_id: Optional[int] = None,
+    context_guard=None,
 ):
+    for widget in canvas.winfo_children():
+        widget.destroy()
     canvas.delete("all")
-    canvas.configure(bg="#f4f6fa")
+    canvas.configure(bg="#f1f4f8")
     canvas.update_idletasks()
-    canvas_width = max(canvas.winfo_width(), 800)
-    canvas_height = max(canvas.winfo_height(), 650)
-    active_mode = "trade" if mode == "trade" else "order"
-    log_event(
-        "render_results(active) start: "
-        f"mode={active_mode}, order_id={order_id}, sku={sku}, serial={serial_number}, "
-        f"canvas_width={canvas_width}, canvas_height={canvas_height}"
-    )
-    style = tb.Style()
-    success = style.colors.success
-    warning = style.colors.warning
-    danger = style.colors.danger
-    secondary = style.colors.secondary
-
-    panel_bg = "#ffffff"
-    border = "#d7dde8"
-    divider = "#e6eaf2"
-    heading = "#101828"
-    muted = "#475467"
-    header_fill = "#eef4fb"
-    light_fill = "#f8fafc"
-
-    outer_left = 24
-    outer_right = canvas_width - 24
-    inner_left = outer_left + 18
-    inner_right = outer_right - 18
-    content_width = inner_right - inner_left
-
-    header_top = 20
-    header_bottom = 96
-    canvas.create_rectangle(outer_left, header_top, outer_right, header_bottom, fill=panel_bg, outline=border, width=1)
-    title_label = "Product" if active_mode == "trade" else "SKU"
-    canvas.create_text(inner_left, header_top + 24, text=f"{title_label}: {sku}", font=("Segoe UI", 18, "bold"), fill=heading, anchor="w")
-    canvas.create_text(
-        inner_left,
-        header_top + 54,
-        text=f"Serial Number: {serial_number}",
-        font=("Segoe UI", 10, "bold"),
-        fill=muted,
-        anchor="w",
-    )
-
+    from ui.scrolling import bind_scrolling
+    panel_bg = '#ffffff'
+    heading = '#101828'
+    content = tk.Frame(canvas, autostyle=False, bg=panel_bg, padx=20, pady=18)
+    item = canvas.create_window(0, 0, window=content, anchor='nw')
+    canvas._comparison_content = content
+    if not getattr(canvas, "_sc12_wheel", False):
+        bind_scrolling(canvas)
+        canvas._sc12_wheel = True
+    title = tk.Label(content, autostyle=False, text='SKU: ' + str(sku), anchor='w',
+                     justify='left', bg=panel_bg, fg=heading,
+                     font=('Segoe UI', 16, 'bold'))
+    title.pack(fill='x', pady=(0, 8))
+    identity = tk.Label(content, autostyle=False, text=(
+        'Order: {}  |  Serial Number: {}'.format(order_id, serial_number)
+        if show_serial_controls else 'Serial Number: ' + str(serial_number)),
+        anchor='w', justify='left', bg=panel_bg, font=('Arial', 10, 'bold'))
+    identity.pack(fill='x', pady=(0, 8))
+    actions = tk.Frame(content, autostyle=False, bg=panel_bg)
+    actions.pack(fill='x', pady=(0, 12))
     if show_serial_controls:
-        if active_mode == "trade":
-            assign_command = lambda: assign_trade_serial_logic(
-                trade_job_id,
-                order_id,
-                serial_number,
-                laptop_specs,
-                test_results,
-                sku,
-                details,
-                mdm_status,
-                assigned_by,
-                root,
-            )
-        else:
-            assign_command = lambda: assign_serial_logic(
-                order_id,
-                serial_number,
-                laptop_specs,
-                test_results,
-                sku,
-                mdm_status,
-                assigned_by,
-                root,
-            )
+        def guarded(action):
+            if context_guard is not None and not context_guard():
+                messagebox.showwarning("Search required", "Search again to resolve the current order before using this action.")
+                return
+            action()
+
+        assign_command = lambda: assign_serial_logic(
+            order_id,
+            serial_number,
+            laptop_specs,
+            test_results,
+            sku,
+            mdm_status,
+            assigned_by,
+            root,
+            expected_details=deepcopy(details),
+        )
         assign_button = ttk.Button(
-            canvas,
+            actions,
             text="Assign Serial",
             style="success.TButton",
-            command=assign_command,
+            command=lambda: guarded(lambda: start_serial_assignment(root, assign_button, assign_command)),
         )
-        canvas.create_window(outer_right - 236, header_top + 38, window=assign_button, anchor="w")
-        if active_mode != "trade":
-            view_serials_button = ttk.Button(
-                canvas,
-                text="View Serials",
-                style="info.TButton",
-                command=lambda: open_serial_viewer(order_id),
-            )
-            canvas.create_window(outer_right - 122, header_top + 38, window=view_serials_button, anchor="w")
+        assign_button.pack(side="left", padx=(0, 8))
+        view_serials_button = ttk.Button(
+            actions,
+            text="View Serials",
+            style="info.TButton",
+            command=lambda: guarded(lambda: open_serial_viewer(order_id, assigned_by=assigned_by)),
+        )
+        view_serials_button.pack(side="left")
 
-    table_top = header_bottom + 18
-    row_height = 38
-    fields = ["Model", "CPU", "SSD", "RAM", "Resolution", "Windows", "Battery"]
-    if has_secondary_battery(laptop_specs.get("Battery 2")):
-        fields.append("Battery 2")
-    log_event(f"render_results(active) fields={fields}")
 
-    table_header_top = table_top + 12
-    table_header_bottom = table_header_top + 38
-    table_bottom = table_header_bottom + (len(fields) * row_height) + 12
-    canvas.create_rectangle(outer_left, table_top, outer_right, table_bottom, fill=panel_bg, outline=border, width=1)
-    canvas.create_rectangle(inner_left, table_header_top, inner_right, table_header_bottom, fill=header_fill, outline=divider, width=1)
-
-    col_field = inner_left + 14
-    col_sku = inner_left + int(content_width * 0.31)
-    col_laptop = inner_left + int(content_width * 0.62)
-    col_status = inner_right - 92
-
-    canvas.create_text(col_field, table_header_top + 19, text="Spec", font=("Segoe UI", 11, "bold"), fill=heading, anchor="w")
-    canvas.create_text(col_sku, table_header_top + 19, text="SKU Spec", font=("Segoe UI", 11, "bold"), fill=heading, anchor="w")
-    canvas.create_text(col_laptop, table_header_top + 19, text="Laptop Spec", font=("Segoe UI", 11, "bold"), fill=heading, anchor="w")
-    canvas.create_text(col_status, table_header_top + 19, text="Status", font=("Segoe UI", 11, "bold"), fill=heading, anchor="w")
-
-    canvas.create_line(col_sku - 16, table_header_top, col_sku - 16, table_bottom - 12, fill=divider)
-    canvas.create_line(col_laptop - 16, table_header_top, col_laptop - 16, table_bottom - 12, fill=divider)
-    canvas.create_line(col_status - 16, table_header_top, col_status - 16, table_bottom - 12, fill=divider)
-
+    title.pack_forget()
+    title.pack(fill='x', pady=(0, 12))
+    table = tk.Frame(content, autostyle=False, bg=panel_bg)
+    table.pack(fill='x')
+    for column, weight in enumerate((20, 30, 30, 20)):
+        table.columnconfigure(column, weight=weight, uniform='spec_column')
+    headings = []
+    for column, text in enumerate(('Check', 'Order requirement', 'This device', 'Result')):
+        label = tk.Label(table, autostyle=False, text=text, bg='#eef5f1', anchor='w',
+                         font=('Arial', 10, 'bold'), padx=6, pady=8)
+        label.grid(row=0, column=column, sticky='nsew')
+        headings.append(label)
+    cells = []
+    canvas._comparison_status = {}
+    fields = ['Model', 'CPU', 'SSD', 'RAM', 'Resolution', 'Windows', 'Battery']
+    if has_secondary_battery(laptop_specs.get('Battery 2')):
+        fields.append('Battery 2')
     mismatches = []
 
     for index, field in enumerate(fields):
-        row_top = table_header_bottom + (index * row_height)
-        row_bottom = row_top + row_height
-        row_center = row_top + (row_height // 2)
-        sku_value = details.get(field, "Unknown")
-        laptop_value = laptop_specs.get(field, "Unknown")
+        sku_value = details.get(field, 'Unknown')
+        laptop_value = laptop_specs.get(field, 'Unknown')
         match = True
-
-        if field.startswith("Battery") and isinstance(laptop_value, str):
-            laptop_value = re.sub(r"\s*\(.*?\)", "", laptop_value).strip()
-
-        if index % 2 == 0:
-            canvas.create_rectangle(inner_left, row_top, inner_right, row_bottom, fill=light_fill, outline="")
-
+        if field.startswith('Battery') and isinstance(laptop_value, str):
+            laptop_value = re.sub(r'\s*\([^)]* health\)', '', laptop_value).strip()
         sku_is_unknown = str(sku_value).strip().lower() == "unknown"
         laptop_is_unknown = str(laptop_value).strip().lower() == "unknown"
         if sku_is_unknown:
@@ -1070,10 +826,16 @@ def render_results(
         elif laptop_is_unknown:
             mismatches.append(f"{field}: Laptop spec is Unknown (review required)")
             match = False
+        elif field == "Resolution":
+            mismatches.append("Resolution: native panel capability is unverified.")
+            match = False
         elif field.startswith("Battery"):
             sku_pct = parse_percent(sku_value)
             laptop_pct = parse_percent(laptop_value)
-            if sku_pct is not None and laptop_pct is not None and laptop_pct < sku_pct:
+            if sku_pct is None or laptop_pct is None:
+                mismatches.append(f"{field}: health is unavailable or unreadable (review required)")
+                match = False
+            elif laptop_pct < sku_pct:
                 mismatches.append(f"{field}: Expected at least {sku_pct}%, found {laptop_pct}%")
                 match = False
         elif not sku_is_unknown and not laptop_is_unknown:
@@ -1082,53 +844,59 @@ def render_results(
                     mismatches.append(f"{field}: Expected {sku_value}, found {laptop_value}")
                     match = False
             elif field == "SSD":
-                if not storage_specs_are_compatible(sku_value, laptop_value):
-                    mismatches.append(f"{field}: Expected {sku_value}, found {laptop_value}")
+                if not storage_specs_are_compatible(sku_value, laptop_value, laptop_specs.get("Storage", {})):
+                    mismatches.append(f"{field}: Expected {sku_value}, found {laptop_value}. "
+                                      + compare_storage(sku_value, laptop_value, laptop_specs.get("Storage", {}))[1])
                     match = False
-            elif sku_value.lower().strip() != laptop_value.lower().strip():
+            elif not specification_matches(field, sku_value, laptop_value):
                 mismatches.append(f"{field}: Expected {sku_value}, found {laptop_value}")
                 match = False
 
-        canvas.create_text(col_field, row_center, text=field, font=("Segoe UI", 10), fill=heading, anchor="w")
-        canvas.create_text(col_sku, row_center, text=str(sku_value), font=("Segoe UI", 10), fill=heading, anchor="w")
-        canvas.create_text(col_laptop, row_center, text=str(laptop_value), font=("Segoe UI", 10), fill=heading, anchor="w")
+        sku_display = str(sku_value)
+        laptop_display = str(laptop_value)
+        if field == "SSD":
+            sku_display = ("Ambiguous storage\n(review mapping)" if sku_display.startswith("Ambiguous")
+                           else "\n+ ".join(part.strip() for part in sku_display.split("+")))
+            laptop_display = "\n+ ".join(part.strip() for part in laptop_display.split("+"))
+        name = ('Storage' if field == 'SSD' else
+                'Current display mode\n(panel capability unverified)' if field == 'Resolution'
+                else 'Windows edition\n(activation separate)' if field == 'Windows' else field)
+        row_cells = []
+        for column, text in enumerate((name, sku_display, laptop_display,
+                                       'MATCH' if match else 'REVIEW')):
+            label = tk.Label(table, autostyle=False, text=text, anchor='w', justify='left',
+                             bg=('#f8fafc' if index % 2 == 0 else panel_bg),
+                             fg=heading, font=('Arial', 10), padx=6, pady=8)
+            if column == 3:
+                label.config(bg='#ecfdf3' if match else '#fffbeb',
+                             fg='#166534' if match else '#92400e',
+                             font=('Arial', 9, 'bold'))
+                canvas._comparison_status[field] = label
+            label.grid(row=index + 1, column=column, sticky='nsew')
+            row_cells.append(label)
+        cells.append(row_cells)
 
-        badge_fill = "#e7f6ec" if match else "#fdeaea"
-        badge_text = "MATCH" if match else "REVIEW"
-        badge_text_color = "#1f7a4d" if match else "#b42318"
-        canvas.create_rectangle(col_status, row_center - 11, col_status + 72, row_center + 11, fill=badge_fill, outline="")
-        canvas.create_text(col_status + 36, row_center, text=badge_text, font=("Segoe UI", 9, "bold"), fill=badge_text_color, anchor="center")
-
+    def resize(event=None):
+        if not content.winfo_exists():
+            return
+        width = max(200, canvas.winfo_width() - 4)
+        canvas.itemconfigure(item, width=width)
+        title.config(wraplength=max(100, width - 28))
+        identity.config(wraplength=max(100, width - 28))
+        for row in [headings] + cells:
+            for column, label in enumerate(row):
+                fraction = (.20, .30, .30, .20)[column]
+                label.config(wraplength=max(30, int((width - 28) * fraction) - 16))
+        canvas.configure(scrollregion=canvas.bbox('all'))
+    previous = getattr(canvas, '_comparison_resize_binding', None)
+    if previous:
+        canvas.unbind('<Configure>', previous)
+    canvas._comparison_resize_binding = canvas.bind('<Configure>', resize, add='+')
+    content.bind('<Configure>', lambda event: canvas.configure(scrollregion=canvas.bbox('all')))
+    resize()
     mismatch_text = "\n".join(mismatches) if mismatches else "All listed specs match."
-    mismatch_color = danger if mismatches else success
     if mismatches:
         log_event(f"Spec mismatches detected for order {order_id}:\n{mismatch_text}")
-
-    status = mdm_status or {}
-    mdm_state = status.get("state", "error")
-    mdm_details = status.get("details", "")
-
-    if mdm_state == "locked":
-        mdm_text = "Microsoft MDM lock detected."
-        if mdm_details:
-            mdm_text = f"{mdm_text}\n{mdm_details}"
-        mdm_color = danger
-    elif mdm_state == "not_locked":
-        mdm_text = "No Microsoft MDM lock detected."
-        if mdm_details:
-            mdm_text = f"{mdm_text}\n{mdm_details}"
-        mdm_color = success
-    elif mdm_state == "unsupported":
-        mdm_text = mdm_details or "Microsoft MDM lock checks are not supported on this platform."
-        mdm_color = secondary
-    else:
-        mdm_text = mdm_details or "Unable to retrieve Microsoft MDM lock status."
-        mdm_color = warning
-
-    if mdm_state == "locked":
-        log_event(f"Microsoft MDM lock warning for order {order_id}: {mdm_details}")
-    elif mdm_state not in {"not_locked", "unsupported"}:
-        log_event(f"Microsoft MDM lock status indeterminate ({mdm_state}): {mdm_details}")
 
     existing_animation = getattr(canvas, "_battery_animation_id", None)
     if existing_animation:
@@ -1145,7 +913,6 @@ def render_results(
     # a valid footer with a temporary "Battery: NONE" state.
 
 
-
 def search_order_logic(
     order_id: str,
     canvas: tk.Canvas,
@@ -1155,6 +922,7 @@ def search_order_logic(
     root: tk.Tk,
     assigned_by: Optional[str] = None,
     on_complete=None,
+    on_resolved=None,
 ) -> None:
     """Search for an order, compare laptop specs, and update the UI."""
     log_event(f"Starting search for order ID: {order_id}")
@@ -1236,13 +1004,14 @@ def search_order_logic(
                 else selected_sku
             ) or selected_sku
 
-            laptop_specs = load_laptop_specs()
+            laptop_specs = load_laptop_specs(force_refresh=True)
             serial_number = laptop_specs.get("Serial Number", "Unknown")
 
-            test_results.update(load_test_results(cursor, order_number, serial_number))
-            test_results["activation"] = "pass" if check_activation_status() else "fail"
+            loaded_results = load_test_results(cursor, order_number, serial_number)
+            start_measurement(loaded_results, "activation")
+            loaded_results["activation"] = "pass" if check_activation_status() else "fail"
             log_event(
-                f"[DEBUG] test_results['activation'] set to: {test_results['activation']} for order {order_number}"
+                f"Activation refreshed for order {order_number}"
             )
 
             log_event(f"Processing SKU: {selected_sku_value}")
@@ -1259,35 +1028,32 @@ def search_order_logic(
                 except Exception as exc:
                     log_event(f"Search footer preparation failed: {exc}")
 
-            root.after(
-                0,
-                lambda: render_results(
-                    canvas,
-                    order_number,
-                    selected_sku_value,
-                    serial_number,
-                    laptop_specs,
-                    details,
-                    test_results,
-                    mdm_status,
-                    assigned_by,
-                    True,
-                    order_note_text,
-                    root,
-                ),
-            )
+            def deliver():
+                if on_resolved is not None:
+                    on_resolved({
+                        "order_id": db_order_id, "order_number": order_number,
+                        "serial_number": serial_number, "sku": selected_sku_value,
+                        "specs": laptop_specs, "details": details,
+                        "test_results": loaded_results, "mdm": mdm_status,
+                        "notes": order_note_text, "footer": footer_payload,
+                    })
+                    return
+                test_results.clear()
+                test_results.update(loaded_results)
+                render_results(canvas, order_number, selected_sku_value,
+                               serial_number, laptop_specs, details, test_results,
+                               mdm_status, assigned_by, True, order_note_text, root)
+                if footer_payload and callable(footer_callback):
+                    footer_callback(*footer_payload)
+                if callable(order_notes_callback):
+                    order_notes_callback(order_note_text, db_order_id, order_number)
+                start_hash_capture_status_update(root, serial_number, "order search")
 
-            if footer_payload and callable(footer_callback):
-                root.after(0, lambda payload=footer_payload: footer_callback(*payload))
-            if callable(order_notes_callback):
-                root.after(
-                    0,
-                    lambda t=order_note_text, oid=db_order_id, on=order_number: order_notes_callback(t, oid, on),
-                )
-            start_hash_capture_status_update(root, serial_number, "order search")
+            root.after(0, deliver)
 
         except Exception as err:
-            log_event(f"Unhandled exception in search logic for order {order_id}:\n{traceback.format_exc()}")
+            from services.runtime import log_diagnostic
+            log_diagnostic('order.search_failed', error=err, stage='lookup')
             msg = f"{err}"
             root.after(0, lambda: messagebox.showerror("Unexpected Error", msg))
         finally:
@@ -1296,21 +1062,24 @@ def search_order_logic(
                     conn.close()
                 except Exception:
                     pass
-            root.after(0, lambda: search_button.config(state="normal"))
+            if on_complete is None:
+                root.after(0, lambda: search_button.config(state="normal"))
             if on_complete is not None:
                 root.after(0, on_complete)
 
     threading.Thread(target=run_search, daemon=True).start()
 
 
-def start_hash_capture_status_update(root: tk.Tk, serial_number: str, context_label: str) -> None:
+def start_hash_capture_status_update(root: tk.Tk, serial_number: str,
+                                     context_label: str, context_guard=None) -> None:
     hash_status_callback = getattr(root, "_update_hash_capture_status", None)
     if not callable(hash_status_callback):
         return
 
     root.after(
         0,
-        lambda: hash_status_callback("Autopilot Hash Pending", "#b54708"),
+        lambda: hash_status_callback("Autopilot Hash Pending", "#b54708")
+        if context_guard is None or context_guard() else None,
     )
 
     def worker() -> None:
@@ -1328,157 +1097,37 @@ def start_hash_capture_status_update(root: tk.Tk, serial_number: str, context_la
             log_event(f"Autopilot hash capture raised after {context_label}: {exc}")
         root.after(
             0,
-            lambda t=hash_status_text, c=hash_status_color: hash_status_callback(t, c),
+            lambda t=hash_status_text, c=hash_status_color: hash_status_callback(t, c)
+            if context_guard is None or context_guard() else None,
         )
 
     threading.Thread(target=worker, daemon=True).start()
 
 
-def search_trade_job_logic(
-    job_reference: str,
-    canvas: tk.Canvas,
-    search_button: tk.Button,
-    test_results: dict,
-    test_labels: dict,
-    root: tk.Tk,
-    assigned_by: Optional[str] = None,
-    on_complete=None,
-) -> None:
-    log_event(f"Starting trade job search: {job_reference}")
+def confirm_server_reassignment(root, conflicts):
+    return _call_on_ui(
+        root, messagebox.askyesno, "Reassign Serial",
+        "Current server assignment: " + ", ".join(conflicts)
+        + "\nMove this serial to the selected reference?",
+    )
 
-    def run_search():
-        conn = None
-        try:
-            conn = get_db_connection(show_errors=False)
-            if not conn:
-                root.after(
-                    0,
-                    lambda: messagebox.showerror(
-                        "Database Error",
-                        "The app started, but the database is unavailable. Please try again when the connection is back.",
-                    ),
-                )
-                return
 
-            cursor = conn.cursor()
-            identity = resolve_trade_job_by_reference(cursor, job_reference)
-            if not identity:
-                matches = search_trade_jobs(cursor, job_reference)
-                if not matches:
-                    root.after(
-                        0,
-                        lambda: messagebox.showerror(
-                            "Trade Job Not Found",
-                            f"No trade job matching '{job_reference}' was found.",
-                        ),
-                    )
-                    return
-                selected_match = prompt_for_trade_job_selection(root, matches)
-                if not selected_match:
-                    root.after(
-                        0,
-                        lambda: messagebox.showinfo(
-                            "Selection Cancelled",
-                            "No trade job was selected. Please search again when you are ready to continue.",
-                        ),
-                    )
-                    return
-                identity = (selected_match["id"], selected_match["reference"])
+def assignment_receipt_note(response):
+    operation_id = response.get("operation_id")
+    note = f"\nOperation: {operation_id}" if operation_id else ""
+    if response.get("recovered_pending"):
+        note += (
+            "\nRecovered an earlier server confirmation. Refresh Web-Tools "
+            "to check the current assignment."
+        )
+    return note
 
-            job_id, canonical_reference = identity
-            candidates = load_trade_product_candidates(cursor, job_id)
-            if not candidates:
-                root.after(
-                    0,
-                    lambda: messagebox.showerror(
-                        "Trade Job Missing Products",
-                        f"Trade job '{canonical_reference}' does not have any product rows recorded.",
-                    ),
-                )
-                return
 
-            selected_label = prompt_for_sku_selection(
-                root,
-                [candidate["label"] for candidate in candidates],
-                title="Select Product",
-                message=(
-                    f"Multiple products were found for trade job '{canonical_reference}'.\n"
-                    "Select the product you want to process:"
-                ),
-            )
-            if not selected_label:
-                root.after(
-                    0,
-                    lambda: messagebox.showinfo(
-                        "Selection Cancelled",
-                        "No product was selected. Please search again when you are ready to continue.",
-                    ),
-                )
-                return
-            selected_candidate = next(
-                candidate for candidate in candidates if candidate["label"] == selected_label
-            )
-
-            laptop_specs = load_laptop_specs()
-            serial_number = laptop_specs.get("Serial Number", "Unknown")
-            test_results.update(load_trade_test_results(cursor, canonical_reference, serial_number))
-            test_results["activation"] = "pass" if check_activation_status() else "fail"
-            mdm_status = check_mdm_lock_status()
-            details = selected_candidate["details"]
-            note_text = load_trade_job_note_for_job_id(cursor, job_id)
-            notes_callback = getattr(root, "_update_order_notes_footer", None)
-
-            footer_payload = None
-            footer_callback = getattr(root, "_update_results_footer", None)
-            if callable(footer_callback):
-                try:
-                    footer_payload = build_results_footer(laptop_specs, details, mdm_status)
-                except Exception as exc:
-                    log_event(f"Trade footer preparation failed: {exc}")
-
-            root.after(
-                0,
-                lambda: render_results(
-                    canvas,
-                    canonical_reference,
-                    selected_label,
-                    serial_number,
-                    laptop_specs,
-                    details,
-                    test_results,
-                    mdm_status,
-                    assigned_by,
-                    True,
-                    note_text,
-                    root,
-                    mode="trade",
-                    trade_job_id=job_id,
-                ),
-            )
-            if footer_payload and callable(footer_callback):
-                root.after(0, lambda payload=footer_payload: footer_callback(*payload))
-            if callable(notes_callback):
-                root.after(
-                    0,
-                    lambda t=note_text, jid=job_id, ref=canonical_reference: notes_callback(t, jid, ref),
-                )
-            start_hash_capture_status_update(root, serial_number, "trade search")
-
-        except Exception as err:
-            log_event(f"Unhandled exception in trade search logic for {job_reference}:\n{traceback.format_exc()}")
-            msg = f"{err}"
-            root.after(0, lambda: messagebox.showerror("Unexpected Error", msg))
-        finally:
-            if conn:
-                try:
-                    conn.close()
-                except Exception:
-                    pass
-            root.after(0, lambda: search_button.config(state="normal"))
-            if on_complete is not None:
-                root.after(0, on_complete)
-
-    threading.Thread(target=run_search, daemon=True).start()
+def refresh_assignment_specs(previous, serial_number):
+    current = load_laptop_specs(force_refresh=True)
+    if current.get("Serial Number") != serial_number or not fresh(current):
+        raise ValueError("Fresh device measurements could not be confirmed for this serial. Refresh Device and search again.")
+    return current
 
 
 def assign_serial_logic(
@@ -1490,6 +1139,7 @@ def assign_serial_logic(
     mdm_status: Optional[Dict[str, str]],
     assigned_by: Optional[str],
     root: tk.Tk,
+    expected_details=None,
 ) -> None:
     """
     Assign a serial number to an order and update test results.
@@ -1497,52 +1147,50 @@ def assign_serial_logic(
     conn = None
     try:
         if not order_number or not serial_number or serial_number == "Unknown":
-            messagebox.showerror("Input Error", "Order number and serial number must be provided.")
+            _call_on_ui(root, messagebox.showerror, "Input Error", "Order number and serial number must be provided.")
             return
 
-        test_keys = ["keyboard", "speaker", "microphone", "display", "webcam", "usb", "wifi"]
-        incomplete = [
-            key.replace("_", " ").title()
-            for key in test_keys
-            if normalise_test_result(test_results.get(key)) == "n/a"
-        ]
-        mdm_locked = mdm_status and mdm_status.get("state") == "locked"
+        test_results = deepcopy(test_results)
+        specs = refresh_assignment_specs(specs, serial_number)
+        mdm_status = qualified(check_mdm_lock_status())
 
         warning_lines = []
-        if incomplete:
-            warning_lines.append(f"The following tests are incomplete: {', '.join(incomplete)}.")
-        if mdm_locked:
-            mdm_details = mdm_status.get("details") if mdm_status else ""
-            detail_text = f" {mdm_details}" if mdm_details else ""
-            warning_lines.append(f"Microsoft MDM lock detected.{detail_text}")
+        if test_results.get("_provenance_unknown"):
+            warning_lines.append("Saved result override history is unavailable for this legacy report.")
+        if mdm_needs_review(mdm_status):
+            warning_lines.append("Local MDM evidence needs review; tenant status is not verified.")
 
-        conn = get_db_connection()
+        conn = get_db_connection(show_errors=False)
         if not conn:
-            messagebox.showerror("Database Error", "Could not connect to the database.")
+            _call_on_ui(root, messagebox.showerror, "Database Error", "Could not connect to the database.")
             return
 
         cursor = conn.cursor()
 
+        details = {}
         try:
-            details = extract_details_from_sku(cursor, (sku or "").strip())
+            details = (deepcopy(expected_details) if isinstance(expected_details, dict)
+                       else extract_details_from_sku(cursor, (sku or "").strip()))
             mismatch_text, _, _, _, _ = build_results_footer(specs, details, mdm_status)
             if mismatch_text != "All listed specs match.":
                 warning_lines.append("Spec mismatches were detected (items marked REVIEW in the results table).")
         except Exception as exc:  # noqa: BLE001 - warning enrichment should not block assignment
             log_event(f"Unable to prepare spec mismatch warning during assignment: {exc}")
 
-        if warning_lines:
-            warn_message = (
-                "There are outstanding issues before assigning this serial:\n"
-                + "\n".join(warning_lines)
-                + "\n\nPress OK to continue or Cancel to abort."
-            )
-            if not messagebox.askokcancel("Confirm Assignment", warn_message):
-                return
+        storage_ok, storage_message = compare_storage(
+            details.get("SSD"), specs.get("SSD"), specs.get("Storage", {}))
+        storage_review = {
+            "policy": "physical_configuration", "required": details.get("SSD", "Unknown"),
+            "matched": storage_ok, "detail": storage_message,
+            "measured": specs.get("SSD", "Unknown"),
+            "captured_at": (specs.get("Storage") or {}).get("checked_at"),
+        }
+        if not storage_ok:
+            warning_lines.append("Storage review: " + storage_message)
 
         identity = resolve_order_identity(cursor, order_number)
         if not identity:
-            messagebox.showerror(
+            _call_on_ui(root, messagebox.showerror,
                 "Order Not Found",
                 f"Order '{order_number}' could not be found in the consolidated order table.",
             )
@@ -1550,18 +1198,6 @@ def assign_serial_logic(
 
         order_db_id, canonical_order_number = identity
         order_number = canonical_order_number
-
-        cursor.execute("SELECT order_number FROM order_serials WHERE serial_number = %s", (serial_number,))
-        existing = cursor.fetchall()
-
-        if existing:
-            old_orders = ", ".join(order[0] for order in existing)
-            confirm = messagebox.askyesno(
-                "Reassign Serial",
-                f"Serial '{serial_number}' is already assigned to {old_orders}\nDo you want to reassign it to order '{order_number}'?"
-            )
-            if not confirm:
-                return
 
         sku_value = (sku or "").strip()
         if not sku_value:
@@ -1587,33 +1223,40 @@ def assign_serial_logic(
                 else:
                     selected = prompt_for_sku_selection(root, sku_options)
                     if not selected:
-                        messagebox.showinfo(
+                        _call_on_ui(root, messagebox.showinfo,
                             "Selection Cancelled",
                             "No SKU was selected. Assignment cancelled.",
                         )
                         return
                     sku_value = selected
-        mdm_state = mdm_status.get("state") if mdm_status else None
-        mdm_details = mdm_status.get("details") if mdm_status else None
+        hash_csv_path = capture_autopilot_hash_csv(preferred_serial=serial_number)
+        if not hash_csv_path:
+            warning_lines.append("Autopilot hardware hash was not captured; elevated capture may be required. No tenant enrolment is inferred.")
+
+        summary = (f"Order: {order_number}\nSerial: {serial_number}\nSKU: {sku_value}\nOperator: {assigned_by or 'not signed in'}\n\n"
+                   + "\n".join(review_lines(test_results) + warning_lines)
+                   + "\n\nStorage required: " + str(storage_review["required"])
+                   + "\nStorage measured: " + str(storage_review["measured"])
+                   + "\nStorage policy: exact physical configuration; " + storage_message
+                   + "\n\n" + measurement_summary(specs)
+                   + "\nDisplay: current mode only; panel capability unverified. Windows edition is separate from activation."
+                   + "\n\n" + mdm_summary(mdm_status)[0])
+        reason = _call_on_ui(
+            root, prompt_assignment_review, root, summary,
+            bool(needs_reason(test_results) or warning_lines),
+        )
+        if reason is None:
+            return
         checked_at = datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
-        normalized_tests = {
-            "keyboard": normalise_test_result(test_results.get("keyboard")),
-            "speaker": normalise_test_result(test_results.get("speaker")),
-            "microphone": normalise_test_result(test_results.get("microphone")),
-            "display": normalise_test_result(test_results.get("display")),
-            "webcam": normalise_test_result(test_results.get("webcam")),
-            "usb": normalise_test_result(test_results.get("usb")),
-            "wifi": normalise_test_result(test_results.get("wifi")),
-            "activation": normalise_test_result(test_results.get("activation")),
+        normalized_tests, test_overrides = snapshot(test_results)
+        test_coverage = deepcopy(test_results.get("_coverage", {}))
+        assignment_review = {
+            "operator": assigned_by, "at": checked_at,
+            "reason": reason, "warnings": warning_lines,
+            "history_unknown": test_results.get("_history_unknown", []),
         }
 
-        hash_csv_path = capture_autopilot_hash_csv(preferred_serial=serial_number)
-        battery_report = get_latest_batteryinfoview_report()
-        if not battery_report:
-            try:
-                battery_report = capture_batteryinfoview_report()
-            except Exception as exc:
-                log_event(f"BatteryInfoView report capture failed during assignment: {exc}")
+        battery_report = deepcopy(specs.get("_battery_report")) or {}
         stock_report_ok, stock_report_response = upload_stock_unit_check_report(
             order_id=order_db_id,
             order_number=order_number,
@@ -1621,18 +1264,23 @@ def assign_serial_logic(
             sku=sku_value,
             specs=specs,
             test_results=normalized_tests,
+            test_overrides=test_overrides,
+            test_coverage=test_coverage,
+            assignment_review=assignment_review,
+            storage_review=storage_review,
             mdm_status=mdm_status,
             assigned_by=assigned_by,
             hash_csv_path=hash_csv_path,
             battery_report=battery_report,
             checked_at=checked_at,
+            reassignment_prompt=lambda conflicts: confirm_server_reassignment(root, conflicts),
         )
         if (
             not stock_report_ok
             and isinstance(stock_report_response, dict)
             and stock_report_response.get("error") == "Stock unit not found"
         ):
-            create_stock = messagebox.askyesno(
+            create_stock = _call_on_ui(root, messagebox.askyesno,
                 "Stock Entry Not Found",
                 (
                     f"Serial '{serial_number}' was not found in the Stock List.\n\n"
@@ -1648,346 +1296,54 @@ def assign_serial_logic(
                     sku=sku_value,
                     specs=specs,
                     test_results=normalized_tests,
+                    test_overrides=test_overrides,
+                    test_coverage=test_coverage,
+                    assignment_review=assignment_review,
+                    storage_review=storage_review,
                     mdm_status=mdm_status,
                     assigned_by=assigned_by,
                     hash_csv_path=hash_csv_path,
                     battery_report=battery_report,
                     checked_at=checked_at,
+                    reassignment_prompt=lambda conflicts: confirm_server_reassignment(root, conflicts),
                     create_stock_unit=True,
                 )
             else:
-                messagebox.showinfo(
+                _call_on_ui(root, messagebox.showinfo,
                     "Assignment Cancelled",
                     f"Serial '{serial_number}' was not assigned because no stock entry was created.",
                 )
                 return
         if stock_report_ok:
+            saved_callback = getattr(root, "_check_report_saved", None)
+            if callable(saved_callback):
+                _call_on_ui(root, saved_callback, order_db_id, serial_number,
+                            test_results)
             user_text = f" by '{assigned_by}'" if assigned_by else ""
             hash_status_text = "OK" if hash_csv_path else "Not collected"
-            show_assign_success_dialog(
+            _call_on_ui(root, show_assign_success_dialog,
                 root,
                 f"Serial '{serial_number}' (SKU '{sku_value or 'Unknown'}') assigned to order '{order_number}'{user_text}."
                 f"\nStock Report Upload: OK"
-                f"\nHash Upload: {hash_status_text}",
+                f"\nHash Upload: {hash_status_text}"
+                + assignment_receipt_note(stock_report_response),
             )
             return
 
-        log_event(
-            f"Falling back to legacy order_serials insert for serial={serial_number}; "
-            f"stock report response={stock_report_response}"
-        )
-        if existing:
-            cursor.execute("DELETE FROM order_serials WHERE serial_number = %s", (serial_number,))
-
-        cursor.execute(
-            """
-                INSERT INTO order_serials (
-                    order_id, order_number, serial_number, sku, cpu, ram, ssd, model, resolution, windows, battery, battery2,
-                    laptop_status, test_keyboard, test_speaker, test_microphone, test_display, test_webcam, test_usb, test_wifi, activation,
-                    mdm_state, mdm_details, assigned_by
-                ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-                )
-            """,
-            (
-                order_db_id,
-                order_number,
-                serial_number,
-                sku_value,
-                specs.get("CPU", ""),
-                specs.get("RAM", ""),
-                specs.get("SSD", ""),
-                specs.get("Model", ""),
-                specs.get("Resolution", ""),
-                specs.get("Windows", ""),
-                specs.get("Battery", ""),
-                specs.get("Battery 2", ""),
-                "Reserved",
-                normalized_tests["keyboard"],
-                normalized_tests["speaker"],
-                normalized_tests["microphone"],
-                normalized_tests["display"],
-                normalized_tests["webcam"],
-                normalized_tests["usb"],
-                normalized_tests["wifi"],
-                normalized_tests["activation"],
-                mdm_state,
-                mdm_details,
-                assigned_by,
-            ),
-        )
-        serial_row_id = cursor.lastrowid
-        conn.commit()
-
-        hash_upload_ok = False
-        if hash_csv_path:
-            hash_upload_ok = upload_hash_csv(
-                hash_csv_path,
-                serial_id=serial_row_id,
-                sku=sku_value,
-                uploaded_at=checked_at,
-            )
-        else:
-            log_event(
-                f"Hash upload skipped for serial assignment: serial_id={serial_row_id}, serial_number={serial_number} (csv capture failed)."
-            )
-
-        user_text = f" by '{assigned_by}'" if assigned_by else ""
-        hash_status_text = "OK" if hash_upload_ok else "Failed"
-        show_assign_success_dialog(
-            root,
-            f"Serial '{serial_number}' (SKU '{sku_value or 'Unknown'}') assigned to order '{order_number}'{user_text}."
-            f"\nHash Upload: {hash_status_text}",
+        error = (stock_report_response.get("error", "Unknown error")
+                 if isinstance(stock_report_response, dict) else "Unknown error")
+        if isinstance(stock_report_response, dict):
+            error += assignment_receipt_note(stock_report_response)
+        _call_on_ui(
+            root, messagebox.showerror, "Assignment Not Confirmed",
+            f"Web-Tools did not confirm the assignment: {error}\n\n"
+            "Check the connection and configuration, then retry. "
+            "If the request timed out, check Web-Tools before retrying.",
         )
     except Exception as e:
         if conn:
             conn.rollback()
-        messagebox.showerror("Error", f"Failed to assign serial: {e}")
-    finally:
-        if conn:
-            conn.close()
-
-
-def assign_trade_serial_logic(
-    job_id: Optional[int],
-    job_reference: str,
-    serial_number: str,
-    specs: dict,
-    test_results: dict,
-    product_label: str,
-    expected_details: dict,
-    mdm_status: Optional[Dict[str, str]],
-    assigned_by: Optional[str],
-    root: tk.Tk,
-) -> None:
-    conn = None
-    try:
-        if not job_id or not job_reference or not serial_number or serial_number == "Unknown":
-            messagebox.showerror("Input Error", "Trade job reference and serial number must be provided.")
-            return
-
-        test_keys = ["keyboard", "speaker", "microphone", "display", "webcam", "usb", "wifi"]
-        incomplete = [
-            key.replace("_", " ").title()
-            for key in test_keys
-            if normalise_test_result(test_results.get(key)) == "n/a"
-        ]
-        mdm_locked = mdm_status and mdm_status.get("state") == "locked"
-
-        warning_lines = []
-        if incomplete:
-            warning_lines.append(f"The following tests are incomplete: {', '.join(incomplete)}.")
-        if mdm_locked:
-            mdm_details = mdm_status.get("details") if mdm_status else ""
-            detail_text = f" {mdm_details}" if mdm_details else ""
-            warning_lines.append(f"Microsoft MDM lock detected.{detail_text}")
-
-        conn = get_db_connection()
-        if not conn:
-            messagebox.showerror("Database Error", "Could not connect to the database.")
-            return
-
-        cursor = conn.cursor()
-        try:
-            mismatch_text, _, _, _, _ = build_results_footer(specs, expected_details or {}, mdm_status)
-            if mismatch_text != "All listed specs match.":
-                warning_lines.append("Spec mismatches were detected (items marked REVIEW in the results table).")
-        except Exception as exc:
-            log_event(f"Unable to prepare trade spec mismatch warning during assignment: {exc}")
-
-        if warning_lines:
-            warn_message = (
-                "There are outstanding issues before assigning this serial:\n"
-                + "\n".join(warning_lines)
-                + "\n\nPress OK to continue or Cancel to abort."
-            )
-            if not messagebox.askokcancel("Confirm Trade Assignment", warn_message):
-                return
-
-        identity = resolve_trade_job_by_reference(cursor, job_reference)
-        if not identity:
-            messagebox.showerror("Trade Job Not Found", f"Trade job '{job_reference}' could not be found.")
-            return
-        job_id, canonical_reference = identity
-
-        cursor.execute(
-            "SELECT order_number FROM order_serials WHERE serial_number = %s",
-            (serial_number,),
-        )
-        order_conflicts = [_decode_db_value(row[0]) for row in cursor.fetchall()]
-        cursor.execute(
-            "SELECT id, job_reference FROM job_serials WHERE serial_number = %s",
-            (serial_number,),
-        )
-        trade_conflicts = [(int(row[0]), _decode_db_value(row[1])) for row in cursor.fetchall()]
-
-        conflict_labels = []
-        conflict_labels.extend(f"order {value}" for value in order_conflicts if value)
-        conflict_labels.extend(
-            f"trade job {value}" for _serial_id, value in trade_conflicts if value and value != canonical_reference
-        )
-        if conflict_labels:
-            confirm = messagebox.askyesno(
-                "Reassign Serial",
-                (
-                    f"Serial '{serial_number}' is already assigned to {', '.join(conflict_labels)}.\n"
-                    f"Do you want to reassign it to trade job '{canonical_reference}'?"
-                ),
-            )
-            if not confirm:
-                return
-
-        normalized_tests = {
-            "keyboard": normalise_test_result(test_results.get("keyboard")),
-            "speaker": normalise_test_result(test_results.get("speaker")),
-            "microphone": normalise_test_result(test_results.get("microphone")),
-            "display": normalise_test_result(test_results.get("display")),
-            "webcam": normalise_test_result(test_results.get("webcam")),
-            "usb": normalise_test_result(test_results.get("usb")),
-            "wifi": normalise_test_result(test_results.get("wifi")),
-            "activation": normalise_test_result(test_results.get("activation")),
-        }
-        mdm_state = mdm_status.get("state") if mdm_status else None
-        mdm_details = mdm_status.get("details") if mdm_status else None
-        checked_at = datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
-
-        hash_csv_path = capture_autopilot_hash_csv(preferred_serial=serial_number)
-        battery_report = get_latest_batteryinfoview_report()
-        if not battery_report:
-            try:
-                battery_report = capture_batteryinfoview_report()
-            except Exception as exc:
-                log_event(f"BatteryInfoView report capture failed during trade assignment: {exc}")
-
-        report_ok, report_response = upload_trade_job_check_report(
-            job_reference=canonical_reference,
-            serial_number=serial_number,
-            product_label=product_label,
-            specs=specs,
-            test_results=normalized_tests,
-            mdm_status=mdm_status,
-            assigned_by=assigned_by,
-            hash_csv_path=hash_csv_path,
-            battery_report=battery_report,
-            checked_at=checked_at,
-        )
-        if (
-            not report_ok
-            and isinstance(report_response, dict)
-            and report_response.get("error") == "Stock unit not found"
-        ):
-            create_stock = messagebox.askyesno(
-                "Stock Entry Not Found",
-                (
-                    f"Serial '{serial_number}' was not found in the Stock List.\n\n"
-                    "Would you like to create a new Web-Tools stock entry for this laptop "
-                    "and continue assigning it to the trade job?"
-                ),
-            )
-            if create_stock:
-                report_ok, report_response = upload_trade_job_check_report(
-                    job_reference=canonical_reference,
-                    serial_number=serial_number,
-                    product_label=product_label,
-                    specs=specs,
-                    test_results=normalized_tests,
-                    mdm_status=mdm_status,
-                    assigned_by=assigned_by,
-                    hash_csv_path=hash_csv_path,
-                    battery_report=battery_report,
-                    checked_at=checked_at,
-                    create_stock_unit=True,
-                )
-            else:
-                messagebox.showinfo(
-                    "Assignment Cancelled",
-                    f"Serial '{serial_number}' was not assigned because no stock entry was created.",
-                )
-                return
-
-        if order_conflicts:
-            cursor.execute("DELETE FROM order_serials WHERE serial_number = %s", (serial_number,))
-
-        hash_filename, hash_file_data = _read_optional_hash_file(hash_csv_path)
-
-        cursor.execute(
-            """
-                INSERT INTO job_serials (
-                    job_id, job_reference, serial_number, cpu, ram, ssd, model, resolution, windows, battery,
-                    test_keyboard, test_speaker, test_microphone, test_display, test_webcam, test_usb, activation,
-                    mdm_state, mdm_details, hash_filename, hash_file_data, hash_uploaded_at, assigned_by, assigned_at
-                ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), %s, NOW()
-                )
-                ON DUPLICATE KEY UPDATE
-                    job_id = VALUES(job_id),
-                    job_reference = VALUES(job_reference),
-                    cpu = VALUES(cpu),
-                    ram = VALUES(ram),
-                    ssd = VALUES(ssd),
-                    model = VALUES(model),
-                    resolution = VALUES(resolution),
-                    windows = VALUES(windows),
-                    battery = VALUES(battery),
-                    test_keyboard = VALUES(test_keyboard),
-                    test_speaker = VALUES(test_speaker),
-                    test_microphone = VALUES(test_microphone),
-                    test_display = VALUES(test_display),
-                    test_webcam = VALUES(test_webcam),
-                    test_usb = VALUES(test_usb),
-                    activation = VALUES(activation),
-                    hash_filename = IF(VALUES(hash_file_data) <> '', VALUES(hash_filename), hash_filename),
-                    hash_file_data = IF(VALUES(hash_file_data) <> '', VALUES(hash_file_data), hash_file_data),
-                    hash_uploaded_at = IF(VALUES(hash_file_data) <> '', VALUES(hash_uploaded_at), hash_uploaded_at),
-                    assigned_by = VALUES(assigned_by),
-                    assigned_at = NOW()
-            """,
-            (
-                job_id,
-                canonical_reference,
-                serial_number,
-                specs.get("CPU", ""),
-                specs.get("RAM", ""),
-                specs.get("SSD", ""),
-                specs.get("Model", ""),
-                specs.get("Resolution", ""),
-                specs.get("Windows", ""),
-                specs.get("Battery", ""),
-                normalized_tests["keyboard"],
-                normalized_tests["speaker"],
-                normalized_tests["microphone"],
-                normalized_tests["display"],
-                normalized_tests["webcam"],
-                normalized_tests["usb"],
-                normalized_tests["activation"],
-                mdm_state,
-                mdm_details,
-                hash_filename,
-                hash_file_data,
-                assigned_by,
-            ),
-        )
-        conn.commit()
-
-        cursor.execute("SELECT COUNT(*) FROM job_serials WHERE job_id = %s", (job_id,))
-        assigned_count = int(cursor.fetchone()[0] or 0)
-
-        user_text = f" by '{assigned_by}'" if assigned_by else ""
-        report_status_text = "OK" if report_ok else f"Failed ({report_response.get('error') if isinstance(report_response, dict) else 'unknown'})"
-        hash_status_text = "OK" if hash_csv_path else "Not collected"
-        show_assign_success_dialog(
-            root,
-            f"Serial '{serial_number}' assigned to trade job '{canonical_reference}'{user_text}."
-            f"\nAssigned Serials: {assigned_count}"
-            f"\nStock Report Upload: {report_status_text}"
-            f"\nHash Upload: {hash_status_text}",
-        )
-    except Exception as e:
-        if conn:
-            conn.rollback()
-        messagebox.showerror("Error", f"Failed to assign trade serial: {e}")
+        _call_on_ui(root, messagebox.showerror, "Error", f"Failed to assign serial: {e}")
     finally:
         if conn:
             conn.close()

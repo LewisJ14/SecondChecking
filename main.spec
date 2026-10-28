@@ -3,14 +3,21 @@
 import os
 import sys
 
-here = os.path.abspath(os.path.dirname(sys.argv[0]))
+here = SPECPATH
 manifest_file = os.path.join(here, "app.manifest")
+identity = os.environ.get('SECOND_CHECKING_BUILD_IDENTITY')
+version_resource = os.environ.get('SECOND_CHECKING_VERSION_RESOURCE')
+if not identity or not version_resource:
+    raise RuntimeError('Build with compile.ps1 or scripts/release_package.py to record artifact identity.')
 
 a = Analysis(
     ['src\\main.py'],
     pathex=['src'],
     binaries=[],
-    datas=[('src/assets', 'assets')],
+    datas=[('src/assets/AudioCheck.wav', 'assets'),
+           ('src/assets/astro-login-hero.png', 'assets'),
+           ('src/assets/BatteryInfoView/BatteryInfoView.exe', 'assets/BatteryInfoView'),
+           ('src/Script.ps1', '.'), (identity, '.')],
     hiddenimports=['requests'],
     hookspath=[],
     hooksconfig={},
@@ -41,5 +48,6 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     manifest=manifest_file,
-    uac_admin=True,
+    version=version_resource,
+    uac_admin=False,
 )

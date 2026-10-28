@@ -32,7 +32,7 @@ class DatabaseHelperTests(unittest.TestCase):
 
         self.assertIn("The app started, but the database is unavailable.", message)
         self.assertIn("Error connecting to MySQL after 2 attempts", message)
-        self.assertIn("timeout", message)
+        self.assertNotIn("timeout", message)
 
     def test_format_db_unavailable_message_supports_unexpected_errors(self):
         message = format_db_unavailable_message("boom", 1, unexpected=True)
@@ -41,16 +41,9 @@ class DatabaseHelperTests(unittest.TestCase):
 
 
 class RuntimeManifestTests(unittest.TestCase):
-    def test_runtime_manifest_marks_config_as_user_managed(self):
+    def test_runtime_manifest_never_distributes_private_configuration_or_logs(self):
         manifest = json.loads((REPO_ROOT / "runtime-files.json").read_text(encoding="utf-8"))
-
-        config_entry = next(item for item in manifest if item["target"] == "config.ini")
-        logs_entry = next(item for item in manifest if item["target"] == "logs.txt")
-
-        self.assertTrue(config_entry["userManaged"])
-        self.assertFalse(config_entry["overwrite"])
-        self.assertFalse(logs_entry["userManaged"])
-        self.assertTrue(logs_entry["overwrite"])
+        self.assertEqual(manifest, [], "Runtime files must be supplied separately, never copied from a bench.")
 
 
 class AssignSerialLogicTests(unittest.TestCase):
@@ -65,9 +58,12 @@ class AssignSerialLogicTests(unittest.TestCase):
 
         with (
             patch.object(main_logic, "get_db_connection", return_value=conn),
+            patch.object(main_logic, "refresh_assignment_specs", side_effect=lambda specs, serial: dict(specs)),
+            patch.object(main_logic, "check_mdm_lock_status", return_value=None),
             patch.object(main_logic, "extract_details_from_sku", return_value={}),
             patch.object(main_logic, "build_results_footer", return_value=("All listed specs match.", None, None, None, None)),
             patch.object(main_logic, "resolve_order_identity", return_value=(12, "ORD-1")),
+            patch.object(main_logic, "get_latest_batteryinfoview_report", return_value={"content": "test"}),
             patch.object(main_logic, "capture_autopilot_hash_csv", return_value=r"C:\temp\PF24NEM2.csv"),
             patch.object(
                 main_logic,
@@ -77,6 +73,7 @@ class AssignSerialLogicTests(unittest.TestCase):
             patch.object(main_logic, "upload_hash_csv") as upload_hash_csv,
             patch.object(main_logic, "show_assign_success_dialog") as show_success,
             patch.object(main_logic.messagebox, "askyesno", return_value=False),
+            patch.object(main_logic, "prompt_assignment_review", return_value=""),
             patch.object(main_logic.messagebox, "showinfo") as showinfo,
         ):
             main_logic.assign_serial_logic(

@@ -1,0 +1,66 @@
+[
+  {
+    "scale_percent": 100,
+    "width": 1024,
+    "height": 768,
+    "comparison_height": 401,
+    "footer_height": 160,
+    "title_height": 126
+  },
+  {
+    "scale_percent": 100,
+    "width": 1366,
+    "height": 768,
+    "comparison_height": 401,
+    "footer_height": 160,
+    "title_height": 96
+  },
+  {
+    "scale_percent": 125,
+    "width": 1024,
+    "height": 768,
+    "comparison_height": 376,
+    "footer_height": 160,
+    "title_height": 191
+  },
+  {
+    "scale_percent": 125,
+    "width": 1366,
+    "height": 768,
+    "comparison_height": 376,
+    "footer_height": 160,
+    "title_height": 154
+  },
+  {
+    "scale_percent": 150,
+    "width": 1024,
+    "height": 768,
+    "comparison_height": 351,
+    "footer_height": 160,
+    "title_height": 276
+  },
+  {
+    "scale_percent": 150,
+    "width": 1366,
+    "height": 768,
+    "comparison_height": 351,
+    "footer_height": 160,
+    "title_height": 186
+  },
+  {
+    "scale_percent": 200,
+    "width": 1024,
+    "height": 768,
+    "comparison_height": 310,
+    "footer_height": 160,
+    "title_height": 419
+  },
+  {
+    "scale_percent": 200,
+    "width": 1366,
+    "height": 768,
+    "comparison_height": 310,
+    "footer_height": 160,
+    "title_height": 360
+  }
+]
