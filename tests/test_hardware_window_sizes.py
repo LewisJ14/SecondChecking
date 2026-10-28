@@ -96,8 +96,9 @@ class HardwareWindowSizeTests(unittest.TestCase):
                         self.assertNotIn('camera 0', camera.status.get())
                         self.assertEqual(camera.details['camera_index'], 0)
                         self.assertLessEqual(camera.window.winfo_height(), height - 40)
-                        self.assertLessEqual(camera.window.winfo_width(), round(820 * scale / 100) + 2)
-                        self.assertLessEqual(camera.window.winfo_height(), round(680 * scale / 100) + 2)
+                        effective_scale = float(root.tk.call('tk', 'scaling')) / (96 / 72)
+                        self.assertLessEqual(camera.window.winfo_width(), round(820 * effective_scale) + 2)
+                        self.assertLessEqual(camera.window.winfo_height(), round(680 * effective_scale) + 2)
                         self.assertLessEqual(camera.body.content.winfo_reqheight(),
                                              camera.body.canvas.winfo_height() + 2)
                         available_height = (camera.body.canvas.winfo_height()

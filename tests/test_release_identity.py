@@ -21,7 +21,7 @@ class ReleaseIdentityTests(unittest.TestCase):
     def setUp(self):
         self.temp = TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name) / 'repo'
+        self.root = Path(self.temp.name).resolve() / 'repo'
         self.root.mkdir()
         (self.root / 'src').mkdir()
         (self.root / 'scripts').mkdir()
@@ -38,7 +38,7 @@ class ReleaseIdentityTests(unittest.TestCase):
         self.state = {'version': '1.2.3', 'tag': 'v1.2.3', 'commit': 'a' * 40,
                       'dirty': False, 'review_only': False, 'source_sha256': {'src/version.py': 'b' * 64}}
         self.identity = dict(self.state, identity_version=1, build_id='fixture-id')
-        self.output = Path(self.temp.name) / 'build'
+        self.output = Path(self.temp.name).resolve() / 'build'
         (self.output / 'dist').mkdir(parents=True)
         self.artifact = self.output / 'dist/main.exe'
         self.artifact.write_bytes(b'MZfixture executable')
@@ -115,7 +115,7 @@ class ReleaseIdentityTests(unittest.TestCase):
         self.assertNotEqual(before, release.source_hashes())
 
     def test_build_fails_if_inputs_change_during_packaging(self):
-        output = Path(self.temp.name) / 'new-build'
+        output = Path(self.temp.name).resolve() / 'new-build'
         changed = dict(self.state, source_sha256={'different': 'hash'})
         with patch.object(release, 'check_dependencies'), \
                 patch.object(release, 'source_state', side_effect=[self.state, changed]), \
@@ -137,7 +137,7 @@ class ReleaseIdentityTests(unittest.TestCase):
             command.assert_not_called()
 
     def test_build_identity_round_trips_into_the_executable(self):
-        output = Path(self.temp.name) / 'new-build'
+        output = Path(self.temp.name).resolve() / 'new-build'
 
         def package(command, **kwargs):
             (output / 'dist').mkdir()

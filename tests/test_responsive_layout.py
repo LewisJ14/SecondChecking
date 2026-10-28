@@ -145,6 +145,7 @@ class LoginLayoutTests(unittest.TestCase):
             return
         root = app_controller.tb.Window(themename='flatly')
         root.geometry('1400x900+0+0')
+        root.maxsize(5000, 4000)
         root.minsize(800, 500)
         root.attributes('-alpha', 0)
         root.tk.call('tk', 'scaling', 4 / 3 * int(scale) / 100)

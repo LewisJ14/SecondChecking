@@ -209,7 +209,7 @@ class TransactionTests(unittest.TestCase):
     def setUp(self):
         self.temporary = TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
-        self.root = Path(self.temporary.name)
+        self.root = Path(self.temporary.name).resolve()
         self.target = self.root / "main.exe"
         self.target.write_bytes(OLD)
         (self.root / "config.ini").write_bytes(b"private-config-fixture")

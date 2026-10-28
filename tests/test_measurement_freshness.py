@@ -217,7 +217,7 @@ class BatteryCaptureTests(unittest.TestCase):
             with patch.object(helpers.sys, "frozen", True, create=True), \
                     patch.object(helpers.sys, "_MEIPASS", directory, create=True), \
                     patch.object(helpers, "get_app_dir", return_value=str(Path(directory) / "unrelated")):
-                self.assertEqual(Path(helpers.ensure_batteryinfoview()), exe)
+                self.assertEqual(Path(helpers.ensure_batteryinfoview()).resolve(), exe.resolve())
 
     def test_ac_power_is_not_a_charging_confirmation(self):
         client = Mock()
