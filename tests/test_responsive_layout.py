@@ -149,13 +149,17 @@ class LoginLayoutTests(unittest.TestCase):
         root.minsize(800, 500)
         root.attributes('-alpha', 0)
         root.tk.call('tk', 'scaling', 4 / 3 * int(scale) / 100)
+        # Deferred sizing runs after construction: retain monitor fixtures until
+        # after Tk teardown, rather than ending them before root.update().
+        for target in ('auth.login.get_work_area', 'utils.ui_scaling.get_work_area'):
+            monitor = patch(target, return_value=(0, 0, 1800, 1120))
+            monitor.start()
+            self.addCleanup(monitor.stop)
         errors = []
         root.report_callback_exception = lambda *args: errors.append(args)
         try:
             before = root.bind('<FocusIn>')
             with patch.object(login.LoginPanel, '_load_usernames_async'), \
-                    patch.object(login, 'get_work_area', return_value=(0, 0, 1800, 1120)), \
-                    patch('utils.ui_scaling.get_work_area', return_value=(0, 0, 1800, 1120)), \
                     patch.object(login, '_load_last_user', return_value='tester'):
                 panel = login.LoginPanel(root, Mock())
             panel._finish_username_load(['tester', 'review_operator_with_a_deliberately_long_name'], None)
