@@ -155,6 +155,7 @@ class LoginLayoutTests(unittest.TestCase):
             before = root.bind('<FocusIn>')
             with patch.object(login.LoginPanel, '_load_usernames_async'), \
                     patch.object(login, 'get_work_area', return_value=(0, 0, 1800, 1120)), \
+                    patch('utils.ui_scaling.get_work_area', return_value=(0, 0, 1800, 1120)), \
                     patch.object(login, '_load_last_user', return_value='tester'):
                 panel = login.LoginPanel(root, Mock())
             panel._finish_username_load(['tester', 'review_operator_with_a_deliberately_long_name'], None)
