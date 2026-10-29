@@ -342,24 +342,35 @@ Unavailable standard-user hash capture is shown in the final recorded-reason rev
 
 ## Bug reports
 
-Error dialogs offer **Upload bug report**. Login, Tools and hardware checks also
-provide the same action for inline errors. The operator sees a frozen preview
+Error dialogs offer **Upload bug report**. Tools and hardware checks also
+provide the same action for inline errors; the sign-in form has no report button.
+The operator sees a frozen preview
 before sending anything to the configured HTTPS Web-Tools service. Upload is
 manual, runs in a background thread and keeps the same reference when retried.
 
 Reports contain the app/build and Windows/Python versions, code locations,
 exception types, numeric error codes, and up to 60 structured diagnostic events
-from the preceding 30 minutes. They never attach config files, raw logs,
-exception messages/locals, screenshots, audio, customer/order data or hardware
-identifiers. Only the versioned allowlisted JSON contract is accepted by Astro.
+from the preceding 30 minutes. Reports also include bounded, redacted text files
+selected for the current error: app diagnostics, Sysprep Panther logs, recent
+Windows Update events, or allowlisted app-update state. No configuration files,
+arbitrary file paths, screenshots or audio are collected. Credentials, local
+account/machine names, paths and common identifiers are redacted before preview
+and again by Astro. Only fixed filenames are accepted, at most 48 KiB each and
+192 KiB for the complete report. Missing/unreadable files and truncated extracts
+are identified in the preview. An earlier Sysprep error does not cause its logs
+to be included with a later unrelated error.
 `diagnostics.jsonl` is bounded/rotated at 1 MiB alongside `logs.txt`; the old text
 log is kept locally and is never uploaded. A memory fallback retains diagnostics
 when the app folder is not writable. GUI callback/background errors are captured.
-Maintenance records approval/start/exit/timeout stages; Sysprep failures extract
-recent numeric Windows error codes without attaching sensitive Panther text.
+Maintenance records approval/start/exit/timeout stages. File collection runs in
+the background, and the preview remains cancellable while it is prepared.
 
 Deploy the matching Web-Tools bug-report migration/API before distributing this
-client. The API uses the existing deployment key even before operator sign-in;
+client. This attachment extension uses the existing JSON column and needs no new
+migration. The client checks the server's attachment capability before sending
+files and requires an attachment-count receipt. Astro administrators can preview
+or download the redacted text files from each report. The API uses the existing
+deployment key even before operator sign-in;
 valid sessions attribute the report to its operator, but neither authentication
 header is included in evidence. Missing service/migration, TLS/network failure
 and throttling show a retryable upload result and never claim success. Hard

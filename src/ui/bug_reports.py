@@ -16,13 +16,7 @@ from services.bug_reports import prepare_report, upload_report
 
 def open_report(parent, incident=None):
     """No upload occurs until the operator presses Upload in this preview."""
-    try:
-        report = prepare_report(incident)
-    except Exception as error:
-        runtime.log_diagnostic('support.prepare_failed', error=error)
-        messagebox.showinfo('Bug report unavailable',
-                            'Could not prepare diagnostics. Please retry.', parent=parent)
-        return
+    report = None
     window = tk.Toplevel(parent)
     previous_grab = parent.grab_current()
     window.title('Upload bug report')
@@ -34,16 +28,16 @@ def open_report(parent, incident=None):
     ttk.Label(window, text='Review bug report', font=('Segoe UI', 16, 'bold')).grid(
         row=0, column=0, sticky='w', padx=16, pady=(16, 8))
     label = ttk.Label(window, text='Uploads to your configured Web-Tools service. Includes code locations, '
-                      'error codes, build details and recent diagnostic events. No configuration files, '
-                      'raw logs, screenshots, audio, order data or device identifiers are attached.',
+                      'error codes and relevant redacted log files. Configuration files, '
+                      'screenshots and audio are excluded. Review the included files below before uploading.',
                       wraplength=720, justify='left')
     label.grid(row=1, column=0, sticky='ew', padx=16, pady=(0, 12))
     label.bind('<Configure>', lambda event: label.configure(wraplength=max(100, event.width)))
     preview = ScrolledText(window, wrap='word', height=14, font=('Consolas', 10))
     preview.grid(row=2, column=0, sticky='nsew', padx=16)
-    preview.insert('1.0', json.dumps(report, indent=2))
+    preview.insert('1.0', 'Preparing diagnostic files…')
     preview.configure(state='disabled')
-    status = tk.StringVar(value='Nothing has been uploaded.')
+    status = tk.StringVar(value='Preparing diagnostic files. Nothing has been uploaded.')
     status_label = ttk.Label(window, textvariable=status, wraplength=720)
     status_label.grid(row=3, column=0, sticky='ew', padx=16, pady=12)
     status_label.bind('<Configure>', lambda event: status_label.configure(wraplength=max(100, event.width)))
@@ -51,12 +45,51 @@ def open_report(parent, incident=None):
     actions.grid(row=4, column=0, sticky='ew', padx=16, pady=(0, 16))
     replies = queue.Queue()
     busy = {'value': False}
+    prepared = queue.Queue()
+    preparation_timer = {'id': None}
 
     def close():
         if not busy['value']:
             window.destroy()
             if previous_grab is not None and previous_grab.winfo_exists():
                 previous_grab.grab_set()
+
+    def disposed(event):
+        if event.widget is window and preparation_timer['id']:
+            window.after_cancel(preparation_timer['id'])
+            preparation_timer['id'] = None
+    window.bind('<Destroy>', disposed, add='+')
+
+    def preparation_worker():
+        try:
+            prepared.put((True, prepare_report(incident)))
+        except Exception as error:
+            runtime.log_diagnostic('support.prepare_failed', error=error)
+            prepared.put((False, None))
+
+    def prepared_poll():
+        nonlocal report
+        preparation_timer['id'] = None
+        try:
+            success, report = prepared.get_nowait()
+        except queue.Empty:
+            preparation_timer['id'] = window.after(80, prepared_poll)
+            return
+        if not success:
+            status.set('Could not prepare diagnostics. Close this window and retry.')
+            return
+        evidence = {key: value for key, value in report.items() if key != 'attachments'}
+        preview.configure(state='normal')
+        preview.delete('1.0', 'end')
+        preview.insert('1.0', json.dumps(evidence, indent=2))
+        for attachment in report.get('attachments', []):
+            preview.insert('end', '\n\n--- {} ({} bytes{}) ---\n{}'.format(
+                attachment['name'], attachment['size'],
+                ', recent extract' if attachment['truncated'] else '', attachment['text']))
+        preview.configure(state='disabled')
+        status.set('{} diagnostic file(s) included. Nothing has been uploaded.'.format(
+            len(report.get('attachments', []))))
+        send.configure(state='normal')
 
     def poll():
         try:
@@ -74,7 +107,7 @@ def open_report(parent, incident=None):
             send.configure(state='normal', text='Retry upload')
 
     def send_report():
-        if busy['value']:
+        if busy['value'] or report is None:
             return
         busy['value'] = True
         send.configure(state='disabled')
@@ -97,6 +130,9 @@ def open_report(parent, incident=None):
     send = ttk.Button(actions, text='Upload bug report', command=send_report,
                       style='success.TButton')
     send.pack(side='left')
+    send.configure(state='disabled')
+    threading.Thread(target=preparation_worker, daemon=True).start()
+    preparation_timer['id'] = window.after(80, prepared_poll)
     cancel = ttk.Button(actions, text='Cancel', command=close)
     cancel.pack(side='right')
     window.protocol('WM_DELETE_WINDOW', close)

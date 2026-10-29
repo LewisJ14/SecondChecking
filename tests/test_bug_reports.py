@@ -22,6 +22,11 @@ class BugReportTests(unittest.TestCase):
         self.memory = patch.object(runtime, '_DIAGNOSTICS', runtime.deque(maxlen=60))
         self.memory.start()
         self.addCleanup(self.memory.stop)
+        capability = Mock(status_code=200)
+        capability.json.return_value = {'attachments_version': 1}
+        ready = patch.object(bug_reports.transport, 'get', return_value=capability)
+        ready.start()
+        self.addCleanup(ready.stop)
 
     def report(self):
         try:
@@ -64,7 +69,8 @@ class BugReportTests(unittest.TestCase):
     def test_upload_uses_configured_transport_and_retries_frozen_reference(self):
         report = self.report()
         response = Mock(status_code=200)
-        response.json.return_value = {'success': True, 'report_id': report['report_id']}
+        response.json.return_value = {'success': True, 'report_id': report['report_id'],
+                                      'attachment_count': len(report['attachments'])}
         with patch.object(bug_reports, 'service_settings', return_value=('https://fixture.invalid', 'fixture-key')), \
                 patch.object(bug_reports.operator_session, 'headers', return_value={}), \
                 patch.object(bug_reports.transport, 'post', return_value=response) as sender:
@@ -112,6 +118,67 @@ class BugReportTests(unittest.TestCase):
 
 
 class BugReportDialogTests(unittest.TestCase):
+    def test_file_preparation_keeps_preview_responsive_and_upload_explicit(self):
+        if self.child():
+            return
+        import threading
+        import time
+        from ui.bug_reports import open_report
+        release = threading.Event()
+        report = {'report_id': 'a' * 32, 'attachments': [{'name': 'sysprep-setuperr.log',
+            'text': '0x80073cf2\nUseful Windows error', 'size': 34, 'truncated': False}]}
+        def prepare(*args):
+            release.wait(5)
+            return report
+        def buttons(widget):
+            result = []
+            for child in widget.winfo_children():
+                if child.winfo_class() == 'TButton':
+                    result.append(child)
+                result.extend(buttons(child))
+            return result
+        try:
+            with patch('ui.bug_reports.prepare_report', side_effect=prepare), \
+                    patch('ui.bug_reports.upload_report') as sender:
+                window = open_report(self.root)
+                send = next(b for b in buttons(window) if b.cget('text') == 'Upload bug report')
+                ticks = []
+                self.root.after(10, lambda: ticks.append(True))
+                deadline = time.monotonic() + 2
+                while not ticks and time.monotonic() < deadline:
+                    self.root.update()
+                    time.sleep(.01)
+                self.assertTrue(ticks)
+                self.assertIn('disabled', send.state())
+                release.set()
+                deadline = time.monotonic() + 3
+                while 'disabled' in send.state() and time.monotonic() < deadline:
+                    self.root.update()
+                    time.sleep(.01)
+                self.assertNotIn('disabled', send.state())
+                sender.assert_not_called()
+                window.destroy()
+        finally:
+            release.set()
+
+    def test_sign_in_has_retry_and_exit_but_no_report_action(self):
+        if self.child():
+            return
+        from auth.login import LoginPanel
+        with patch.object(LoginPanel, '_load_usernames_async'):
+            LoginPanel(self.root, Mock())
+            self.root.update_idletasks()
+        labels = []
+        def walk(widget):
+            for child in widget.winfo_children():
+                if child.winfo_class() in ('Button', 'TButton'):
+                    labels.append(str(child.cget('text')))
+                walk(child)
+        walk(self.root)
+        self.assertIn('Retry', labels)
+        self.assertIn('Exit', labels)
+        self.assertFalse(any('bug report' in label.lower() for label in labels))
+
     def setUp(self):
         if os.environ.get('SC_BUG_REPORT_UI_CHILD') != '1':
             return

@@ -22,6 +22,18 @@ def register_private_values(values):
         _SECRETS.update(str(value) for value in values if value and len(str(value)) >= 4)
 
 
+def diagnostic_private_values():
+    with _LOCK:
+        values = set(_SECRETS)
+    values.update(value for key, value in os.environ.items()
+                  if re.search(r'PASSWORD|SECRET|TOKEN|API_KEY|SECOND_CHECK_KEY', key, re.I)
+                  and len(value) >= 4)
+    values.update(os.environ.get(key, '') for key in
+                  ('USERNAME', 'COMPUTERNAME', 'USERPROFILE', 'USERDOMAIN', 'USERDNSDOMAIN')
+                  if len(os.environ.get(key, '')) >= 4)
+    return values
+
+
 def redact_text(message):
     """Defence in depth for older text events; diagnostics use an allowlist."""
     text = str(message)[:16000]
