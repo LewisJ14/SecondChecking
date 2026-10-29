@@ -17,6 +17,21 @@ class MaintenanceCancelled(MaintenanceError):
     """Windows explicitly reported that administrator approval was cancelled."""
 
 
+SYSPREP_FAILURES = {
+    11: ('maintenance_lock_create', 'Windows could not prepare the maintenance lock.'),
+    12: ('maintenance_lock_acquire', 'Another maintenance action is running. Wait for it to finish before retrying.'),
+    31: ('dialog_support', 'The Sysprep window check could not load.'),
+    32: ('process_query', 'Windows could not identify the existing Sysprep process.'),
+    33: ('process_identity', 'The existing Sysprep executable could not be verified.'),
+    34: ('process_arguments', 'An existing Sysprep operation could not be confirmed idle.'),
+    35: ('dialog_identify', 'The Sysprep window could not be confirmed idle. Close its idle options window and retry.'),
+    36: ('dialog_close', 'The idle Sysprep window did not close. No second operation was started.'),
+    37: ('process_recheck', 'Sysprep is still running. No second operation was started.'),
+    38: ('process_launch', 'Windows could not launch Sysprep.'),
+    39: ('process_result', 'Windows Sysprep returned a failure result.'),
+}
+
+
 def _powershell_executable():
     import win32api
     return Path(win32api.GetSystemDirectory()) / 'WindowsPowerShell/v1.0/powershell.exe'
@@ -67,6 +82,7 @@ if (-not $module) {
 SYSPREP_SCRIPT = r'''
 $ErrorActionPreference = 'Stop'
 $program = Join-Path ([Environment]::GetFolderPath('System')) 'Sysprep\Sysprep.exe'
+$script:scMaintenanceExit = 31
 Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
@@ -108,25 +124,36 @@ public static class SecondCheckingSysprepDialog {
 }
 '@
 foreach ($existing in @(Get-Process -Name Sysprep -ErrorAction SilentlyContinue)) {
+    $script:scMaintenanceExit = 32
     $details = Get-CimInstance Win32_Process -Filter ("ProcessId=" + $existing.Id)
     if (-not $details) { continue }
     $command = ([string]$details.CommandLine).Trim()
     $bareCommand = ($command -ieq $program -or $command -ieq ('"' + $program + '"'))
-    if (-not $bareCommand -or $details.ExecutablePath -ine $program) {
+    $script:scMaintenanceExit = 33
+    if ($details.ExecutablePath -ine $program) {
+        throw 'The existing Sysprep executable could not be verified.'
+    }
+    $script:scMaintenanceExit = 34
+    if (-not $bareCommand) {
         throw 'An active or unrecognized Sysprep operation is already running.'
     }
     $existing.Refresh()
+    $script:scMaintenanceExit = 35
     if (-not [SecondCheckingSysprepDialog]::CancelIdle($existing.MainWindowHandle, $existing.Id)) {
         throw 'The existing Sysprep window is busy or could not be identified safely.'
     }
+    $script:scMaintenanceExit = 36
     if (-not $existing.WaitForExit(10000)) {
         throw 'The idle Sysprep window did not close. No second operation was started.'
     }
 }
+$script:scMaintenanceExit = 37
 if (Get-Process -Name Sysprep -ErrorAction SilentlyContinue) {
     throw 'Sysprep is still running. No second operation was started.'
 }
+$script:scMaintenanceExit = 38
 $operation = Start-Process -FilePath $program -ArgumentList '/oobe', '/shutdown' -Wait -PassThru
+$script:scMaintenanceExit = 39
 if ($operation.ExitCode -ne 0) { throw 'Sysprep did not complete successfully.' }
 '''
 
@@ -152,10 +179,12 @@ def action_script(action):
     # timeout in the GUI. Never terminate an unrelated maintenance process.
     return r'''
 $ErrorActionPreference = 'Stop'
-trap { exit 1 }
+$script:scMaintenanceExit = 11
+trap { exit $script:scMaintenanceExit }
 $mutex = [Threading.Mutex]::new($false, 'Global\SecondCheckingMaintenance')
 $owned = $false
 try {
+    $script:scMaintenanceExit = 12
     try { $owned = $mutex.WaitOne(0) }
     catch [Threading.AbandonedMutexException] { $owned = $true }
     if (-not $owned) { throw 'Another maintenance action is running.' }
@@ -214,9 +243,14 @@ def run_elevated(action, timeout=1800):
         code = win32process.GetExitCodeProcess(handle) if result == win32event.WAIT_OBJECT_0 else None
         log_diagnostic('maintenance.finished', kind=action,
                        result='error' if code != 0 else 'success', exit_code=code,
+                       stage=(SYSPREP_FAILURES.get(code, ('wait', ''))[0]
+                              if action == 'sysprep' else 'wait'),
                        elapsed_ms=int((time.monotonic() - started) * 1000))
         if result != win32event.WAIT_OBJECT_0 or code != 0:
             if action == 'sysprep':
+                if code in SYSPREP_FAILURES:
+                    raise MaintenanceError(SYSPREP_FAILURES[code][1] +
+                                           ' Upload a bug report if it persists.')
                 raise MaintenanceError('Sysprep failed. Upload a bug report to include its Windows error codes.')
             raise MaintenanceError('Maintenance failed. Check Windows history, permissions and required machine modules.')
     finally:

@@ -4,9 +4,12 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import base64
+from unittest.mock import patch, Mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
-from services.maintenance import SYSPREP_SCRIPT, action_script
+from services.maintenance import (SYSPREP_SCRIPT, SYSPREP_FAILURES, action_script,
+                                  run_elevated, MaintenanceError)
 
 
 FIXTURE = r'''
@@ -42,6 +45,58 @@ $fixture.Prepare()
 
 
 class SysprepLaunchTests(unittest.TestCase):
+    def test_encoded_preflight_failures_keep_stage_without_exception_text(self):
+        for fault, expected in (('support', 31), ('query', 32),
+                                ('identity', 33), ('arguments', 34), ('dialog', 35)):
+            with self.subTest(fault=fault):
+                prefix = "$fault='" + fault + "'\n" + r'''
+function Get-Process {
+    $process=[pscustomobject]@{ Id=12345; MainWindowHandle=[IntPtr]::Zero }
+    $process | Add-Member ScriptMethod Refresh {}
+    return $process
+}
+function Get-CimInstance {
+    if ($fault -eq 'query') { throw 'private-fixture-text' }
+    $path=Join-Path ([Environment]::GetFolderPath('System')) 'Sysprep\Sysprep.exe'
+    $cmd=$path
+    if ($fault -eq 'identity') { $path='C:\private-fixture-text\Sysprep.exe' }
+    if ($fault -eq 'arguments') { $cmd+=' /oobe /shutdown' }
+    return [pscustomobject]@{ ExecutablePath=$path; CommandLine=$cmd }
+}
+if ($fault -eq 'support') { function Add-Type { throw 'private-fixture-text' } }
+function Start-Process { throw 'An operation must never start in this fixture' }
+'''
+                encoded = base64.b64encode((prefix + action_script('sysprep')).encode(
+                    'utf-16-le')).decode('ascii')
+                result = subprocess.run(['powershell.exe', '-NoProfile', '-NonInteractive',
+                    '-EncodedCommand', encoded], capture_output=True, text=True, timeout=20)
+                self.assertEqual(result.returncode, expected, result.stderr)
+                self.assertNotIn('private-fixture-text', result.stdout + result.stderr)
+
+    def test_encoded_elevated_wrapper_preserves_safe_failure_stage(self):
+        for native_exit, expected in ((0, 0), (5, 39)):
+            with self.subTest(native_exit=native_exit):
+                prefix = "function Get-Process {}\nfunction Start-Process { " + (
+                    "return [pscustomobject]@{ExitCode=%s} }\n" % native_exit)
+                source = prefix + action_script('sysprep')
+                encoded = base64.b64encode(source.encode('utf-16-le')).decode('ascii')
+                result = subprocess.run(['powershell.exe', '-NoProfile', '-NonInteractive',
+                    '-EncodedCommand', encoded], capture_output=True, text=True, timeout=20)
+                self.assertEqual(result.returncode, expected, result.stderr)
+
+    def test_failure_stages_are_logged_and_explained_without_private_text(self):
+        import win32event
+        for code, (stage, message) in SYSPREP_FAILURES.items():
+            with self.subTest(stage=stage), \
+                    patch('services.maintenance._shell_execute', return_value=Mock()), \
+                    patch('win32event.WaitForSingleObject', return_value=win32event.WAIT_OBJECT_0), \
+                    patch('win32process.GetExitCodeProcess', return_value=code), \
+                    patch('services.maintenance.log_diagnostic') as log:
+                with self.assertRaises(MaintenanceError) as caught:
+                    run_elevated('sysprep')
+                self.assertIn(message, str(caught.exception))
+                self.assertEqual(log.call_args.kwargs['stage'], stage)
+
     def run_script(self, script):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'fixture.ps1'

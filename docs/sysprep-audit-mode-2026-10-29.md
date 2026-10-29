@@ -90,3 +90,26 @@ These validate the implementation; the earlier app/Audit Mode VM pass above
 reproduced the defects before this change. The corrected packaged app still
 needs an end-to-end Audit Mode shutdown retest; this release does not claim that
 new VM acceptance has already taken place.
+
+## Physical-machine failure and 0.1.47 diagnostics
+
+Report `d3c7b8f049d54afe81dbfb499760a9c9` from 0.1.46 records helper exit 1
+after 3,125 ms, with no recent native Sysprep errors. It does not identify which
+preflight condition failed, so it cannot establish why that machine's window
+remained open.
+
+A new elevated VM probe opened the actual system Sysprep options window and ran
+the original 0.1.46 guard. It closed the real dialog and reached a substituted
+launch returning success. No Sysprep operation or shutdown was executed by this
+probe. Its result is retained in the VM test payload as
+`sysprep-real-dialog-result.json`. This validates real idle-dialog cancellation
+on that VM, not a complete app-driven Audit Mode shutdown or a resolution of
+the affected physical machine's failure.
+
+Version 0.1.47 retains that behavior and adds fixed exit codes and safe stage
+names for maintenance lock creation/acquisition, window-check compilation,
+process query, executable identity, command-line qualification, dialog
+recognition, closure, process recheck, launch and Windows result. The operator
+message identifies the failed step. Reports include the stage and numeric code;
+they do not include process paths, command lines or PowerShell exception text.
+The affected machine must retry and upload its report to identify the cause.
