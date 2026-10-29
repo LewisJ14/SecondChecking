@@ -85,6 +85,11 @@ def run_worker(directory):
         reply = {"helper_version": 1, "request_id": request_id, "kind": kind,
                  "outcome": "error", "error": "Helper operation failed.",
                  "diagnostic": exception_report(exc)}
+        if kind == 'updates':
+            from services.update_integrity import UpdateCheckError, UpdateError
+            reply['error_code'] = (exc.reason if isinstance(exc, UpdateCheckError)
+                                   else 'invalid_release' if isinstance(exc, UpdateError)
+                                   else 'unavailable')
     write_result(directory, reply)
 
 
@@ -93,6 +98,11 @@ def decode_reply(reply, kind, request_id):
             or reply.get("request_id") != request_id or reply.get("kind") != kind):
         raise HelperError("Helper result is missing, unsupported or mismatched.")
     if reply.get("outcome") != "ok":
+        if kind == 'updates':
+            from services.update_integrity import CHECK_FAILURES
+            code = reply.get('error_code')
+            if isinstance(code, str) and code in CHECK_FAILURES:
+                raise HelperError(CHECK_FAILURES[code])
         raise HelperError("Helper operation failed; no result was confirmed. "
                           "See helper.failed in logs.txt (reference {}).".format(
                               request_id.replace('-', '')))

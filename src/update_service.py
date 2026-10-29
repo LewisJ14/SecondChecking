@@ -12,8 +12,9 @@ from uuid import uuid4
 import webbrowser
 
 from services.update_integrity import (MAX_BINARY, MAX_MANIFEST, REPOSITORY,
-    UpdateError, download, file_hash, open_release, safe_url, signer_pin,
-    verify_content, verify_publisher, version_tuple)
+    UpdateError, UpdateCheckError, certificate_failure, download, file_hash,
+    open_release, safe_url, signer_pin, verify_content, verify_publisher,
+    version_tuple)
 from services.update_transaction import (copy_atomic, load_plan, previous_plan,
     read_json, write_json)
 from utils.helpers import log_event
@@ -107,7 +108,10 @@ class UpdateService:
         except Exception as exc:
             from services.runtime import log_diagnostic
             log_diagnostic('update.manifest_fetch_failed', error=exc, stage='download')
-            raise UpdateError("Release manifest could not be downloaded or decoded.") from None
+            reason = ('certificate' if certificate_failure(exc) else
+                      'invalid_release' if isinstance(exc, (ValueError, UnicodeError))
+                      else 'network')
+            raise UpdateCheckError(reason) from None
 
     def check_for_updates(self):
         manifest = self.fetch_manifest()

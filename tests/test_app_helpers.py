@@ -177,8 +177,15 @@ class HelperConsumerTests(unittest.TestCase):
         return controller, callbacks
 
     def consume(self, callbacks):
-        callback = callbacks.get(timeout=3)
-        callback()
+        import time
+        deadline = time.monotonic() + 3
+        while time.monotonic() < deadline:
+            callback = callbacks.get(timeout=3)
+            callback()
+            if callbacks.empty():
+                return
+            time.sleep(0.01)
+        self.fail("UI result was not delivered")
 
     def test_updater_uses_file_payload_and_errors_never_become_no_update(self):
         import app_controller

@@ -5,9 +5,12 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import ssl
 import time
 from urllib.parse import urlsplit, unquote
-from urllib.request import HTTPRedirectHandler, Request, build_opener
+from urllib.request import HTTPRedirectHandler, HTTPSHandler, Request, build_opener
+
+import certifi
 
 REPOSITORY = "lewisj14/SecondChecking"
 MAX_MANIFEST = 65536
@@ -16,6 +19,47 @@ MAX_BINARY = 512 * 1024 * 1024
 
 class UpdateError(RuntimeError):
     pass
+
+
+CHECK_FAILURES = {
+    'certificate': 'The update service certificate could not be verified. Retry or upload a bug report.',
+    'network': 'Could not reach the update service. Check the connection and retry.',
+    'invalid_release': 'The update service returned an invalid release. No update was accepted.',
+    'unavailable': 'The update check could not finish. Retry or upload a bug report.',
+}
+
+
+class UpdateCheckError(UpdateError):
+    def __init__(self, reason):
+        self.reason = reason if reason in CHECK_FAILURES else 'unavailable'
+        super().__init__(CHECK_FAILURES[self.reason])
+
+
+def release_tls_context():
+    """Keep Windows/enterprise trust and add the packaged public CA roots.
+
+    Fresh Windows installations can lack roots otherwise obtained by automatic
+    root updates. Requests already ships certifi; urllib must opt into it.
+    Hostname and certificate-chain verification remain mandatory.
+    """
+    context = ssl.create_default_context()
+    context.load_verify_locations(cafile=certifi.where())
+    return context
+
+
+def certificate_failure(error):
+    pending, seen = [error], set()
+    while pending and len(seen) < 10:
+        item = pending.pop()
+        if id(item) in seen:
+            continue
+        seen.add(id(item))
+        if isinstance(item, ssl.SSLCertVerificationError):
+            return True
+        pending.extend(value for value in (getattr(item, 'reason', None),
+            getattr(item, '__cause__', None), getattr(item, '__context__', None))
+            if isinstance(value, BaseException))
+    return False
 
 
 def version_tuple(value):
@@ -60,7 +104,8 @@ class TrustedRedirects(HTTPRedirectHandler):
 
 def open_release(url, timeout=8):
     safe_url(url)
-    response = build_opener(TrustedRedirects()).open(
+    response = build_opener(TrustedRedirects(),
+                            HTTPSHandler(context=release_tls_context())).open(
         Request(url, headers={"User-Agent": "SecondChecking-Updater"}), timeout=timeout)
     try:
         safe_url(response.geturl(), redirect=True)

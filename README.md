@@ -66,6 +66,8 @@ Order references support both legacy and current formats:
 
 ## Update service
 
+Update checks use system certificate trust plus the bundled public CA roots. Certificate and hostname verification stay enabled; no certificate store is changed. Startup shows checking, up-to-date, available, or failed status beside the version. **Tools > Check for App Updates** retries a failed check and displays its result.
+
 The GUI exposes **Tools > Check for App Updates**. The updater compares the embedded version with the HTTPS release manifest, validates its repository/version/asset identity, and offers a newer release. Download and verification run in the background with progress and Cancel.
 
 The default manifest is in the trusted `lewisj14/SecondChecking` repository. `APP_UPDATE_MANIFEST_URL` may select a release manifest within that repository; arbitrary origins are rejected:

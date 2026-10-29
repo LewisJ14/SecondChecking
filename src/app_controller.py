@@ -96,6 +96,10 @@ class AppController:
 
     def _operator_destroyed(self, event):
         if event.widget is self.root:
+            self._update_ui_closed = True
+            update_poll = getattr(self, "_update_check_after_id", None)
+            if update_poll:
+                self.root.after_cancel(update_poll)
             pending = getattr(self, '_details_resize_after_id', None)
             if pending:
                 self.root.after_cancel(pending)
@@ -236,6 +240,7 @@ class AppController:
             font=("Arial", 9),
             style='HeaderMuted.TLabel',
         )
+        self._version_text = self.version_label.cget("text")
         self.version_label.grid(row=0, column=2, sticky="e", pady=(0, 12))
 
         self.order_context_label = ttk.Label(
@@ -1102,70 +1107,82 @@ class AppController:
         if self._preserve_check_draft():
             self.root.destroy()
 
-    def check_for_updates(self, silent: bool = False):
-        if getattr(self, "_operator_locked", False):
-            return
-        def worker():
-            try:
-                from services.app_helper import run_helper
-                result = run_helper("updates", timeout=60)
-            except Exception as err:
-                log_event(f"App update check process failed: {err}")
-                if not silent:
-                    self.root.after(
-                        0,
-                        lambda detail=str(err): messagebox.showerror(
-                            "Update Check Failed",
-                            "Unable to check for updates:\n" + detail,
-                        ),
-                    )
-                return
+    def _set_update_check_status(self, status):
+        self._update_check_status = status
+        label = getattr(self, 'version_label', None)
+        if label is not None:
+            label.configure(text=getattr(self, '_version_text', '') + "\n" + status)
 
+    def check_for_updates(self, silent: bool = False):
+        if (getattr(self, "_operator_locked", False)
+                or getattr(self, '_update_ui_closed', False)):
+            return
+        if getattr(self, '_update_check_running', False):
+            self._update_check_notify = self._update_check_notify or not silent
+            return
+        self._update_check_running = True
+        self._update_check_notify = not silent
+        self._set_update_check_status('Checking for app updates…')
+        results = queue.Queue()
+        current_version = self.update_service.current_version
+
+        def worker():
+            from services.app_helper import run_helper, HelperError
+            from services.update_integrity import CHECK_FAILURES
             from services.update_result import decode_update_result
             try:
-                manifest_data = decode_update_result(
-                    json.dumps(result), self.update_service.current_version)
-            except (ValueError, TypeError) as exc:
-                log_event('Invalid update helper result: {}'.format(exc))
-                if not silent:
-                    self.root.after(0, lambda detail=str(exc): messagebox.showerror(
-                        'Update Check Failed', detail))
+                result = run_helper("updates", timeout=60)
+                data = decode_update_result(json.dumps(result), current_version)
+                results.put((data, None))
+            except Exception as err:
+                from services.runtime import log_diagnostic
+                log_diagnostic('update.check_failed', error=err, stage='helper')
+                detail = (str(err) if isinstance(err, HelperError)
+                          and str(err) in CHECK_FAILURES.values()
+                          else CHECK_FAILURES['unavailable'])
+                results.put((None, detail))
+
+        def poll():
+            self._update_check_after_id = None
+            if getattr(self, '_update_ui_closed', False):
                 return
-            if manifest_data is None:
-                if not silent:
-                    self.root.after(0, lambda: messagebox.showinfo(
-                        'No Updates', 'The update service confirmed no newer release '
-                        'for this version.'))
+            try:
+                data, error = results.get_nowait()
+            except queue.Empty:
+                self._update_check_after_id = self.root.after(100, poll)
                 return
-
-            manifest = UpdateManifest(
-                version=manifest_data["version"],
-                download_url=manifest_data.get("download_url"),
-                release_page=manifest_data.get("release_page"),
-                notes=manifest_data.get("notes"),
-                metadata=manifest_data.get("metadata", {}),
-                sha256=manifest_data.get("sha256"), size=manifest_data.get("size"),
-                signer_sha256=manifest_data.get("signer_sha256"),
-            )
-
-            notes = (manifest.notes or "No release notes provided.").strip()
-
-            def show_update_prompt():
-                if getattr(self, "_operator_locked", False):
-                    return
-                automatic = self.update_service.can_auto_install(manifest)
-                action = ("Download, verify and install it now?" if automatic else
-                          "Open the trusted release page? Automatic installation "
-                          "requires release hashes and a configured trusted publisher.")
-                message = (f"Release {manifest.version} is available.\n"
-                           f"Running version: {self.update_service.current_version}.\n\n"
-                           f"{notes}\n\n{action}")
-                if messagebox.askyesno("Update Available", message):
-                    self._begin_update(manifest)
-
-            self.root.after(0, show_update_prompt)
+            self._update_check_running = False
+            notify = self._update_check_notify
+            if error:
+                self._set_update_check_status('Update check failed — use Tools to retry.')
+                if notify and not getattr(self, '_operator_locked', False):
+                    messagebox.showerror('Update Check Failed', error)
+                return
+            if data is None:
+                self._set_update_check_status('App is up to date')
+                if notify and not getattr(self, '_operator_locked', False):
+                    messagebox.showinfo('No Updates',
+                        'The update service confirmed no newer release for this version.')
+                return
+            manifest = UpdateManifest(**{
+                name: data[name] for name in UpdateManifest.__dataclass_fields__
+                if name in data
+            })
+            self._set_update_check_status('Update available: ' + manifest.version)
+            if getattr(self, '_operator_locked', False):
+                return
+            automatic = self.update_service.can_auto_install(manifest)
+            action = ("Download, verify and install it now?" if automatic else
+                      "Open the trusted release page? Automatic installation "
+                      "requires release hashes and a configured trusted publisher.")
+            message = (f"Release {manifest.version} is available.\n"
+                       f"Running version: {current_version}.\n\n"
+                       f"{(manifest.notes or 'No release notes provided.').strip()}\n\n{action}")
+            if messagebox.askyesno("Update Available", message):
+                self._begin_update(manifest)
 
         threading.Thread(target=worker, daemon=True).start()
+        self._update_check_after_id = self.root.after(100, poll)
 
     def _update_busy(self):
         runner = getattr(self, "_tests_runner", None)
