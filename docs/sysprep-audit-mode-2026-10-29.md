@@ -53,7 +53,7 @@ rollback record are retained outside Git under
 Guest controls left the host computer's mouse and keyboard available. No new OVA
 or VM clone was created. The existing pre-test disk checkpoint is retained.
 
-## Follow-up fixes
+## Follow-up fixes identified during the original VM pass
 
 - Explain the existing-process guard accurately. Audit Mode's idle GUI is a
   `Sysprep.exe` process, so the current guard rejects it. Tell the operator to
@@ -68,3 +68,25 @@ or VM clone was created. The existing pre-test disk checkpoint is retained.
 
 Microsoft documents the keyboard entry sequence and automatic System Preparation
 Tool window in [Boot Windows to Audit Mode or OOBE](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/boot-windows-to-audit-mode-or-oobe?view=windows-11).
+
+## Implementation in 0.1.46
+
+The maintenance script now sends Cancel to an identified idle options dialog,
+then waits for that process to exit before launching the requested operation.
+It requires the system Sysprep executable, a command line without operation
+arguments, the owning process ID, two visible enabled selectors and enabled
+OK/Cancel buttons. Unknown or busy processes block a second launch. No process
+is forcefully terminated. Windows' installed dialog resources confirm the
+options/progress distinction and the standard OK/Cancel control IDs.
+
+The new operation uses `Start-Process -Wait -PassThru` and its `ExitCode`, avoiding
+the stale `$LASTEXITCODE` path. Existing authorization, elevation, maintenance
+mutex, draft preservation and unconfirmed-timeout behavior are retained.
+
+Automated PowerShell tests exercise real native fixture windows without running
+Windows Sysprep: idle cancellation, busy/foreign-window refusal, unrecognized
+executable/active arguments, failed closure, waited launch and nonzero exit.
+These validate the implementation; the earlier app/Audit Mode VM pass above
+reproduced the defects before this change. The corrected packaged app still
+needs an end-to-end Audit Mode shutdown retest; this release does not claim that
+new VM acceptance has already taken place.

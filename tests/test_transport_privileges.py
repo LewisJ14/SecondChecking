@@ -242,7 +242,7 @@ class MaintenanceBoundaryTests(unittest.TestCase):
         self.assertEqual(options['lpVerb'], 'runas')
         self.assertTrue(options['lpFile'].lower().endswith('windowspowershell\\v1.0\\powershell.exe'))
         command = base64.b64decode(options['lpParameters'].split()[-1]).decode('utf-16-le')
-        self.assertIn('/oobe /shutdown', command)
+        self.assertIn("-ArgumentList '/oobe', '/shutdown' -Wait -PassThru", command)
         self.assertNotIn('/generalize', command)
         self.assertNotIn('taskkill', command.lower())
         self.assertNotIn('Second-Check-Key', command)

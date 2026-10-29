@@ -66,12 +66,68 @@ if (-not $module) {
 
 SYSPREP_SCRIPT = r'''
 $ErrorActionPreference = 'Stop'
-if (Get-Process -Name Sysprep -ErrorAction SilentlyContinue) {
-    throw 'Sysprep is already running. Resolve it before trying again.'
-}
 $program = Join-Path ([Environment]::GetFolderPath('System')) 'Sysprep\Sysprep.exe'
-& $program /oobe /shutdown
-if ($LASTEXITCODE -ne 0) { throw 'Sysprep did not complete successfully.' }
+Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+using System.Text;
+public static class SecondCheckingSysprepDialog {
+    private delegate bool EnumChild(IntPtr window, IntPtr unused);
+    [DllImport("user32.dll")] private static extern bool EnumChildWindows(IntPtr parent, EnumChild callback, IntPtr unused);
+    [DllImport("user32.dll")] private static extern bool IsWindowEnabled(IntPtr window);
+    [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr window);
+    [DllImport("user32.dll")] private static extern int GetDlgCtrlID(IntPtr window);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetClassName(IntPtr window, StringBuilder name, int count);
+    [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr window, out uint processId);
+    [DllImport("user32.dll", SetLastError = true)] private static extern IntPtr SendMessageTimeout(IntPtr window, uint message, IntPtr wparam, IntPtr lparam, uint flags, uint timeout, out IntPtr result);
+    public static bool CancelIdle(IntPtr window, int processId) {
+        uint owner;
+        GetWindowThreadProcessId(window, out owner);
+        if (window == IntPtr.Zero || owner != (uint)processId) return false;
+        int choices = 0;
+        IntPtr ok = IntPtr.Zero, cancel = IntPtr.Zero;
+        EnumChildWindows(window, delegate(IntPtr child, IntPtr unused) {
+            var name = new StringBuilder(256);
+            GetClassName(child, name, name.Capacity);
+            if (!IsWindowVisible(child) || !IsWindowEnabled(child)) return true;
+            if (name.ToString() == "ComboBox") choices++;
+            if (name.ToString() == "Button") {
+                if (GetDlgCtrlID(child) == 1) ok = child;
+                if (GetDlgCtrlID(child) == 2) cancel = child;
+            }
+            return true;
+        }, IntPtr.Zero);
+        // The idle options dialog has two choices and OK/Cancel.
+        // Processing windows do not qualify. Never terminate a process.
+        if (choices != 2 || ok == IntPtr.Zero || cancel == IntPtr.Zero) return false;
+        if (!IsWindowEnabled(ok) || !IsWindowEnabled(cancel)) return false;
+        IntPtr result;
+        return SendMessageTimeout(window, 0x0111, new IntPtr(2), cancel,
+                                  0x0002, 5000, out result) != IntPtr.Zero;
+    }
+}
+'@
+foreach ($existing in @(Get-Process -Name Sysprep -ErrorAction SilentlyContinue)) {
+    $details = Get-CimInstance Win32_Process -Filter ("ProcessId=" + $existing.Id)
+    if (-not $details) { continue }
+    $command = ([string]$details.CommandLine).Trim()
+    $bareCommand = ($command -ieq $program -or $command -ieq ('"' + $program + '"'))
+    if (-not $bareCommand -or $details.ExecutablePath -ine $program) {
+        throw 'An active or unrecognized Sysprep operation is already running.'
+    }
+    $existing.Refresh()
+    if (-not [SecondCheckingSysprepDialog]::CancelIdle($existing.MainWindowHandle, $existing.Id)) {
+        throw 'The existing Sysprep window is busy or could not be identified safely.'
+    }
+    if (-not $existing.WaitForExit(10000)) {
+        throw 'The idle Sysprep window did not close. No second operation was started.'
+    }
+}
+if (Get-Process -Name Sysprep -ErrorAction SilentlyContinue) {
+    throw 'Sysprep is still running. No second operation was started.'
+}
+$operation = Start-Process -FilePath $program -ArgumentList '/oobe', '/shutdown' -Wait -PassThru
+if ($operation.ExitCode -ne 0) { throw 'Sysprep did not complete successfully.' }
 '''
 
 
