@@ -370,6 +370,9 @@ class AudioTestDialog:
                                        style='secondary.Outline.TButton',
                                        command=lambda: self.finish('error'))
         self.error_button.pack(fill='x', pady=3)
+        from ui.bug_reports import open_report
+        ttk.Button(body, text='Upload bug report…',
+                   command=lambda: open_report(self.window)).pack(fill='x', pady=3)
         ttk.Button(body, text='Unavailable / unable to verify',
                    style='secondary.Outline.TButton',
                    command=lambda: self.finish('unavailable')).pack(

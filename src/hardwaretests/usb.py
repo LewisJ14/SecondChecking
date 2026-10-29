@@ -68,6 +68,9 @@ class USBTestDialog:
                                       style='success.TButton',
                                       command=lambda: self.finish('pass'))
         self.pass_button.pack(fill='x', pady=3)
+        from ui.bug_reports import open_report
+        ttk.Button(actions, text='Upload bug report…',
+                   command=lambda: open_report(self.window)).pack(fill='x', pady=3)
         for text, state in [('Fail — observed port problem', 'fail'),
                             ('Unavailable / no test media', 'unavailable'),
                             ('Record test error', 'error'),

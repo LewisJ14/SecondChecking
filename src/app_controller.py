@@ -195,6 +195,9 @@ class AppController:
         tools_menu.add_command(label="Check for App Updates", command=self.check_for_updates)
         tools_menu.add_command(label="Restore previous app version", command=self.restore_previous_update)
         tools_menu.add_command(label="Run Windows Updates", command=self.run_windows_update_script)
+        from ui.bug_reports import open_report
+        tools_menu.add_separator()
+        tools_menu.add_command(label="Upload bug report…", command=lambda: open_report(self.root))
 
         header_frame = ttk.Frame(self.root, padding=(18, 14, 18, 14), style="Header.TFrame")
         header_frame.pack(fill="x")

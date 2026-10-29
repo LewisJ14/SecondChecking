@@ -183,7 +183,12 @@ class LiveDpiController:
     def _poll(self):
         self.after_id = None
         try:
-            focused = self.root.focus_displayof()
+            try:
+                focused = self.root.focus_displayof()
+            except (KeyError, tk.TclError):
+                # Native combobox popdowns and recently destroyed widgets can
+                # own focus without a corresponding Python Tk widget.
+                focused = None
             window = focused.winfo_toplevel() if focused else self.root
             dpi = self._window_dpi(window)
             work_area = get_work_area(window)

@@ -14,6 +14,20 @@ from utils.ui_scaling import LiveDpiController, center_window
 
 
 class LiveDpiTests(unittest.TestCase):
+    def test_native_focus_without_python_widget_does_not_interrupt_polling(self):
+        root = tk.Tk()
+        root.withdraw()
+        try:
+            with patch.object(LiveDpiController, '_window_dpi', return_value=96):
+                controller = LiveDpiController(root)
+                root.after_cancel(controller.after_id)
+                controller.after_id = None
+                with patch.object(root, 'focus_displayof', side_effect=KeyError('native-popdown')):
+                    controller._poll()
+                self.assertIsNotNone(controller.after_id)
+        finally:
+            root.destroy()
+
     def test_initial_native_position_is_reapplied_and_cancelled_on_close(self):
         root = tk.Tk()
         root.attributes('-alpha', 0)

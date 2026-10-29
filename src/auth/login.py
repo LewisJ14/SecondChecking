@@ -330,6 +330,10 @@ class LoginPanel:
             relief="flat",
         )
         self.exit_button.grid(row=0, column=1, sticky="ew", padx=6)
+        from ui.bug_reports import open_report
+        ttk.Button(secondary_button_frame, text='Upload bug report…',
+                   command=lambda: open_report(self.parent)).grid(
+                       row=1, column=0, columnspan=2, sticky='ew', padx=6, pady=(8, 0))
 
         footer = tk.Label(
             container,

@@ -28,6 +28,8 @@ def install(base_url, response):
             or not isinstance(seconds, (int, float)) or not 0 < seconds <= 3600):
         raise ValueError("Invalid operator session response.")
     with _lock:
+        from services.runtime import register_private_values
+        register_private_values([token, user.get('username'), user.get('email')])
         _generation += 1
         _state.clear()
         _state.update(base_url=base_url.rstrip("/"), token=token, user=dict(user),

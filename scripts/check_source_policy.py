@@ -34,6 +34,7 @@ def forbidden_reason(name):
                      'batteryinfoview.cfg', 'build-identity.json', 'build-record.json',
                      'build-manifest.json', 'version-resource.txt', 'src.zip'}
             or basename.startswith('logs.txt.')
+            or basename.startswith('diagnostics.jsonl')
             or basename.endswith(('.log', '.log.1', '.pyc', '.pyo', '.previous',
                                    '.update.lock', '.pem', '.pfx', '.p12'))
             or basename == '.env' or basename.startswith('.env.') and basename != '.env.example'

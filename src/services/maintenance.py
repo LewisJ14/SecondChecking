@@ -3,6 +3,10 @@ import base64
 from pathlib import Path
 import subprocess
 import sys
+import re
+import time
+
+from services.runtime import log_diagnostic
 
 
 class MaintenanceError(RuntimeError):
@@ -128,14 +132,18 @@ def _shell_execute(script):
 
 
 def run_elevated(action, timeout=1800):
+    started = time.monotonic()
+    log_diagnostic('maintenance.requested', kind=action, timeout_seconds=timeout)
     script = action_script(action)
     try:
         handle = _shell_execute(script)
     except Exception as error:
         code = getattr(error, 'winerror', None) or getattr(error, 'errno', None)
         if code == 1223:  # ERROR_CANCELLED from ShellExecuteEx
+            log_diagnostic('maintenance.cancelled', kind=action, error=error, stage='approval')
             raise MaintenanceCancelled(
                 'Administrator approval was cancelled. No maintenance action was started.') from None
+        log_diagnostic('maintenance.start_failed', kind=action, error=error, stage='approval')
         raise MaintenanceError(
             'Maintenance could not start. Retry or ask an administrator to check permissions.') from None
     try:
@@ -143,9 +151,17 @@ def run_elevated(action, timeout=1800):
         import win32process
         result = win32event.WaitForSingleObject(handle, int(timeout * 1000))
         if result == win32event.WAIT_TIMEOUT:
+            log_diagnostic('maintenance.timeout', kind=action, result='error', stage='wait',
+                           elapsed_ms=int((time.monotonic() - started) * 1000))
             raise MaintenanceError('Maintenance exceeded its time limit; its outcome is unconfirmed. '
                                'It may still be running. Check Windows before retrying.')
-        if result != win32event.WAIT_OBJECT_0 or win32process.GetExitCodeProcess(handle) != 0:
+        code = win32process.GetExitCodeProcess(handle) if result == win32event.WAIT_OBJECT_0 else None
+        log_diagnostic('maintenance.finished', kind=action,
+                       result='error' if code != 0 else 'success', exit_code=code,
+                       elapsed_ms=int((time.monotonic() - started) * 1000))
+        if result != win32event.WAIT_OBJECT_0 or code != 0:
+            if action == 'sysprep':
+                raise MaintenanceError('Sysprep failed. Upload a bug report to include its Windows error codes.')
             raise MaintenanceError('Maintenance failed. Check Windows history, permissions and required machine modules.')
     finally:
         handle.Close()
@@ -161,4 +177,51 @@ def run_windows_updates(timeout=1800):
 def run_sysprep_shutdown(timeout=120):
     from services.auth_service import authorize
     authorize('maintenance')
-    run_elevated('sysprep', timeout)
+    try:
+        run_elevated('sysprep', timeout)
+    except MaintenanceCancelled:
+        raise
+    except MaintenanceError as error:
+        log_diagnostic('sysprep.failed', error=error, stage='maintenance')
+        collect_sysprep_diagnostics()
+        raise
+
+
+def collect_sysprep_diagnostics():
+    """Extract recent numeric Windows codes only; never upload Panther text.
+
+    Panther can contain account/package identifiers and full paths. Keep its
+    error codes, severity and line number while leaving the native logs local.
+    """
+    from datetime import datetime, timedelta
+    import win32api
+    root = Path(win32api.GetSystemDirectory()) / 'Sysprep' / 'Panther'
+    cutoff = datetime.now() - timedelta(minutes=30)
+    for filename in ('setuperr.log', 'setupact.log'):
+        try:
+            with (root / filename).open('rb') as stream:
+                size = stream.seek(0, 2)
+                stream.seek(max(0, size - 128 * 1024))
+                lines = stream.read(128 * 1024).decode('utf-8-sig', errors='replace').splitlines()
+            found = 0
+            for line_number, line in enumerate(lines):
+                try:
+                    stamp = datetime.strptime(line[:19], '%Y-%m-%d %H:%M:%S')
+                except ValueError:
+                    continue
+                if stamp < cutoff or not re.search(r'\bError\b', line, re.I):
+                    continue
+                stage = ('appx' if re.search(r'appx|package', line, re.I) else
+                         'bitlocker' if re.search(r'bitlocker|bde', line, re.I) else
+                         'validation' if re.search(r'validat', line, re.I) else 'panther')
+                for code in re.findall(r'\b0x[0-9a-fA-F]{1,8}\b', line)[-4:]:
+                    log_diagnostic('sysprep.windows_error', stage=stage,
+                                   kind=filename, native_code=int(code, 16),
+                                   line_number=line_number + 1 if size <= 128 * 1024 else None,
+                                   result='error')
+                    found += 1
+                if found >= 20:
+                    break
+            log_diagnostic('sysprep.diagnostics_read', kind=filename, count=found)
+        except OSError as error:
+            log_diagnostic('sysprep.diagnostics_unavailable', error=error, kind=filename)

@@ -1,5 +1,6 @@
 """Runtime paths and logging, independent of GUI, database and hardware code."""
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+from collections import deque
 from pathlib import Path
 import json
 import os
@@ -12,6 +13,7 @@ from uuid import uuid4
 _RUN_ID = uuid4().hex[:12]
 _LOCK = threading.RLock()
 _SECRETS = set()
+_DIAGNOSTICS = deque(maxlen=60)
 
 
 def register_private_values(values):
@@ -77,15 +79,80 @@ def log_diagnostic(event, error=None, **context):
                'camera_index', 'attempt', 'timeout_seconds', 'elapsed_ms',
                'version', 'build', 'count', 'request_id'}
     allowed.update({'source_rate', 'sample_rate', 'channels'})
+    allowed.update({'exit_code', 'http_status', 'native_code', 'line_number'})
     data = {key: value for key, value in context.items()
             if key in allowed and isinstance(value, (str, int, float, bool, type(None)))}
     if error is not None:
         data['exceptions'] = exception_report(error)
     failed = (error is not None or event.endswith(('.failed', '_failed', '.error'))
               or data.get('result') == 'error')
+    level = ('ERROR' if failed else 'WARNING'
+             if data.get('result') in ('fail', 'unavailable') else 'INFO')
+    record = diagnostic_record(event, data, level)
+    _write_diagnostic(record)
     log_event('{} {}'.format(event, json.dumps(data, ensure_ascii=True)),
-              level='ERROR' if failed else 'WARNING'
-              if data.get('result') in ('fail', 'unavailable') else 'INFO')
+              level=level)
+    return record
+
+
+def diagnostic_record(event, data=None, level='ERROR'):
+    from services.diagnostic_schema import event_record
+    data = data or {}
+    # Values registered as private cannot become token-shaped context either.
+    context = {key: redact_text(value) if isinstance(value, str) else value
+               for key, value in data.items() if key != 'exceptions'}
+    return event_record({'at': datetime.now(timezone.utc).isoformat(),
+                         'event': redact_text(event), 'run': _RUN_ID,
+                         'level': level, 'context': context,
+                         'exceptions': data.get('exceptions', [])})
+
+
+def diagnostic_path():
+    return log_path().with_name('diagnostics.jsonl')
+
+
+def _write_diagnostic(record):
+    with _LOCK:
+        _DIAGNOSTICS.append(record)
+        try:
+            path = diagnostic_path()
+            if path.exists() and path.stat().st_size > 1024 * 1024:
+                previous = path.with_suffix('.jsonl.1')
+                if previous.exists():
+                    previous.unlink()
+                path.replace(previous)
+            with path.open('a', encoding='utf-8') as stream:
+                stream.write(json.dumps(record, ensure_ascii=True) + '\n')
+        except OSError:
+            pass
+
+
+def recent_diagnostics():
+    """Bounded 30-minute evidence, including worker processes; no raw logs."""
+    from services.diagnostic_schema import event_record
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=30)
+    records = list(_DIAGNOSTICS)
+    for path in (diagnostic_path().with_suffix('.jsonl.1'), diagnostic_path()):
+        try:
+            with path.open('rb') as stream:
+                size = stream.seek(0, 2)
+                stream.seek(max(0, size - 256 * 1024))
+                lines = stream.read(256 * 1024).decode('utf-8', errors='replace').splitlines()
+            for line in lines:
+                try:
+                    records.append(event_record(json.loads(line)))
+                except (ValueError, TypeError):
+                    continue
+        except OSError:
+            pass
+    unique = {}
+    for record in records:
+        try:
+            if datetime.fromisoformat(record['at'].replace('Z', '+00:00')) >= cutoff:
+                unique[json.dumps(record, sort_keys=True)] = record
+        except (ValueError, KeyError, TypeError):
+            continue
+    return sorted(unique.values(), key=lambda record: record['at'])[-60:]
 
 
 def app_directory():

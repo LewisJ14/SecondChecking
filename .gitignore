@@ -51,6 +51,7 @@ config.ini
 last_user.txt
 *.log.*
 logs.txt.*
+diagnostics.jsonl*
 check-drafts/
 pending-operations/
 BatteryInfoView.cfg

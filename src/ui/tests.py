@@ -173,6 +173,10 @@ class TestsWindow:
         self.status_label.bind('<Configure>', lambda event:
                                self.status_label.config(
                                    wraplength=max(100, event.width - 4)))
+        from ui.bug_reports import open_report
+        ttk.Button(action_card, text='Upload bug report…',
+                   command=lambda: open_report(self.tests_window)).grid(
+                       row=2, column=0, columnspan=2, sticky='ew', pady=(8, 0))
 
     def _result_visuals(self, result):
         if result == "pass":

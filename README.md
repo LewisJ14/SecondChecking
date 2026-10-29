@@ -333,3 +333,29 @@ Only isolated loopback tests may opt into plaintext: `SECOND_CHECK_ALLOW_HTTP_LO
 The GUI runs with the invoking user's privileges. Windows Update and post-assignment Sysprep require explicit confirmation, a fresh service permission check and separate Windows administrator approval. Tester access is retained. No service credentials are passed to elevated PowerShell. An administrator must provision PSWindowsUpdate under Program Files; it is no longer installed automatically. Sysprep does not kill another running Sysprep. A timeout means unconfirmed, not cancelled: inspect Windows before retrying.
 
 Unavailable standard-user hash capture is shown in the final recorded-reason review. Checks do not elevate automatically. Protected app directories may require a manual verified update. Complete real TLS, UAC/maintenance, physical evidence and signed-update VM acceptance before deployment. See [SC21 details and acceptance limits](docs/sc21-transport-privileges.md).
+
+## Bug reports
+
+Error dialogs offer **Upload bug report**. Login, Tools and hardware checks also
+provide the same action for inline errors. The operator sees a frozen preview
+before sending anything to the configured HTTPS Web-Tools service. Upload is
+manual, runs in a background thread and keeps the same reference when retried.
+
+Reports contain the app/build and Windows/Python versions, code locations,
+exception types, numeric error codes, and up to 60 structured diagnostic events
+from the preceding 30 minutes. They never attach config files, raw logs,
+exception messages/locals, screenshots, audio, customer/order data or hardware
+identifiers. Only the versioned allowlisted JSON contract is accepted by Astro.
+`diagnostics.jsonl` is bounded/rotated at 1 MiB alongside `logs.txt`; the old text
+log is kept locally and is never uploaded. A memory fallback retains diagnostics
+when the app folder is not writable. GUI callback/background errors are captured.
+Maintenance records approval/start/exit/timeout stages; Sysprep failures extract
+recent numeric Windows error codes without attaching sensitive Panther text.
+
+Deploy the matching Web-Tools bug-report migration/API before distributing this
+client. The API uses the existing deployment key even before operator sign-in;
+valid sessions attribute the report to its operator, but neither authentication
+header is included in evidence. Missing service/migration, TLS/network failure
+and throttling show a retryable upload result and never claim success. Hard
+process termination cannot display an error button; use Tools on the next launch
+to report the retained diagnostics.

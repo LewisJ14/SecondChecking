@@ -71,6 +71,10 @@ class CameraTest:
                            sticky='ew', padx=4, pady=3)
         if self.panel and hasattr(self.panel, 'register_cancel'):
             self.panel.register_cancel(self.cancel)
+        from ui.bug_reports import open_report
+        ttk.Button(actions, text='Upload bug report…',
+                   command=lambda: open_report(self.window)).grid(
+                       row=3, column=0, columnspan=2, sticky='ew', padx=4, pady=3)
         scale = float(root.tk.call('tk', 'scaling')) / (96 / 72)
         center_window(self.window, round(820 * scale), round(680 * scale),
                       min_width=640, min_height=300)

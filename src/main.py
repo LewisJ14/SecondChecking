@@ -105,11 +105,8 @@ def main() -> None:
         build = read_identity() or {}
         log_diagnostic('application.started', version=build.get('version', __version__),
                        build=str(build.get('build_id') or build.get('commit') or 'source').replace('-', ''))
-        root.report_callback_exception = lambda kind, error, trace: log_diagnostic(
-            'ui.callback_failed', error=error, stage='tk_callback')
-        import threading
-        threading.excepthook = lambda args: log_diagnostic(
-            'thread.unhandled_exception', error=args.exc_value, stage='background')
+        from ui.bug_reports import install
+        install(root)
         root._live_dpi = LiveDpiController(root)
         app = AppController(root)
         root.update_idletasks()
@@ -120,6 +117,9 @@ def main() -> None:
     except Exception as exc:
         from services.runtime import log_diagnostic, exception_report
         log_diagnostic('application.startup_failed', error=exc, stage='startup')
+        if 'root' in locals() and getattr(root, '_error_reporting', None):
+            root._error_reporting.show_error('Application could not start',
+                'Startup did not complete. You can upload a bug report, then close and retry.')
         startup_error_path = os.path.join(get_app_dir(), "startup_error.log")
         with open(startup_error_path, "w", encoding="utf-8") as f:
             f.write(json.dumps(exception_report(exc), indent=2))

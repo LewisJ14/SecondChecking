@@ -54,8 +54,13 @@ def _call(sender, url, *args, **kwargs):
     kwargs.setdefault('timeout', 15)
     try:
         response = sender(url, *args, **kwargs)
-    except requests.RequestException:
+    except requests.RequestException as error:
+        from services.runtime import log_diagnostic
+        log_diagnostic('service.connection_failed', error=error, stage='transport')
         raise TransportError('Service connection failed; verify TLS, configuration and connectivity.') from None
+    if response.status_code >= 400:
+        from services.runtime import log_diagnostic
+        log_diagnostic('service.http_error', stage='transport', http_status=response.status_code)
     if 300 <= response.status_code < 400:
         raise TransportError('Service redirect refused. Configure the final HTTPS service address.')
     return response
