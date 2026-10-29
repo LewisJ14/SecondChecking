@@ -1173,8 +1173,7 @@ class AppController:
                 return
             automatic = self.update_service.can_auto_install(manifest)
             action = ("Download, verify and install it now?" if automatic else
-                      "Open the trusted release page? Automatic installation "
-                      "requires release hashes and a configured trusted publisher.")
+                      "Open the release page to install this update manually?")
             message = (f"Release {manifest.version} is available.\n"
                        f"Running version: {current_version}.\n\n"
                        f"{(manifest.notes or 'No release notes provided.').strip()}\n\n{action}")

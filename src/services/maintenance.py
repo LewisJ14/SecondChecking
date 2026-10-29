@@ -23,7 +23,6 @@ SYSPREP_FAILURES = {
     31: ('dialog_support', 'The Sysprep window check could not load.'),
     32: ('process_query', 'Windows could not identify the existing Sysprep process.'),
     33: ('process_identity', 'The existing Sysprep executable could not be verified.'),
-    34: ('process_arguments', 'An existing Sysprep operation could not be confirmed idle.'),
     35: ('dialog_identify', 'The Sysprep window could not be confirmed idle. Close its idle options window and retry.'),
     36: ('dialog_close', 'The idle Sysprep window did not close. No second operation was started.'),
     37: ('process_recheck', 'Sysprep is still running. No second operation was started.'),
@@ -127,16 +126,12 @@ foreach ($existing in @(Get-Process -Name Sysprep -ErrorAction SilentlyContinue)
     $script:scMaintenanceExit = 32
     $details = Get-CimInstance Win32_Process -Filter ("ProcessId=" + $existing.Id)
     if (-not $details) { continue }
-    $command = ([string]$details.CommandLine).Trim()
-    $bareCommand = ($command -ieq $program -or $command -ieq ('"' + $program + '"'))
     $script:scMaintenanceExit = 33
     if ($details.ExecutablePath -ine $program) {
         throw 'The existing Sysprep executable could not be verified.'
     }
-    $script:scMaintenanceExit = 34
-    if (-not $bareCommand) {
-        throw 'An active or unrecognized Sysprep operation is already running.'
-    }
+    # Windows can open an idle options dialog using different command lines.
+    # Identify idle state from its enabled native controls, not its arguments.
     $existing.Refresh()
     $script:scMaintenanceExit = 35
     if (-not [SecondCheckingSysprepDialog]::CancelIdle($existing.MainWindowHandle, $existing.Id)) {

@@ -113,3 +113,24 @@ recognition, closure, process recheck, launch and Windows result. The operator
 message identifies the failed step. Reports include the stage and numeric code;
 they do not include process paths, command lines or PowerShell exception text.
 The affected machine must retry and upload its report to identify the cause.
+
+## Confirmed physical-machine cause and local correction
+
+Report `5b191c88c31348438b709bfe1a2dffd2` from 0.1.47 identifies
+`process_arguments`, exit code 34. The executable identity check passed, but
+the command line was not exactly the full executable path with optional quotes.
+The helper therefore stopped before attempting to close the window. The report
+deliberately does not reveal that command line, so its exact form is unknown.
+
+The local 0.1.48 correction removes that command-line assumption. The verified
+system executable, owning process and enabled native idle-dialog controls remain
+required. Busy controls, a different process or executable, failed closure and
+an existing process after closure still block another launch. No process is
+forcefully terminated. Regression tests cover idle dialogs with operation
+arguments, relative launch syntax and unavailable command-line metadata, and a
+busy dialog with operation arguments that must remain untouched.
+
+This correction was initially prepared as a local 0.1.48 review build. The
+operator subsequently approved compiling and publishing 0.1.49, which includes
+the correction and restored automatic updates without paid signing. This is
+not a claim of a completed full Audit Mode shutdown retest.

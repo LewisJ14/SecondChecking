@@ -52,6 +52,19 @@ def load_plan(path):
     return plan, directory, target
 
 
+def plan_publisher(plan):
+    """An optional configured publisher stays mandatory for that installation.
+
+    With no configured publisher, updates use the fixed HTTPS repository and
+    manifest hashes. A journal cannot remove or change an existing publisher.
+    """
+    pin = signer_pin()
+    expected = plan.get('signer_sha256')
+    if not isinstance(expected, str) or expected != pin:
+        raise UpdateError("The configured publisher does not match this update.")
+    return pin
+
+
 def set_state(directory, plan, state, reason=None):
     import psutil
     write_json(directory / "state.json", {
@@ -111,16 +124,19 @@ def apply_plan(path, restore=False, verifier=None, health=None, launcher=None):
     plan, directory, target = load_plan(path)
     backup = backup_path(target, plan["id"])
     staged = target.with_name("." + target.name + "." + plan["id"] + ".new")
-    pin = signer_pin()
-    if not pin or pin != plan["signer_sha256"]:
-        raise UpdateError("The configured publisher does not match this update.")
+    pin = plan_publisher(plan)
+
+    def check_publisher(path):
+        if pin:
+            verifier(path, pin)
+
     original = plan["original_sha256"]
     current = file_hash(target) if target.exists() else None
     if current not in (original, plan["sha256"], None):
         raise UpdateError("The installed executable changed; automatic recovery was stopped.")
     if restore:
         verify_content(backup, original, plan["original_size"])
-        verifier(backup, pin)
+        check_publisher(backup)
         copy_atomic(backup, staged, original)
         os.replace(str(staged), str(target))
         health(target, plan["from_version"])
@@ -136,20 +152,20 @@ def apply_plan(path, restore=False, verifier=None, health=None, launcher=None):
     try:
         candidate = directory / "candidate.exe"
         verify_content(candidate, plan["sha256"], plan["size"])
-        verifier(candidate, pin)
+        check_publisher(candidate)
         health(candidate, plan["version"])
         if backup.exists():
             verify_content(backup, original, plan["original_size"])
         else:
             copy_atomic(target, backup, original)
-        verifier(backup, pin)
+        check_publisher(backup)
         copy_atomic(candidate, staged, plan["sha256"])
         verify_content(staged, plan["sha256"], plan["size"])
-        verifier(staged, pin)
+        check_publisher(staged)
         set_state(directory, plan, "installing")
         os.replace(str(staged), str(target))
         verify_content(target, plan["sha256"], plan["size"])
-        verifier(target, pin)
+        check_publisher(target)
         health(target, plan["version"])
         set_state(directory, plan, "restarting")
         launcher(target, path, plan["version"])
@@ -164,7 +180,7 @@ def apply_plan(path, restore=False, verifier=None, health=None, launcher=None):
         elif current in (plan["sha256"], None):
             try:
                 verify_content(backup, original, plan["original_size"])
-                verifier(backup, pin)
+                check_publisher(backup)
                 copy_atomic(backup, staged, original)
                 os.replace(str(staged), str(target))
                 set_state(directory, plan, "rolled_back", "replacement_or_restart_failed")
@@ -217,7 +233,9 @@ def worker(path, restore=False):
                 or plan["from_version"] != __version__):
             raise UpdateError("Update worker identity does not match the installed baseline.")
         verify_content(sys.executable, plan["original_sha256"], plan["original_size"])
-        verify_publisher(sys.executable, signer_pin())
+        pin = plan_publisher(plan)
+        if pin:
+            verify_publisher(sys.executable, pin)
         launch = read_json(directory / "launch.json")
         with target_lock(target):
             write_json(directory / "handoff.json", {"launch_id": launch["launch_id"], "ready": True})

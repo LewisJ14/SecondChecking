@@ -89,7 +89,11 @@ The manifest must look like this:
 }
 ```
 
-Automatic installation requires a packaged Windows client, exact executable size/SHA-256, and `APP_UPDATE_SIGNER_SHA256` configured out of band with the SHA-256 of the trusted signing certificate's DER bytes. Both the installed baseline and downloaded executable must have a valid Windows Authenticode signature from that certificate. An optional manifest `signer_sha256` must match the configured fingerprint; manifest metadata cannot establish publisher trust. Sign the final artifact **before** calculating its digest/size. A publisher certificate and signing pipeline have not yet been configured for this project.
+Automatic installation requires a packaged Windows client and the exact executable size/SHA-256 from the validated HTTPS release manifest. Only this repository's version-matching GitHub release assets are accepted. Paid signing is not required. The updater checks the downloaded file, the installed baseline and copied helper, staged version/importability and confirmed restart before completing replacement.
+
+Publisher signing is optional. If `APP_UPDATE_SIGNER_SHA256` is explicitly configured with the SHA-256 of a trusted signing certificate's DER bytes, both the installed baseline and downloaded executable must have a valid Windows Authenticode signature from that certificate. A manifest `signer_sha256` must match that configured fingerprint; manifest metadata cannot establish publisher trust. A transaction cannot remove or change an existing publisher requirement. Sign the final artifact **before** calculating its digest/size when using this mode.
+
+Builds through 0.1.48 contain the previous signing-only policy. Replace one of those builds manually with the corrected build once; that build can then install future matching releases through the app. Existing configuration/certificates stay beside the executable.
 
 Without automatic-install prerequisites, accepting the prompt opens the trusted release page and leaves the app running. Automatic installation checks the candidate's embedded version/importability, preserves drafts, retains a verified previous executable, and uses a separate installer with a durable journal and atomic replacement. A failed replacement or unconfirmed restart triggers recovery of the previous copy. **Tools > Restore previous app version** uses that retained backup. Configuration and draft files are not replaced. See [SC18 recovery details and outstanding signed/VM acceptance](docs/sc18-update-validation-and-rollback.md).
 
@@ -112,7 +116,7 @@ python scripts/release_package.py build --tag v0.1.37 --output C:\Builds\SecondC
 python scripts/release_package.py prepare --tag v0.1.37 --output C:\Builds\SecondChecking-0.1.37 --notes-file C:\Builds\release-notes.txt
 ```
 
-The example version is illustrative; no version was changed during SC19. For automatic-install eligibility, sign that build's executable separately and pass its final path to `prepare --artifact <signed-exe>` with the independently configured `APP_UPDATE_SIGNER_SHA256`. The tool verifies the pinned Authenticode signature before accepting changed bytes, and hashes/copies the final artifact. An unsigned artifact remains a manual-install release under SC18. Signing credentials and a production signing provider are not configured by these scripts.
+The example version is illustrative; no version was changed during SC19. Unsigned builds prepared by this pipeline include the size/hash needed for automatic installation by corrected clients. For optional publisher-pinned installation, sign the build's executable separately and pass its final path to `prepare --artifact <signed-exe>` with the independently configured `APP_UPDATE_SIGNER_SHA256`. The tool verifies the pinned Authenticode signature before accepting changed bytes, and hashes/copies the final artifact. Signing credentials and a production signing provider are not configured by these scripts.
 
 Preparation writes `release/SecondChecking-<version>.exe`, `update.json`, `build-manifest.json` and `release-notes.txt`. It refuses stale source, mismatched embedded identity or an already-prepared output directory. Verify the manifest's final artifact size/hash and retain it with the release.
 

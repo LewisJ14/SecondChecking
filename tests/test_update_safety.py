@@ -81,14 +81,14 @@ class ReleaseValidationTests(unittest.TestCase):
                 patch.dict(os.environ, {"APP_UPDATE_SIGNER_SHA256": ""}), \
                 patch.object(updater.webbrowser, "open", return_value=True) as browser, \
                 patch.object(service, "prepare_update") as prepare:
-            self.assertFalse(service.launch_update(updater.parse_manifest(manifest_data())))
+            self.assertFalse(service.launch_update(updater.UpdateManifest("9.0.0")))
             prepare.assert_not_called()
             browser.assert_called_once_with(ROOT + "tag/v9.0.0")
         with patch.object(updater.webbrowser, "open", return_value=False):
             with self.assertRaises(integrity.UpdateError):
                 service.launch_update(updater.UpdateManifest("9.0.0"))
 
-    def test_newer_release_requires_pinned_publisher_hash_and_size(self):
+    def test_newer_release_requires_hash_size_and_honours_optional_publisher(self):
         service = updater.UpdateService()
         with patch.object(service, "_can_auto_update", return_value=True), \
                 patch.dict(os.environ, {"APP_UPDATE_SIGNER_SHA256": PIN}):

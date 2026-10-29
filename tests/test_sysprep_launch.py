@@ -47,7 +47,7 @@ $fixture.Prepare()
 class SysprepLaunchTests(unittest.TestCase):
     def test_encoded_preflight_failures_keep_stage_without_exception_text(self):
         for fault, expected in (('support', 31), ('query', 32),
-                                ('identity', 33), ('arguments', 34), ('dialog', 35)):
+                                ('identity', 33), ('arguments', 35), ('dialog', 35)):
             with self.subTest(fault=fault):
                 prefix = "$fault='" + fault + "'\n" + r'''
 function Get-Process {
@@ -120,7 +120,8 @@ try {
 ''')
 
     def test_preflight_waits_for_idle_exit_and_refuses_active_or_unclosed_process(self):
-        for scenario in ('idle', 'active', 'wrong_path', 'busy', 'not_closed'):
+        idle_cases = ('idle', 'idle_args', 'idle_relative', 'idle_no_command')
+        for scenario in idle_cases + ('active', 'wrong_path', 'busy', 'not_closed'):
             with self.subTest(scenario=scenario):
                 prefix = r'''
 $ErrorActionPreference='Stop'
@@ -139,7 +140,9 @@ function Get-Process { if (-not $script:closed) { return $existing } }
 function Get-CimInstance {
     $cmd = '"' + $program + '"'
     $path = $program
-    if ($scenario -eq 'active') { $cmd += ' /oobe /shutdown' }
+    if ($scenario -in @('active','idle_args')) { $cmd += ' /oobe /shutdown' }
+    if ($scenario -eq 'idle_relative') { $cmd = 'sysprep.exe' }
+    if ($scenario -eq 'idle_no_command') { $cmd = $null }
     if ($scenario -eq 'wrong_path') { $path = 'C:\untrusted\Sysprep.exe' }
     return [pscustomobject]@{ CommandLine=$cmd; ExecutablePath=$path }
 }
@@ -150,13 +153,13 @@ function Start-Process {
     $script:started = $true
     return [pscustomobject]@{ ExitCode=0 }
 }
-if ($scenario -eq 'busy') { $fixture.SetBusy() }
+if ($scenario -in @('busy','active')) { $fixture.SetBusy() }
 $failed=$false
 try {
 '''
                 suffix = r'''
 } catch { $failed=$true } finally { $fixture.Dispose() }
-if ($scenario -eq 'idle') {
+if ($scenario -in @('idle','idle_args','idle_relative','idle_no_command')) {
     if ($failed -or -not $script:started) { throw 'Idle operation did not launch' }
 } else {
     if (-not $failed -or $script:started) { throw 'Blocked operation launched' }

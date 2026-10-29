@@ -16,7 +16,7 @@ from services.update_integrity import (MAX_BINARY, MAX_MANIFEST, REPOSITORY,
     open_release, safe_url, signer_pin, verify_content, verify_publisher,
     version_tuple)
 from services.update_transaction import (copy_atomic, load_plan, previous_plan,
-    read_json, write_json)
+    plan_publisher, read_json, write_json)
 from utils.helpers import log_event
 from version import __version__ as CURRENT_VERSION
 
@@ -121,40 +121,52 @@ class UpdateService:
         try:
             manifest = parse_manifest(asdict(manifest))
             pin = signer_pin()
-            return bool(self._can_auto_update() and pin and manifest.download_url
+            return bool(self._can_auto_update() and manifest.download_url
                         and manifest.sha256 and manifest.size
-                        and (manifest.signer_sha256 is None or manifest.signer_sha256 == pin))
+                        and (not pin or manifest.signer_sha256 is None
+                             or manifest.signer_sha256 == pin))
         except (UpdateError, TypeError):
             return False
 
     def prepare_update(self, manifest, progress=lambda text: None, cancel=None):
         from services.update_process import check_health
+        manifest = parse_manifest(asdict(manifest))
         if not self._is_newer(manifest.version):
             raise UpdateError("Automatic installation requires a newer release.")
+        if not manifest.download_url or not manifest.sha256 or not manifest.size:
+            raise UpdateError("Automatic installation requires release size and SHA-256.")
         target = self._current_executable()
         pin = signer_pin()
-        progress("Verifying installed publisher…")
-        verify_publisher(target, pin)
+        if pin and manifest.signer_sha256 not in (None, pin):
+            raise UpdateError("The release publisher does not match the configured publisher.")
+        progress("Checking installed application…")
+        original = file_hash(target)
+        original_size = target.stat().st_size
+        verify_content(target, original, original_size)
+        if pin:
+            verify_publisher(target, pin)
         identifier = str(uuid4())
         directory = target.parent / ".secondchecking-updates" / identifier
         directory.mkdir(parents=True)
         write_json(directory / "state.json", {"state": "downloading", "transaction_id": identifier})
         try:
             candidate = download(manifest, directory, progress, cancel)
-            progress("Verifying downloaded publisher…")
-            verify_publisher(candidate, pin)
+            if pin:
+                progress("Verifying downloaded publisher…")
+                verify_publisher(candidate, pin)
             progress("Checking staged app version and startup…")
             check_health(candidate, manifest.version)
             if cancel is not None and cancel.is_set():
                 raise UpdateError("Update preparation cancelled; installed copy retained.")
-            original = file_hash(target)
+            verify_content(target, original, original_size)
             copy_atomic(target, directory / "updater.exe", original)
-            verify_publisher(directory / "updater.exe", pin)
+            if pin:
+                verify_publisher(directory / "updater.exe", pin)
             plan = {"plan_version": 1, "id": identifier, "target_name": target.name,
                     "version": manifest.version, "from_version": self.current_version,
                     "sha256": manifest.sha256, "size": manifest.size,
                     "signer_sha256": pin, "original_sha256": original,
-                    "original_size": target.stat().st_size}
+                    "original_size": original_size}
             path = directory / "plan.json"
             write_json(path, plan)
             write_json(directory / "state.json", {"state": "prepared", "transaction_id": identifier})
@@ -174,6 +186,7 @@ class UpdateService:
         import win32con
         import win32file
         plan, directory, target = load_plan(path)
+        pin = plan_publisher(plan)
         helper = directory / "updater.exe"
         launch_id = str(uuid4())
         write_json(directory / "launch.json", {"launch_id": launch_id,
@@ -186,7 +199,8 @@ class UpdateService:
         process = None
         try:
             verify_content(helper, plan["original_sha256"], plan["original_size"])
-            verify_publisher(helper, signer_pin())
+            if pin:
+                verify_publisher(helper, pin)
             process = subprocess.Popen([str(helper), "--restore-update" if restore else "--apply-update", str(path)],
                 stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                 creationflags=self._windows_no_window_creationflags(), env=fresh_environment())
