@@ -11,4 +11,4 @@ sounddevice==0.4.6
 werkzeug==3.0.3
 ttkbootstrap==1.14.2
 requests==2.32.3
-certifi==2025.4.26
+certifi==2026.10.23
