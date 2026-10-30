@@ -372,8 +372,8 @@ def run_worker(directory):
                 raise RuntimeError('No product key returned.')
             result = dict(state='complete', key=key)
         elif kind == 'battery-live':
-            from utils.helpers import get_live_battery_state
-            result = dict(state='complete', battery=get_live_battery_state(0))
+            from utils.helpers import get_battery_bar_state
+            result = dict(state='complete', battery=get_battery_bar_state())
         else:
             raise ValueError('Unknown hardware job.')
         write_result(directory, result)

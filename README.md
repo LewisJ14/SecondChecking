@@ -181,6 +181,9 @@ Use Refresh Device to capture measurements in the background without losing an
 order's unsaved checks. Capture time, age and source appear in the header; memory
 and disk caches expire. Search and assignment take fresh snapshots. Battery health
 and live charge are separate, with absent/unreadable results identified explicitly.
+The live charge bar falls back to Windows' overall battery reading when the
+per-battery reading is unavailable. Failed refreshes retain a clearly labelled
+last reading while retrying; stale charging status and power rates are not shown.
 The current Windows display mode does not establish native panel capability, and
 Windows edition does not establish activation. See
 [SC08 freshness and acceptance](docs/sc08-measurement-freshness.md).
@@ -196,8 +199,10 @@ unchanged. Cancel, Unavailable and test errors remain distinct from Fail. See
 
 ### Hardware coverage (SC10)
 
-USB uses a checklist of the physical ports you list for the device; each needs a
-fresh removable-drive observation. Keyboard results include observed/missing keys
+USB automatically records each fresh removable-drive insertion as the operator
+moves a test drive between ports. No per-port confirmation or port count is
+required; Finish confirms that every physical port was checked.
+Keyboard results include observed/missing keys
 and a saved explanation for manually passing incomplete capture. Display screens
 show inspection instructions. Wi-Fi detects enabled WLAN adapters only and does
 not certify connectivity or speed. Missing/unreadable cameras and API errors are

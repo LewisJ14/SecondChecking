@@ -8,6 +8,9 @@ from unittest.mock import Mock, patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
 from services.measurements import native_battery_live_state, battery_power_label
 from utils import helpers
+import psutil
+import json
+import tempfile
 
 
 class BatteryRateTests(unittest.TestCase):
@@ -87,6 +90,7 @@ class BatteryRateTests(unittest.TestCase):
                 patch.object(helpers.wmi, 'WMI', return_value=provider):
             state = helpers.get_live_battery_state()
         self.assertEqual(state['rate_watts'], 18.4)
+
         self.assertTrue(state['charging'])
         self.assertEqual(state['percent'], 90)
         client.Win32_Battery.return_value[0].EstimatedChargeRemaining = None
@@ -96,6 +100,77 @@ class BatteryRateTests(unittest.TestCase):
             state = helpers.get_live_battery_state()
         self.assertEqual(state['percent'], 90)
         self.assertEqual(state['rate_watts'], 18.4)
+
+    def test_battery_bar_keeps_valid_pack_reading_without_aggregate_fallback(self):
+        live = dict(percent=73, state='measured', charging=True,
+                    rate_watts=12.5, rate_state='measured')
+        with patch.object(helpers, 'get_live_battery_state', return_value=live), \
+                patch.object(psutil, 'sensors_battery') as fallback:
+            self.assertEqual(helpers.get_battery_bar_state(), live)
+        fallback.assert_not_called()
+
+    def test_battery_bar_uses_fresh_windows_charge_when_wmi_is_unreadable(self):
+        for plugged, power, charging in (
+                (True, 'AC power (charging unconfirmed)', None),
+                (False, 'Discharging', False),
+                (None, 'Unknown', None)):
+            with self.subTest(plugged=plugged), \
+                    patch.object(helpers, 'get_live_battery_state', return_value={
+                        'percent': None, 'state': 'unreadable'}), \
+                    patch.object(psutil, 'sensors_battery', return_value=SimpleNamespace(
+                        percent=73, power_plugged=plugged)):
+                live = helpers.get_battery_bar_state()
+            self.assertEqual(live['percent'], 73)
+            self.assertEqual(live['power_state'], power)
+            self.assertIs(live['charging'], charging)
+            self.assertTrue(live['aggregate'])
+            self.assertIsNone(live['rate_watts'])
+            self.assertEqual(live['source'], 'Windows power status')
+
+    def test_battery_bar_fallback_accepts_zero_and_full_charge(self):
+        for percent, plugged, power in ((0, False, 'Discharging'),
+                                        (100, True, 'Fully charged')):
+            with patch.object(helpers, 'get_live_battery_state', return_value={
+                    'percent': None, 'state': 'absent'}), \
+                    patch.object(psutil, 'sensors_battery', return_value=SimpleNamespace(
+                        percent=percent, power_plugged=plugged)):
+                live = helpers.get_battery_bar_state()
+            self.assertEqual(live['percent'], percent)
+            self.assertEqual(live['power_state'], power)
+            self.assertIs(live['charging'], False)
+
+    def test_battery_bar_does_not_invent_charge_when_all_providers_fail(self):
+        original = dict(percent=None, state='unreadable')
+        for percent in (None, True, '73', -1, 101, float('nan'), float('inf')):
+            with self.subTest(percent=percent), \
+                    patch.object(helpers, 'get_live_battery_state', return_value=original), \
+                    patch.object(psutil, 'sensors_battery', return_value=SimpleNamespace(
+                        percent=percent, power_plugged=True)):
+                self.assertEqual(helpers.get_battery_bar_state(), original)
+        with patch.object(helpers, 'get_live_battery_state', return_value=original), \
+                patch.object(psutil, 'sensors_battery', return_value=None):
+            self.assertEqual(helpers.get_battery_bar_state(), original)
+        with patch.object(helpers, 'get_live_battery_state', return_value=original), \
+                patch.object(psutil, 'sensors_battery', side_effect=OSError('provider failed')), \
+                patch('services.runtime.log_diagnostic') as diagnostic:
+            self.assertEqual(helpers.get_battery_bar_state(), original)
+        self.assertEqual(diagnostic.call_args.kwargs['stage'], 'power_status')
+
+    def test_battery_worker_publishes_fallback_reading(self):
+        from services.hardware_job import run_worker
+        with tempfile.TemporaryDirectory() as directory:
+            folder = Path(directory)
+            (folder / 'request.json').write_text(json.dumps(
+                {'kind': 'battery-live', 'arguments': {}}), encoding='utf-8')
+            with patch.object(helpers, 'get_live_battery_state', return_value={
+                    'state': 'unreadable', 'percent': None}), \
+                    patch.object(psutil, 'sensors_battery', return_value=SimpleNamespace(
+                        percent=73, power_plugged=True)):
+                run_worker(folder)
+            reply = json.loads((folder / 'result.json').read_text(encoding='utf-8'))
+        self.assertEqual(reply['state'], 'complete')
+        self.assertEqual(reply['battery']['percent'], 73)
+        self.assertTrue(reply['battery']['aggregate'])
 
 
 if __name__ == '__main__':

@@ -157,7 +157,6 @@ class HardwareDialogTests(unittest.TestCase):
                                              completion_event=event)
                     dialog.finish('pass')
                     self.assertFalse(event.is_set())
-                    dialog.mark_port()
                     self.assertFalse(dialog.observed)
                     # Simulate each poll without leaving old timers scheduled.
                     def poll():
@@ -165,16 +164,19 @@ class HardwareDialogTests(unittest.TestCase):
                         dialog.poll()
                     volumes.add('E: drive')
                     poll()
-                    dialog.mark_port()
-                    self.assertIn('Port check 1', dialog.observed)
-                    dialog.mark_port()
+                    self.assertIn('Connection 1', dialog.observed)
+                    self.assertFalse(any(
+                        w.winfo_class() in ('TButton', 'Button')
+                        and w.cget('text') == 'Confirm this port works'
+                        for w in descendants(dialog.window)))
+                    poll()  # A drive left connected must not count again.
                     self.assertEqual(len(dialog.observed), 1)
                     volumes.clear()
                     poll()
                     volumes.add('E: drive')
                     poll()
-                    self.assertTrue(dialog.pass_button.instate(['disabled']))
-                    dialog.mark_port()
+                    self.assertEqual(len(dialog.observed), 2)
+                    self.assertFalse(dialog.pass_button.instate(['disabled']))
                     dialog.pass_button.invoke()
                     self.assertTrue(event.is_set())
                     self.assertEqual(results['usb'], 'pass')
@@ -183,15 +185,27 @@ class HardwareDialogTests(unittest.TestCase):
                     self.assertTrue(results['_coverage']['usb']['details']['operator_confirmed_all_ports'])
                     self.assertFalse(results['_coverage']['usb']['details']['port_count_declared'])
                     summary = '\n'.join(coverage_lines(results))
-                    self.assertIn('Confirmed insertion checks: 2', summary)
+                    self.assertIn('Detected insertions: 2', summary)
                     self.assertIn('Every physical port checked: operator confirmed', summary)
                     self.assertNotIn('Required ports:', summary)
 
                     dialog = usb.run_usb_test(root, results, {})
                     self.assertFalse(dialog.ports)
-                    dialog.mark_port()  # The already-connected drive is a baseline.
+                    # The already-connected drive is a baseline, not a new check.
                     self.assertFalse(dialog.observed)
-                    self.assertFalse(dialog.pending)
+                    with patch.object(usb, 'removable_volumes',
+                                      side_effect=OSError('enumeration failed')):
+                        poll()
+                    self.assertIsNone(dialog.known)
+                    self.assertTrue(dialog.pass_button.instate(['disabled']))
+                    poll()  # Recovery establishes a baseline, not an insertion.
+                    self.assertFalse(dialog.observed)
+                    volumes.clear()
+                    poll()
+                    volumes.update(('E: drive', 'F: second partition'))
+                    poll()
+                    self.assertEqual(dialog.observed, {
+                        'Connection 1': ['E: drive', 'F: second partition']})
                     root.tk.call(dialog.window.protocol('WM_DELETE_WINDOW'))
                     self.assertEqual(results['usb'], 'cancelled')
                     self.assertIsNone(dialog.poll_id)

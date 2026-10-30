@@ -1203,6 +1203,37 @@ def get_live_battery_percent(index=0):
     return get_live_battery_state(index)["percent"]
 
 
+def get_battery_bar_state():
+    """Prefer pack evidence; use Windows' overall reading if WMI cannot read it.
+
+    This fallback is only for the live display, never per-pack health/results.
+    AC power alone does not establish that the battery is charging.
+    """
+    live = get_live_battery_state(0)
+    percent = live.get('percent')
+    if type(percent) in (int, float) and 0 <= percent <= 100:
+        return live
+    try:
+        import psutil
+        battery = psutil.sensors_battery()
+        percent = battery.percent if battery is not None else None
+        if type(percent) not in (int, float) or not 0 <= percent <= 100:
+            return live
+        plugged = battery.power_plugged
+        power_state = ('Fully charged' if plugged is True and percent == 100
+                       else 'AC power (charging unconfirmed)' if plugged is True
+                       else 'Discharging' if plugged is False else 'Unknown')
+        return dict(state='measured', percent=round(percent),
+                    charging=None if plugged is not False and percent < 100 else False,
+                    power_state=power_state, rate_watts=None,
+                    rate_state='unavailable', source='Windows power status',
+                    aggregate=True)
+    except Exception as exc:
+        from services.runtime import log_diagnostic
+        log_diagnostic('battery.live_read_failed', error=exc, stage='power_status')
+        return live
+
+
 def is_battery_charging(index=0) -> bool:
     return get_live_battery_state(index)["charging"] is True
 

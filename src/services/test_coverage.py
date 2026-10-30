@@ -30,7 +30,10 @@ def coverage_lines(results):
                 detail.get('manual_confirmation') or 'not recorded')
         if key == 'usb':
             if detail.get('port_count_declared') is False:
-                line += ' Confirmed insertion checks: {}. Every physical port checked: {}.'.format(
+                description = ('Detected insertions' if detail.get('automatic_insertion_detection')
+                               else 'Confirmed insertion checks')
+                line += ' {}: {}. Every physical port checked: {}.'.format(
+                    description,
                     len(detail.get('observed_ports', {})),
                     'operator confirmed' if detail.get('operator_confirmed_all_ports')
                     else 'not confirmed')

@@ -57,6 +57,8 @@ class BatteryLayoutTests(unittest.TestCase):
                     for label in ('Current charge: 79% Discharging',
                                   'Current charge: 90% Charging — 18.4 W',
                                   'Current charge: Unknown (Windows live)',
+                                  'Last reading: 73% — refresh unavailable; retrying',
+                                  'Overall current charge: 73% AC power — rate unavailable',
                                   'Current charge: 100% Charging'):
                         with self.subTest(scale=scale, width=width, label=label):
                             state._battery_bar_label = label

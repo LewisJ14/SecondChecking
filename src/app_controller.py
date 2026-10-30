@@ -734,18 +734,41 @@ class AppController:
 
         def apply(reply):
             live = reply.get('battery', {}) if reply.get('state') == 'complete' else {}
+            if not isinstance(live, dict):
+                live = {}
             percent = live.get('percent')
+            if type(percent) not in (int, float) or not 0 <= percent <= 100:
+                percent = None
             charging = live.get('charging') is True
             changed = (percent != self._battery_bar_percent
                        or charging != self._battery_bar_charging)
+            if percent is None and live.get('state') != 'absent':
+                failure = 'worker_error' if reply.get('state') != 'complete' else 'charge_unreadable'
+                if failure != getattr(self, '_battery_refresh_failure', None):
+                    from services.runtime import log_diagnostic
+                    log_diagnostic('battery.live_read_failed', stage='refresh',
+                                   reason=failure)
+                self._battery_refresh_failure = failure
+                # Do not erase a good initial reading for a failed/partial
+                # refresh, or present old charge/power information as current.
+                if self._battery_bar_percent is not None:
+                    self._battery_bar_label = (
+                        'Last reading: {}% — refresh unavailable; retrying'
+                        .format(self._battery_bar_percent))
+                else:
+                    self._battery_bar_label = 'Current charge: Unavailable — retrying'
+                self._battery_bar_charging = False
+                self._battery_bar_pulse = 0.0
+                return
+            self._battery_refresh_failure = None
             self._battery_bar_percent = percent
             self._battery_bar_charging = charging
             if percent is None:
-                self._battery_bar_label = 'Current charge: {}'.format(
-                    live.get('state', 'unreadable').title())
+                self._battery_bar_label = 'Current charge: No battery detected'
             else:
-                self._battery_bar_label = 'Current charge: {}% {}'.format(
-                    percent, battery_power_label(live))
+                name = 'Overall current charge' if live.get('aggregate') else 'Current charge'
+                self._battery_bar_label = '{}: {}% {}'.format(
+                    name, percent, battery_power_label(live))
             if changed:
                 self._battery_bar_pulse = 0.0
 

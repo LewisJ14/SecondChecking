@@ -29,7 +29,7 @@ class USBTestDialog:
         self.tests_window, self.completion_event = tests_window, completion_event
         self.closed, self.poll_id = False, None
         self.job = None
-        self.known, self.pending = set(), set()
+        self.known = None
         self.ports, self.observed, self.errors = [], {}, []
         self.window = tk.Toplevel(root)
         self.window.title('USB port checklist')
@@ -46,8 +46,8 @@ class USBTestDialog:
         actions = ttk.Frame(self.window, padding=12)
         actions.grid(row=1, column=0, sticky='ew')
         guidance = ttk.Label(body, text=(
-            'Use a known-good removable USB flash drive. Unplug it, insert it '
-            'in a port, then confirm that port works when detection appears. '
+            'Use a known-good removable USB flash drive. Unplug it, then insert it '
+            'in a port. Each connection is recorded automatically. '
             'Unplug and repeat in every physical USB port. '
             'Finish only after you have checked every port.'),
             wraplength=540)
@@ -61,9 +61,6 @@ class USBTestDialog:
             for label in (guidance, status_label):
                 label.configure(wraplength=max(100, event.width - 16))
         self.body.canvas.bind('<Configure>', fit_body, add='+')
-        self.confirm_button = ttk.Button(actions, text='Confirm this port works',
-                                         command=self.mark_port)
-        self.confirm_button.pack(fill='x', pady=3)
         self.pass_button = ttk.Button(actions, text='Finish — I checked every USB port',
                                       style='success.TButton',
                                       command=lambda: self.finish('pass'))
@@ -93,9 +90,8 @@ class USBTestDialog:
         for port in self.ports:
             self.listbox.insert(tk.END, '{} — {}'.format(
                 port, 'DETECTED' if port in self.observed else 'NOT CHECKED'))
-        complete = bool(self.observed) and not self.pending
+        complete = bool(self.observed) and self.known is not None
         self.pass_button.configure(state='normal' if complete else 'disabled')
-        self.confirm_button.configure(state='normal' if self.pending else 'disabled')
 
     def poll(self, initial=False):
         self.poll_id = None
@@ -108,21 +104,25 @@ class USBTestDialog:
             if reply['state'] == 'complete':
                 current = set(reply['volumes'])
                 if not initial and self.known is not None:
-                    had_pending = bool(self.pending)
-                    self.pending = (self.pending | (current - self.known)) & current
-                    if self.pending:
-                        self.status.set('Drive detected. Confirm this port works, '
-                                        'then unplug and move to the next port.')
-                    elif had_pending:
+                    inserted = current - self.known
+                    if inserted:
+                        connection = 'Connection {}'.format(len(self.observed) + 1)
+                        self.ports.append(connection)
+                        self.observed[connection] = sorted(inserted)
+                        self.status.set('USB drive detected and recorded. Unplug '
+                                        'and move to the next port.')
+                    elif self.known - current:
                         self.status.set('Drive removed. Insert it in the next port, '
-                                        'then confirm detection.')
+                                        'or finish if every port has been checked.')
+                elif not initial:
+                    self.status.set('Drive detection resumed. Unplug the test drive, '
+                                    'then insert it in the next port.')
                 self.known = current
             else:
                 detail = reply.get('detail', 'Enumeration failed.')[:500]
                 if detail not in self.errors:
                     self.errors.append(detail)
                     self.errors = self.errors[-10:]
-                self.pending.clear()
                 self.known = None
                 self.status.set('Cannot detect USB drives. Retry, record Error or Cancel.')
             self._refresh()
@@ -130,23 +130,9 @@ class USBTestDialog:
 
         self.job = JobPoller(self.window, 'usb', complete, timeout=10)
 
-    def mark_port(self):
-        if not self.pending:
-            self.status.set('Unplug and reinsert '
-                            'the test drive; a new detection is required.')
-            return
-        port = 'Port check {}'.format(len(self.observed) + 1)
-        self.ports.append(port)
-        self.observed[port] = sorted(self.pending)
-        self.pending.clear()
-        self._refresh()
-        self.status.set('{} confirmed. Unplug and move to the next physical '
-                        'port. Finish only when you have checked every port.'
-                        .format(port))
-
     def finish(self, result):
         if self.closed or (result == 'pass' and (
-                not self.observed or self.pending)):
+                not self.observed or self.known is None)):
             return
         if result == 'error' and not self.errors:
             self.status.set('No USB error has been observed.')
@@ -158,10 +144,11 @@ class USBTestDialog:
             self.window.after_cancel(self.poll_id)
             self.poll_id = None
         record_coverage(self.results, 'usb',
-                        'Operator-confirmed insertion checks; operator confirms '
+                        'Automatically detected insertions; operator confirms '
                         'all physical ports checked at Finish. Removable-volume '
                         'detection only; port uniqueness and other functions unverified.',
                         {'operator_confirmed_all_ports': result == 'pass',
+                         'automatic_insertion_detection': True,
                          'port_count_declared': False,
                          'observed_ports': self.observed, 'errors': self.errors})
         self.results['usb'] = result

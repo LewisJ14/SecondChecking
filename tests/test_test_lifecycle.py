@@ -376,6 +376,28 @@ class LifecycleUITests(unittest.TestCase):
                         'percent': 72, 'charging': True, 'power_state': 'Charging'}))
                     self.assertEqual(controller._battery_bar_percent, 72)
                     self.assertIn('Charging', controller._battery_bar_label)
+                    for reply in (
+                            dict(state='error', detail='worker timeout'),
+                            dict(state='complete', battery={'state': 'unreadable'}),
+                            dict(state='complete', battery=None),
+                            dict(state='complete', battery={'percent': float('nan')})):
+                        callback(reply)
+                        self.assertEqual(controller._battery_bar_percent, 72)
+                        self.assertIn('Last reading: 72%', controller._battery_bar_label)
+                        self.assertIn('retrying', controller._battery_bar_label)
+                        self.assertNotIn('Charging', controller._battery_bar_label)
+                        self.assertFalse(controller._battery_bar_charging)
+                    callback(dict(state='complete', battery={
+                        'percent': 73, 'charging': None, 'aggregate': True,
+                        'power_state': 'AC power (charging unconfirmed)'}))
+                    self.assertEqual(controller._battery_bar_percent, 73)
+                    self.assertIn('Overall current charge', controller._battery_bar_label)
+                    self.assertNotIn('Last reading', controller._battery_bar_label)
+                    callback(dict(state='complete', battery={'state': 'absent'}))
+                    self.assertIsNone(controller._battery_bar_percent)
+                    self.assertIn('No battery detected', controller._battery_bar_label)
+                    callback(dict(state='error'))
+                    self.assertIn('Unavailable', controller._battery_bar_label)
                 self.assertFalse(errors, errors)
         finally:
             root.destroy()
