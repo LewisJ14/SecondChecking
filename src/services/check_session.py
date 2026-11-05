@@ -24,6 +24,7 @@ class CheckDraftStore:
         base = os.environ.get("LOCALAPPDATA") or str(Path.home() / ".local/share")
         self.directory = Path(directory) if directory else (
             Path(base) / "SecondChecking" / "check-drafts")
+        self._recovered_paths = []
 
     def _path(self, key):
         digest = hashlib.sha256(json.dumps(key).encode("utf-8")).hexdigest()
@@ -33,7 +34,26 @@ class CheckDraftStore:
         path = self._path(key)
         if not path.exists():
             return None
-        saved = json.loads(path.read_text(encoding="utf-8"))
+        try:
+            saved = json.loads(path.read_text(encoding="utf-8-sig"))
+            self._validate(saved, key)
+        except ValueError:
+            # Keep the original bytes for recovery, outside the active filename.
+            # If moving fails, propagate the error rather than overwrite a draft
+            # that has not been safely preserved.
+            backup = path.with_name(path.stem + "." + uuid4().hex + ".corrupt")
+            path.rename(backup)
+            self._recovered_paths.append(backup)
+            return None
+        return saved
+
+    def take_recovery_warnings(self):
+        paths = self._recovered_paths
+        self._recovered_paths = []
+        return paths
+
+    @staticmethod
+    def _validate(saved, key):
         if (not isinstance(saved, dict) or saved.get("key") != list(key)
                 or not isinstance(saved.get("results"), dict)
                 or not isinstance(saved.get("baseline"), dict)):
@@ -45,7 +65,6 @@ class CheckDraftStore:
                     or not isinstance(state.get("_history_unknown"), list)
                     or not isinstance(state.get("_provenance_unknown"), bool)):
                 raise ValueError("Invalid local check draft results. The file was preserved.")
-        return saved
 
     def save(self, key, results, baseline):
         self.directory.mkdir(parents=True, exist_ok=True)

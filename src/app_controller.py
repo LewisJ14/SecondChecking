@@ -958,13 +958,27 @@ class AppController:
         self._update_order_notes_footer("")
         self._set_order_context("No order loaded. Submit a search to load an order.")
 
+    def _load_check_draft(self, order_id, serial, saved_results):
+        result = self._check_session.candidate(order_id, serial, saved_results)
+        recovered = self._check_session.store.take_recovery_warnings()
+        if recovered:
+            messagebox.showwarning(
+                "Local check draft could not be restored",
+                "A saved local draft was damaged and has been set aside. "
+                "Unsaved checks from that draft could not be restored. "
+                "You can continue loading this device or order.\n\n"
+                "The original file was preserved for recovery:\n"
+                + "\n".join(str(path) for path in recovered),
+            )
+        return result
+
     def _accept_order_search(self, generation, reference, resolved):
         if (generation != self._search_generation
                 or self._requested_reference != reference):
             return
         try:
             session = self._check_session
-            draft, conflict = session.candidate(
+            draft, conflict = self._load_check_draft(
                 resolved["order_id"], resolved["serial_number"], resolved["test_results"])
             if conflict:
                 choice = messagebox.askyesnocancel(
@@ -1088,7 +1102,7 @@ class AppController:
                             resolved["footer"] = build_results_footer(specs, resolved["details"], mdm)
                             self._accept_order_search(generation, reference, resolved)
                         else:
-                            draft, _ = self._check_session.candidate(0, serial, {})
+                            draft, _ = self._load_check_draft(0, serial, {})
                             results = self._check_session.activate(0, "", serial, {}, draft)
                             self.test_results.clear()
                             self.test_results.update(results)
@@ -1335,7 +1349,7 @@ class AppController:
         if self._check_session.key is None:
             try:
                 serial = specs.get("Serial Number")
-                draft, _ = self._check_session.candidate(0, serial, self.test_results)
+                draft, _ = self._load_check_draft(0, serial, self.test_results)
                 results = self._check_session.activate(0, "", serial,
                                                        self.test_results, draft)
                 self.test_results.clear()

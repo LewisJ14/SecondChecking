@@ -1,6 +1,7 @@
 from copy import deepcopy
 from contextlib import ExitStack
 from pathlib import Path
+import json
 from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 import sys
@@ -82,12 +83,65 @@ class DraftTests(unittest.TestCase):
         self.session.preserve(current)
         self.assertEqual(self.store.load((10, "00123"))["results"]["keyboard"], "pass")
 
-    def test_invalid_draft_is_preserved_and_raises(self):
+    def test_unreadable_drafts_are_preserved_and_do_not_block_restart(self):
+        for content in (b"", b"{broken", b"\xff\xfe\x00", b"[]", b'{"key": [10, "00123"]}'):
+            with self.subTest(content=content):
+                path = self.store._path((10, "00123"))
+                path.write_bytes(content)
+                self.assertEqual(self.session.candidate(10, "00123", self.saved), (None, False))
+                recovered = self.store.take_recovery_warnings()
+                self.assertEqual(len(recovered), 1)
+                self.assertEqual(recovered[0].read_bytes(), content)
+                self.assertFalse(path.exists())
+                restarted = CheckSession(CheckDraftStore(self.temp.name))
+                self.assertEqual(restarted.candidate(10, "00123", self.saved), (None, False))
+                self.assertEqual(restarted.store.take_recovery_warnings(), [])
+                # Saving and clearing a replacement must not delete the backup.
+                self.store.save((10, "00123"), self.saved, self.saved)
+                self.store.discard((10, "00123"))
+                self.assertEqual(recovered[0].read_bytes(), content)
+
+    def test_invalid_results_and_wrong_device_identity_are_not_restored(self):
+        self.store.save((10, "00123"), self.saved, self.saved)
         path = self.store._path((10, "00123"))
-        path.write_text("{broken", encoding="utf-8")
-        with self.assertRaises(ValueError):
-            self.session.candidate(10, "00123", self.saved)
-        self.assertEqual(path.read_text(encoding="utf-8"), "{broken")
+        valid = path.read_text(encoding="utf-8")
+        for mutate in (
+            lambda draft: draft.update(key=[10, "OTHER"]),
+            lambda draft: draft["results"].update(keyboard="invalid"),
+            lambda draft: draft["baseline"].update(_overrides=[]),
+        ):
+            draft = json.loads(valid)
+            mutate(draft)
+            path.write_text(json.dumps(draft), encoding="utf-8")
+            self.assertEqual(self.session.candidate(10, "00123", self.saved), (None, False))
+            backup, = self.store.take_recovery_warnings()
+            self.assertEqual(json.loads(backup.read_text()), draft)
+
+    def test_damaged_order_draft_can_still_restore_valid_bench_checks(self):
+        self.store.save((0, "00123"), dict(self.saved, usb="fail"), self.saved)
+        self.store._path((10, "00123")).write_bytes(b"")
+        draft, conflict = self.session.candidate(10, "00123", self.saved)
+        self.assertFalse(conflict)
+        self.assertEqual(draft["results"]["usb"], "fail")
+        self.assertEqual(len(self.store.take_recovery_warnings()), 1)
+        self.session.activate(10, "ORDER-A", "00123", self.saved, draft)
+        self.assertEqual(self.store.load((10, "00123"))["results"]["usb"], "fail")
+
+    def test_preservation_failure_still_blocks_loading_and_keeps_original(self):
+        path = self.store._path((10, "00123"))
+        path.write_bytes(b"{broken")
+        with patch.object(Path, "rename", side_effect=PermissionError("access denied")):
+            with self.assertRaises(PermissionError):
+                self.session.candidate(10, "00123", self.saved)
+        self.assertEqual(path.read_bytes(), b"{broken")
+        self.assertEqual(self.store.take_recovery_warnings(), [])
+
+    def test_utf8_bom_draft_remains_readable(self):
+        self.store.save((10, "00123"), self.saved, self.saved)
+        path = self.store._path((10, "00123"))
+        path.write_bytes(b"\xef\xbb\xbf" + path.read_bytes())
+        self.assertIsNotNone(self.session.candidate(10, "00123", self.saved)[0])
+        self.assertEqual(self.store.take_recovery_warnings(), [])
 
 
 class SearchContextTests(unittest.TestCase):
@@ -141,6 +195,66 @@ class SearchContextTests(unittest.TestCase):
         c.test_panel_button.config.assert_called_with(state="disabled")
         c.canvas.delete.assert_any_call("search_status")
         self.assertEqual(c._check_session.store.load((10, "00123"))["results"]["keyboard"], "fail")
+
+    def test_order_load_recovers_damaged_draft_and_warns_once(self):
+        c = self.controller
+        c._check_session.store._path((10, "00123")).write_bytes(b"")
+        self.resolved["test_results"]["keyboard"] = "pass"
+        with patch.object(app_controller.messagebox, "showwarning") as warning, \
+                patch.object(app_controller.messagebox, "showerror") as error, \
+                patch.object(app_controller, "render_results"), \
+                patch.object(app_controller, "start_hash_capture_status_update"):
+            c._accept_order_search(0, "external-A", self.resolved)
+            self.assertTrue(c._lookup_valid)
+            self.assertEqual(c.test_results["keyboard"], "pass")
+            warning.assert_called_once()
+            self.assertIn("could not be restored", warning.call_args.args[1])
+            backups = list(Path(self.temp.name).glob("*.corrupt"))
+            self.assertEqual(len(backups), 1)
+            self.assertIn(str(backups[0]), warning.call_args.args[1])
+            c._accept_order_search(0, "external-A", self.resolved)
+            warning.assert_called_once()
+            error.assert_not_called()
+
+    def test_bench_lookup_recovers_damaged_draft_without_restoring_checks(self):
+        c = self.controller
+        c._check_session.store._path((0, "00123")).write_bytes(b"{broken")
+        with patch.object(app_controller.messagebox, "showwarning") as warning:
+            draft, conflict = c._load_check_draft(0, "00123", c.test_results)
+        self.assertIsNone(draft)
+        self.assertFalse(conflict)
+        warning.assert_called_once()
+        results = c._check_session.activate(0, "", "00123", c.test_results, draft)
+        self.assertEqual(results, c.test_results)
+        self.assertEqual(c._check_session.key, (0, "00123"))
+
+    def test_device_refresh_continues_after_empty_bench_draft(self):
+        c = self.controller
+        c._tests_runner = None
+        c.refresh_device_button = Mock()
+        c._render_laptop_specs = Mock()
+        c._check_session.store._path((0, "00123")).write_bytes(b"")
+        queued = []
+        c.root.after.side_effect = lambda delay, action: queued.append(action)
+        thread = lambda target, **kwargs: SimpleNamespace(start=target)
+        specs = {"Serial Number": "00123", "Model": "Fixture"}
+        with ExitStack() as stack:
+            stack.enter_context(patch.object(app_controller.threading, "Thread", side_effect=thread))
+            stack.enter_context(patch.object(app_controller, "load_laptop_specs", return_value=specs))
+            stack.enter_context(patch.object(app_controller, "fresh", return_value=True))
+            stack.enter_context(patch.object(app_controller, "check_mdm_lock_status", return_value={}))
+            warning = stack.enter_context(patch.object(app_controller.messagebox, "showwarning"))
+            error = stack.enter_context(patch.object(app_controller.messagebox, "showerror"))
+            c.refresh_device()
+            for callback in queued:
+                callback()
+        self.assertEqual(c._check_session.key, (0, "00123"))
+        self.assertEqual(c._visible_specs, specs)
+        self.assertTrue(c._showing_default_specs)
+        self.assertFalse(c._search_inflight)
+        c._render_laptop_specs.assert_called_once()
+        warning.assert_called_once()
+        error.assert_not_called()
 
     def test_resolved_context_survives_edits_but_rejects_new_submissions(self):
         c = self.controller

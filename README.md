@@ -154,6 +154,13 @@ until a lookup resolves. If the saved server report has changed, choose Restore,
 Discard or Cancel before replacing a draft. Local drafts are not uploaded until
 assignment succeeds. See [SC05 session protection](docs/sc05-check-session-protection.md).
 
+Unreadable or invalid local drafts are moved to unique `.corrupt` recovery files
+in `%LOCALAPPDATA%\SecondChecking\check-drafts`. The operator sees the preserved
+file location and can continue loading the device or order; checks from the
+damaged draft are not treated as restored. Valid drafts and saved server reports
+remain available. If preserving a damaged draft fails, loading still stops to
+protect the original file.
+
 
 ### Qualified local MDM evidence (SC06)
 
