@@ -1,6 +1,7 @@
 # SecondChecking
 
-SecondChecking checks and assigns devices to **orders**. Trade job search,
+SecondChecking checks devices, assigns them to **orders** and creates laptop
+listing drafts. Trade job search,
 assignment and note editing have been removed from the desktop app. The header
 always offers Search Order; old `[app] mode = trade` settings are ignored.
 Existing trade records and Web-Tools trade features are unaffected.
@@ -9,6 +10,13 @@ An unresolved request left by an older trade-enabled desktop is never resent.
 The app can reconcile its existing server receipt; if the outcome is still
 unknown, review it in Web-Tools before assigning that device to an order.
 Do not delete a pending journal to bypass that review.
+
+## Laptop listing drafts
+
+After installing Windows, sign in on the laptop and open **Tools > Create
+listing draft**. Confirm the scanned serial before saving. No sales order is
+required. Open the draft in Astro to add photos and review the listing. This
+requires an Astro server with the Second Checking listing-capture endpoint.
 
 ## Environment Variables
 

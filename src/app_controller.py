@@ -199,6 +199,9 @@ class AppController:
         tools_menu.add_command(label="Check for App Updates", command=self.check_for_updates)
         tools_menu.add_command(label="Restore previous app version", command=self.restore_previous_update)
         tools_menu.add_command(label="Run Windows Updates", command=self.run_windows_update_script)
+        if operator_session.allowed("test"):
+            tools_menu.add_command(label="Create listing draft…",
+                                   command=self._open_listing_capture)
         from ui.bug_reports import open_report
         tools_menu.add_separator()
         tools_menu.add_command(label="Upload bug report…", command=lambda: open_report(self.root))
@@ -1126,6 +1129,16 @@ class AppController:
         except Exception as exc:
             self._finish_device_lookup(generation)
             messagebox.showerror("Device refresh failed", str(exc))
+
+    def _open_listing_capture(self):
+        if not self._require_operator("test"):
+            return
+        if self._update_busy():
+            messagebox.showinfo("Bench busy", "Finish the current operation before capturing a listing.")
+            return
+        from ui.listing_capture import open_listing_capture
+
+        open_listing_capture(self.root, load_laptop_specs)
 
     def _close_app(self):
         if getattr(self, "_update_preparing", False):

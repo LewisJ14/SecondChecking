@@ -213,18 +213,26 @@ def _get_laptop_specs(force_refresh=False):
         specs["Serial Number"] = bios.SerialNumber.strip()
         log_event(f"Detected Serial Number: {specs['Serial Number']}")
 
+        graphics = []
         for display in c.Win32_VideoController():
-            if display.CurrentHorizontalResolution and display.CurrentVerticalResolution:
+            name = str(getattr(display, "Name", "") or "").strip()
+            pnp_id = str(getattr(display, "PNPDeviceID", "") or "").upper()
+            if (pnp_id.startswith("PCI\\") and name
+                    and name.casefold() != "microsoft basic display adapter"):
+                graphics.append(name)
+            if (specs["Resolution"] == "Unknown" and display.CurrentHorizontalResolution
+                    and display.CurrentVerticalResolution):
                 specs["Resolution"] = f"{display.CurrentHorizontalResolution}x{display.CurrentVerticalResolution}"
                 log_event(f"Detected Resolution: {specs['Resolution']}")
-                break
+        specs["Graphics"] = list(dict.fromkeys(graphics))
 
         os_info = c.Win32_OperatingSystem()[0]
         specs["Windows"] = format_windows_caption(os_info)
         log_event(f"Detected Windows Version: {specs['Windows']}")
 
         system_info = c.Win32_ComputerSystem()[0]
-        manufacturer = (system_info.Manufacturer or "").lower()
+        specs["Manufacturer"] = (system_info.Manufacturer or "").strip()
+        manufacturer = specs["Manufacturer"].lower()
         family_model = _strip_thinkpad_prefix(getattr(system_info, "SystemFamily", ""))
         detected_model = _strip_thinkpad_prefix(getattr(system_info, "Model", ""))
         fallback_model = (system_info.Model or "").strip()
@@ -276,6 +284,32 @@ def _get_laptop_specs(force_refresh=False):
     _save_specs_cache(specs)
     log_event("Laptop specs fetched successfully.")
     return specs
+
+def listing_feature_evidence():
+    """Use positive device matches and leave ambiguous features for review."""
+    patterns = {
+        "fingerprint": r"fingerprint",
+        "touchscreen": r"HID-compliant touch screen",
+        "bluetooth": r"Bluetooth.*(radio|adapter)|Intel.*Bluetooth|Realtek.*Bluetooth",
+        "webcam": r"(Integrated|Built.in|Internal).*Camera|EasyCamera",
+        "wwan": r"WWAN|Mobile Broadband|Sierra Wireless|Fibocom|Quectel|LTE.*module",
+        "thunderbolt": r"Thunderbolt",
+    }
+    pythoncom.CoInitialize()
+    try:
+        devices = wmi.WMI().Win32_PnPEntity(Present=True, ConfigManagerErrorCode=0)
+        names = [str(device.Name or "").strip() for device in devices]
+    except Exception:
+        return {}
+    finally:
+        pythoncom.CoUninitialize()
+    features = {}
+    for key, pattern in patterns.items():
+        matches = sorted({name for name in names if re.search(pattern, name, re.I)})
+        if matches:
+            features[key] = {"state": "detected", "evidence": ", ".join(matches)[:1000]}
+    return features
+
 
 def get_live_battery_percent():
     try:
